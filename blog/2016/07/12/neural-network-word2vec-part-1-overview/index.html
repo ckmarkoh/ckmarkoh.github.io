@@ -1,0 +1,424 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>類神經網路 -- Word2vec (Part 1 : Overview) - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 文字的語意可以用向量來表示，在上一篇 Vector Space of Semantics 中提到，如果把每種字當成一個維度，假設總共有一萬總字，那向量就會有一萬個維度。有兩種方法可降低維度，分別是 singular value decomposition 和 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">類神經網路 -- Word2vec (Part 1 : Overview)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:19:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:19 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>文字的語意可以用向量來表示，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，如果把每種字當成一個維度，假設總共有一萬總字，那向量就會有一萬個維度。有兩種方法可降低維度，分別是 <em>singular value decomposition</em> 和 <em>word2vec</em> 。</p>
+
+<p>本文講解 <em>word2vec</em> 的原理。 <em>word2vec</em> 流程，總結如下：</p>
+
+<p><img src="/images/pic/pic_00191.png" alt="" /></p>
+
+<p>首先，將文字做 <em>one-hot encoding</em> ，然後再用 <em>word2vec</em> 類神經網路計算，求出壓縮後（維度降低後）的語意向量。</p>
+
+<!--more-->
+
+<h2 id="one-hot-encoding">One-Hot Encoding</h2>
+
+<p>一開始，不知道哪個字和哪個字語意相近，所以就假設每個字的語意是不相干的。也就是說，每個字的向量都是互相垂直。</p>
+
+<p>這邊舉個比較簡單的例子，假設總字彙量只有 4 個， 分別為 <em>dog, cat, run, fly</em> ，那麼，經過 <em>one-hot encoding</em> 的結果如下：</p>
+
+<p><img src="/images/pic/pic_00192.png" alt="" /></p>
+
+<p>如上圖， <em>dog</em> 的向量為 (1,0,0,0) ，只有在第一個維度是 1 ，其他維度是 0 ，而 <em>cat</em> 的向量為 (0,1,0,0) 只有在第一個維度是 1 ，其他維度是 0 。</p>
+
+<p>也就是說，每個字都有一個代表它的維度，而它 <em>one hot encoding</em> 的結果，只有在那個維度上是 1 ，其他維度都是 0 。這樣的話，任意兩個 <em>one hot encoding</em> 的向量內積結果，都會是 0 ，內積結果為 0 ，表示兩向量是垂直的。</p>
+
+<p>註：實際應用中，字彙量即是語料庫中的單字種類，通常會有幾千個甚至一萬個以上。</p>
+
+<h2 id="word2vec">word2vec</h2>
+
+<p><em>word2vec</em> 的神經網路架構如下，總共有三層， <em>input layer</em> 和 <em>output layer</em> 一樣大，中間的 <em>hidden layer</em> 比較小。</p>
+
+<p><img src="/images/pic/pic_00193.png" alt="" /></p>
+
+<p>如上圖，總字彙量有 4 個，那麼 <em>input layer</em> 和 <em>output layer</em> 的維度為 4， 每個維度分別代表一個字。 如果想要把向量維度降至三維， <em>hidden layer</em> 的維度為 3。</p>
+
+<p>另外要注意的是， <em>hidden layer</em> 沒有非線性的 <em>activation funciton</em> ，而 <em>output layer</em> 的 <em>activation function</em> 是 <em>sigmoid</em> ，這兩點會有什麼影響，之後會提到。</p>
+
+<p>其中，在 <em>input layer</em> 和 <em>hidden layer</em> 之間， 有 <script type="math/tex">4 \times 3</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{V}</script> ，而在 <em>hidden layer</em> 到 <em>output layer</em> 之間， 有 <script type="math/tex">3 \times 4</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{W}</script> 。</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\textbf{V}=
+
+\begin{bmatrix}
+
+    v_{11} & v_{12} & v_{13}  \\
+
+    v_{21} & v_{22} & v_{23}  \\
+
+    v_{31} & v_{32} & v_{33}  \\
+
+    v_{41} & v_{42} & v_{43}  \\
+
+\end{bmatrix}
+
+\mspace{30mu}
+
+\textbf{W}^T=
+
+\begin{bmatrix}
+
+    w_{11} & w_{12} & w_{13}  \\
+
+    w_{21} & w_{22} & w_{23}  \\
+
+    w_{31} & w_{32} & w_{33}  \\
+
+    w_{41} & w_{42} & w_{43}  \\
+
+\end{bmatrix}
+
+ %]]></script>
+
+<p>由於 <em>input</em> 是 <em>one hot encoding</em> 的向量，又因為 <em>hidden layer</em> 沒有 <em>sigmoid</em> 之類的非線性 <em>activation function</em>。 輸入到類神經網路後，在 <em>hidden layer</em> 所取得的值，即是 <script type="math/tex">\textbf{V}</script> 中某個橫排的值，如下：</p>
+
+<p><img src="/images/pic/pic_00194.png" alt="" /></p>
+
+<p>例如，輸入的是 <em>dog</em> 的 <em>one hot encoding</em> ，只有在第 1 個維度是 1 ，與 <script type="math/tex">\textbf{V}</script> 作矩陣相乘後，在 <em>hidden layer</em> 取得的值是 <script type="math/tex">\textbf{V}</script> 中的第一個橫排： <script type="math/tex">(v_{11}, v_{12}, v_{13})</script> ，這個向量就是 <em>dog</em> 壓縮後的語意向量。運算過程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{bmatrix}
+
+1 & 0 & 0 & 0 
+
+\end{bmatrix}
+
+\begin{bmatrix}
+
+    v_{11} & v_{12} & v_{13}  \\
+
+    v_{21} & v_{22} & v_{23}  \\
+
+    v_{31} & v_{32} & v_{33}  \\
+
+    v_{41} & v_{42} & v_{43}  \\
+
+\end{bmatrix}
+
+= 
+
+\begin{bmatrix}
+
+v_{11} & v_{12} & v_{13}
+
+\end{bmatrix}
+
+ %]]></script>
+
+<p>因此， <script type="math/tex">\textbf{V}</script> 中的某個橫排，就是某個字的語意向量。從反方向來看，由於 <em>output layer</em> 也是對應到字彙的 <em>one hot encoding</em> 因此， <script type="math/tex">\textbf{W}^T</script> 中的某個橫排，就是某個字的語意向量。</p>
+
+<p>所以，一個字分別在 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 中各有一個語意向量。但通常會選擇 <script type="math/tex">\textbf{V}</script> 中的語意向量，作為 <em>word2vec</em> 的輸出結果。</p>
+
+<h2 id="initializing-word2vec">Initializing word2vec</h2>
+
+<p>至於如何訓練這個類神經網路？ 訓練一個類神經網路的過程，第一步就是要先將 <em>weight</em> 作初始化。初始化即是隨機給每個 <em>weight</em> 不同的數值，這些數值介於 <script type="math/tex"> -N \sim N</script> 之間。</p>
+
+<p>因此，在還沒開始訓練之前，這些向量的方向都是隨機的，跟語意無關。</p>
+
+<p>舉 <em>dog</em> 和 <em>cat</em> 在 <script type="math/tex">\textbf{V}</script> 中的向量，為 <script type="math/tex">\textbf{V}_1,\textbf{V}_2</script> ，以及 <em>run</em> 和 <em>fly</em> 在 <script type="math/tex">\textbf{W}</script> 中的向量 為 <script type="math/tex">\textbf{W}_3,\textbf{W}_4</script> ，為例：</p>
+
+<p><img src="/images/pic/pic_00195.png" alt="" /></p>
+
+<p>由於 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 都是隨機初始化的，因此 <script type="math/tex">\textbf{V}_1, \textbf{V}_2, \textbf{W}_3, \textbf{W}_4 </script> 這些向量的方向都是隨機的，跟語意無關，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00196.png" alt="" /></p>
+
+<h2 id="training-word2vec">Training word2vec</h2>
+
+<p>訓練 <em>word2vec</em> 的目的，是希望讓語意向量真的跟語意有關。，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，某字的語意，可從其上下文有哪些字來判斷。因此，可以用某字上下文的字，來做訓練，讓語意向量能抓到文字的語意。</p>
+
+<p>若 <em>dog</em> 的上下文中有 <em>run</em> ， 令 <em>dog</em> 為 <em>word2vec</em> 的 <em>input</em> ， <em>run</em> 為 <em>output</em> 則輸入類神經網路後，在 <em>run</em> 的位置，在經過 <em>sigmoid</em> 之前，得到的結果是 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積。經過了，<em>sigmoid</em> ，得到的值為：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}}
+
+</script>
+
+<p>由於 <em>run</em> 出現在 <em>dog</em> 的上下文中，所以要訓練類神經網路，在 <em>run</em> 位置可以輸出 1，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 1
+
+</script>
+
+<p>過程如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00197.png" alt="" /></p>
+
+<p>根據上圖，如果要讓 <em>run</em> 的位置輸出為 1 ，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積要越大越好。</p>
+
+<p>內積要大，就是向量角度要越小，訓練過程中，會修正這兩個向量的角度，如下圖：</p>
+
+<p><img src="/images/pic/pic_00198.png" alt="" /></p>
+
+<p>上圖左方為先正之前，各向量的方向，上圖右方為修正之後的方向，其中，深藍色為修正後的，淺藍色為修正前的，畫在一起以便作比較。修正完後， <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度又更接近了。</p>
+
+<p>同理，若 <em>cat</em> 的上下文中有 <em>run</em> ，則用 <em>word2vec</em> 做同樣訓練，如下圖：</p>
+
+<p><img src="/images/pic/pic_00199.png" alt="" /></p>
+
+<p>修正向量的角度後，<script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度會更接近，結果如下圖：</p>
+
+<p><img src="/images/pic/pic_00200.png" alt="" /></p>
+
+<p>不過，以上訓練方法有個問題，就是訓練完後， <em>所有的向量都會位於同一條直線上，而無法分辨出每個字語意的差異</em> 。如果要讓 <em>word2vec</em> 學會分辨語意的差異，就需要加入反例，也就是 <em>不是出現在上下文的字</em> 。</p>
+
+<p>如果 <em>dog</em> 的上下文中，不會出現 <em>fly</em> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{W}_4</script> ，將 <em>dog</em> 輸入類神經網路後，在 <em>fly</em> 的位置，訓練其輸出結果為 0 ，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 0
+
+</script>
+
+<p>如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00201.png" alt="" /></p>
+
+<p>如果要讓輸出結果接近 0，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_4</script> 的內積要越小越好，也就是說，它們之間的角度要越大越好。修正這兩個向量的角度，如下圖：</p>
+
+<p><img src="/images/pic/pic_00202.png" alt="" /></p>
+
+<p>同理，若 <em>cat</em> 的上下文中沒有 <em>fly</em> ，則訓練其輸出 0 ：</p>
+
+<p><img src="/images/pic/pic_00203.png" alt="" /></p>
+
+<p>修正  <script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_4</script> 的夾角，如下圖：</p>
+
+<p><img src="/images/pic/pic_00204.png" alt="" /></p>
+
+<p>訓練後，得出的這些語意向量，語意相近的，夾角越小，語意相差越遠的，夾角越大，如下圖：</p>
+
+<p><img src="/images/pic/pic_00205.png" alt="" /></p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ol>
+  <li>
+    <p><em>word2vec</em> 的 <em>backward propagation</em> 公式要怎麼推導，請看：<a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation">word2vec (part2 : Backward Propagation)</a></p>
+  </li>
+  <li>
+    <p>如何從無到有，不使用任何自動微分的套件，實作一個 <em>word2vec</em> ，請看：<a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation">word2vec (part3 : Implementation)</a></p>
+  </li>
+</ol>
+
+<p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:19:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:19 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/07/10/nlp-vector-space-semantics/" title="Previous Post: 自然語言處理 -- Vector Space of Semantics">&laquo; 自然語言處理 -- Vector Space of Semantics</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/" title="Next Post: 類神經網路 -- word2vec (part 2 : Backward Propagation)">類神經網路 -- word2vec (part 2 : Backward Propagation) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

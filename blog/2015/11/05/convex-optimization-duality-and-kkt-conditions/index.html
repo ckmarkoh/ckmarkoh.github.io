@@ -1,0 +1,472 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Convex Optimization -- Duality & KKT Conditions - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在解「 有條件的最佳化問題 」時，有時需要把原本的問題轉換成對偶問題(Dual Problem)後，會比較好解。 如果對偶問題有最佳解，原本問題也有最佳解，且這兩個最佳解相同，則必須要滿足 Karush-Kuhn-Tucker (KKT) Conditions： &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Convex Optimization -- Duality & KKT Conditions</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-05T13:18:00+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:18 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在解「 <strong>有條件的最佳化問題</strong> 」時，有時需要把原本的問題轉換成對偶問題(Dual Problem)後，會比較好解。</p>
+
+<p>如果對偶問題有最佳解，原本問題也有最佳解，且這兩個最佳解相同，則必須要滿足 <em>Karush-Kuhn-Tucker (KKT) Conditions</em>：</p>
+
+<ol>
+  <li>
+    <p>Primal Feasibility </p>
+  </li>
+  <li>
+    <p>Dual Feasibility</p>
+  </li>
+  <li>
+    <p>Complementary Slackness</p>
+  </li>
+  <li>
+    <p>Stationarity</p>
+  </li>
+</ol>
+
+<p>至於這四項到底是什麼？講起來有點複雜。本文會先從對偶問題的概念開始介紹，再來講解這四個條件。</p>
+
+<h2 id="the-lagrange-dual-function">The Lagrange dual function</h2>
+
+<p>首先，講解一下什麼是對偶問題。</p>
+
+<p>通常，有條件的最佳化問題，可寫成 <a name="eq1">＜公式一＞</a> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& \textbf{minimize} & f_{0}(x) & \\
+
+& \textbf{subject to } & f_{i}(x) \leq 0 ,& i=1, ... ,m \\
+
+& & h_{j}(x) = 0 , &j=1, ... ,p \\
+
+\end{aligned}
+
+ %]]></script>
+
+<!--more-->
+
+<p>其中, <script type="math/tex">f_{0}(x)</script> 是目標函數，而 <script type="math/tex"> f_{i}(x) \leq 0</script> 為不等式的條件限制， <script type="math/tex">h_{j}(x) = 0</script> 為等式的條件限制。也就是說，最佳化的目標是要求出 <script type="math/tex">x</script> 讓 <script type="math/tex">f_{0}(x)</script> 得出最小值，而這個 <script type="math/tex">x</script> ，必須滿足 <script type="math/tex"> f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0</script> 所限定的條件。若滿足這兩項條件，則表示這個最佳化問題有解，即為滿足 <strong>primal feasibility</strong> 。</p>
+
+<p>此最佳化問題可以轉換成對偶問題，如下：</p>
+
+<script type="math/tex; mode=display">
+
+L(x, \lambda, \nu) = f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x)
+
+</script>
+
+<p>其中，我們把 <script type="math/tex">L(x, \lambda, \nu)</script> 稱為 <em>Lagrangian</em> ，<script type="math/tex"> \lambda_{i} </script> 和 <script type="math/tex">\nu_{j}</script> 稱為 <em>Lagrange multiplier</em> 。</p>
+
+<p>所謂的對偶函數( <em>Lagrange dual function</em> )，即是在給定了 <em>Lagrange multiplier</em> 之下，改變 <script type="math/tex">x</script> 來得出 <em>Lagrangian</em> 最小值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) )
+
+</script>
+
+<p>其中， <script type="math/tex">g(\lambda, \nu) </script> 為對偶函數，而 <script type="math/tex">\inf_{x}</script> 即是在改變 <script type="math/tex">x</script> 的情況下，找出最小值。</p>
+
+<h2 id="lower-bounds-on-optimal-value">Lower bounds on optimal value</h2>
+
+<p>接著來證明，對偶函數可當作原本問題的 <em>Lower Bound</em> 。設原本問題<a href="#eq1">公式一</a>的最佳解為 <script type="math/tex">p^{\star}</script> ，則在所有 <script type="math/tex"> \lambda_{i} \geq 0 </script> （記作 <script type="math/tex">\lambda \succeq 0 </script> ）和  <script type="math/tex">\nu_{j}</script> 為任意數的情況下，會滿足以下條件：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda, \nu) \leq p^{\star}
+
+</script>
+
+<p>此性質不難證明，對於所有滿足 <script type="math/tex"> f_{i}(\tilde{x}) \leq 0</script> 和 <script type="math/tex">h_{j}(\tilde{x}) = 0</script> 這兩個條件的 <script type="math/tex">\tilde{x}</script> ，必滿足：</p>
+
+<script type="math/tex; mode=display">
+
+\sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \leq 0
+
+</script>
+
+<p>則：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) ) \\
+
+& \leq L(\tilde{x}, \lambda, \nu) =  f_{0}(\tilde{x}) + \sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \\
+
+&\leq  f_{0}(\tilde{x})
+
+\end{aligned}
+
+ %]]></script>
+
+<p>設原本問題<a href="#eq1">公式一</a>最佳解時的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，由於 <script type="math/tex">x^{\star}</script> 必須滿足 滿足 <script type="math/tex"> f_{i}(x^{\star}) \leq 0</script> 和 <script type="math/tex">h_{j}(x^{\star}) = 0</script> 這兩個條件，又因 <script type="math/tex">\lambda \succeq 0 </script> ，故 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 成立。</p>
+
+<p>舉個例子，下圖中，黑色的實線為目標函數 <script type="math/tex">f_{0}(x)</script> ，此最佳化問題有一個不等式條件限制 <script type="math/tex">f_{1}(x)</script> ，用綠色虛線表示，而滿足於  <script type="math/tex">f_{1}(x) \leq 0 </script> 的 <script type="math/tex">x</script> 範圍落在 <script type="math/tex">[-0.46~0.46]</script> 之間，範圍用兩條鉛直的紅色虛線表示。 紫色的圓圈為最佳解的點 <script type="math/tex">x^{\star} = -0.46, p^{\star} = 1.54</script> 。此最佳化問題沒有等式條件，故沒有 <script type="math/tex">h_{j}</script> 及  <script type="math/tex">\nu_{j}</script> 。則此問題的 <em>Lagrangian</em> 為 <script type="math/tex">L(x, \lambda)</script> 。藍色的點為 <script type="math/tex">\lambda = 0.1, 0.2, ... , 1.0 </script> 所畫出來的 <em>Lagrangian</em> 圖形。 </p>
+
+<p><img src="/images/pic/pic_00114.png" alt="" /></p>
+
+<p>在上圖中，兩條紅色虛線之間的範圍內，即 <script type="math/tex">x</script> 滿足不等式的條件限制 <script type="math/tex">f_{1}(x) \leq 0</script> ，此時藍色的虛線皆位於黑色線的下方，滿足 <script type="math/tex">L(x, \lambda) \leq f_{0}(x)</script> 。 </p>
+
+<p>下圖畫出改變不同 <script type="math/tex">\lambda</script> 值時，對偶函數 <script type="math/tex"> g(\lambda) = \inf_{x}( L(x, \lambda) ) </script> 的值，其中，黑色的實線為 <script type="math/tex"> g(\lambda) </script> ，紫色的虛線為 <script type="math/tex">p^{\star}</script> 的值（<script type="math/tex">p^{\star} = 1.54</script> ）。</p>
+
+<p><img src="/images/pic/pic_00115.png" alt="" /></p>
+
+<p>根據此圖，黑色的線恆在紫色的虛線下方，滿足 <script type="math/tex">g(\lambda) \leq p^{\star}</script> 。</p>
+
+<h2 id="the-lagrange-dual-problem">The Lagrange dual problem</h2>
+
+<p>所謂的對偶問題（Lagrange dual problem）即是把原本的問題轉成對偶函數之後，來解最佳化問題。</p>
+
+<p>從前面結論可得知，對偶函數若滿足 <script type="math/tex">\lambda \succeq 0 </script> （也就是所有的 <script type="math/tex">\lambda_{i}</script> 都滿足 <script type="math/tex">\lambda_{i} \geq 0</script> ）的條件，則必足 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 。如果想找出最接近 <script type="math/tex">p^{\star}</script> 的對偶函數解，則可藉由改變 <script type="math/tex">\lambda, \nu</script> ，來找出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值。此對偶問題如下 <a name="eq2">＜公式二＞</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& \textbf{maximize} & g(\lambda, \nu) & \\
+
+& \textbf{subject to } & \lambda \succeq 0 \\
+
+\end{aligned}
+
+ %]]></script>
+
+<p>如果可以找出一組解，滿足 <script type="math/tex">\lambda \succeq 0 </script> ，可得出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值 <script type="math/tex">d^{\star}</script> ，則此問題滿足 <strong>dual feasibility</strong>。</p>
+
+<p>根據對偶問題的解 <script type="math/tex">d^{\star}</script> 和原本問題的解 <script type="math/tex">p^{\star}</script> 的關係，可將對偶性質分為 <em>weak duality</em> 和  <em>strong duality</em> 兩類：</p>
+
+<h4 id="weak-duality">Weak duality</h4>
+
+<p>若對偶問題的解，小於或等於原本問題的解，即滿足 <em>weak duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+d^{\star} \leq p^{\star} 
+
+</script>
+
+<p>根據前面段落 <em>Lower bounds on optimal value</em> 所推導的結論， <em>Weak duality</em> 必定成立。</p>
+
+<h4 id="strong-duality">Strong duality</h4>
+
+<p>若對偶問題的解，等於原本問題的解，即滿足 <em>strong duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+d^{\star} = p^{\star} 
+
+</script>
+
+<p>這個條件不一定會成立，如果要成立的話，原本問題<a href="#eq1">公式一</a>的中的 <script type="math/tex">f_{0}(x)</script> 和 <script type="math/tex">f_{i}(x)</script> 要是凸函數，但即使滿足此條件，仍須滿足其他條件才能使 <em>strong duality</em> 成立，這講起來比較複雜，在此先不提。</p>
+
+<h2 id="complementary-slackness">Complementary Slackness</h2>
+
+<p>設原本問題最佳解的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，對偶問題最佳解的 <script type="math/tex">(\lambda, \nu)</script> 為 <script type="math/tex">(\lambda^{\star}, \nu^{\star}) </script> ，根據對偶函數 <script type="math/tex">g(\lambda^{\star}, \nu^{\star})</script> 的定義，和前面段落 <em>Lower bounds on optimal value</em> 所推導出的結論，可得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& g(\lambda^{\star}, \nu^{\star}) = \inf_{x}( L(x, \lambda^{\star}, \nu^{\star}) ) \\
+
+& \leq f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star})  \\
+
+& \leq f_{0}(x^{\star}) 
+
+\end{aligned}
+
+ %]]></script>
+
+<p>若對偶問題滿足 <em>strong duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  
+
+</script>
+
+<p>則須滿足：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star})  = 0 \mspace{40mu} \text{(a)} \\
+
+& \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star}) = 0 \mspace{40mu} \text{(b)}
+
+\end{aligned}
+
+ %]]></script>
+
+<p>由於 <script type="math/tex">h_{j}(x^{\star}) = 0 </script> 為原本問題的等式條件限制，故 <strong>(b)</strong> 必會成立，若 <strong>(a)</strong> 要成立的話，須滿足：</p>
+
+<script type="math/tex; mode=display">
+
+\lambda_{i}^{\star} f_{i}(x^{\star})  = 0  \mspace{20mu} \textbf{for } i=1,2,...m
+
+</script>
+
+<p>也就是說，<script type="math/tex">f_{i}(x^{\star}) </script> 和  <script type="math/tex">\lambda_{i}^{\star}</script> 的其中一項必須為零，不可以兩項都不為零。這種情形稱為 <strong>complementary slackness</strong> ，也就是林軒田教授在<a href="https://www.coursera.org/course/ntumltwo">機器學習技法</a>課程中所提到的：</p>
+
+<blockquote>
+  <p>哈利波特和佛地魔，其中一個必須死掉。</p>
+</blockquote>
+
+<h2 id="karush-kuhn-tucker-kkt-conditions">Karush-Kuhn-Tucker (KKT) conditions</h2>
+
+<p><em>KKT conditions</em> 即為下四個條件：</p>
+
+<ol>
+  <li>
+    <p>Primal Feasibility：即滿足原本問題<a href="#eq1">公式一</a>的限制條件 <script type="math/tex">f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0 </script>  ，使原本問題有解。</p>
+  </li>
+  <li>
+    <p>Dual Feasibility：即滿足對偶問題<a href="#eq2">公式二</a>的限制條件： <script type="math/tex"> \lambda \succeq 0 </script> ，使對偶問題有解。</p>
+  </li>
+  <li>
+    <p>Complementary Slackness：即滿足 <em>strong duality</em> ：<script type="math/tex"> g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  </script> ，使原本問題和對偶問題有相同解。</p>
+  </li>
+  <li>
+    <p>Stationarity（gradient of Lagrangian with respect to x vanishes）：</p>
+  </li>
+</ol>
+
+<script type="math/tex; mode=display">
+
+\nabla f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i} \nabla f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j} \nabla h_{j}(x^{\star}) = 0
+
+</script>
+
+<p>第四項雖然前面沒提到，但很容易理解，也就是說，在得出最佳解 <script type="math/tex">x^{\star}</script> 的時候， <em>Lagrangian</em> 對於 <script type="math/tex">x^{\star}</script> 的 <em>gradient</em> 要等於 0 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至以下教科書，本文中的圖片也取自於以下教科書：</p>
+
+<p>Stephen Boyd &amp; Lieven Vandenberghe. Convex Optimization. Chapter 5 Duality.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-11-05T13:18:00+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:18 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/duality/'>duality</a>, <a class='category' href='/blog/categories/kkt-conditions/'>kkt_conditions</a>, <a class='category' href='/blog/categories/optimization/'>optimization</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/10/26/neural-network-neural-turing-machine/" title="Previous Post: 類神經網路 -- Neural Turing Machine">&laquo; 類神經網路 -- Neural Turing Machine</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/12/23/optimization-method-adagrad/" title="Next Post: Optimization Method -- Gradient Descent & AdaGrad">Optimization Method -- Gradient Descent & AdaGrad &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

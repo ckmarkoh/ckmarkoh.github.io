@@ -1,0 +1,495 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>類神經網路 -- Recurrent Neural Network - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在數位電路裡面，如果一個電路沒有 latch 或 flip flop 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 combinational circuit 。 對於類神經網路而言， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">類神經網路 -- Recurrent Neural Network</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-06T09:32:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>9:32 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在數位電路裡面，如果一個電路沒有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 <em>combinational circuit</em> 。</p>
+
+<p>對於類神經網路而言，如果它的值只是從輸入端一層層地依序傳到輸出端，不會再把值從輸出端傳回輸入端，這種神經元就相當於 <em>combinational circuit</em> ，也就是說它的輸出值只取決於目前時刻的輸入值，這樣的類神經網路稱為 <em>feedforward neural network</em> 。</p>
+
+<p>如果一個電路有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值就跟上個時間點的輸入值有關，這種的電路它稱為 <em>sequential circuit</em> 。</p>
+
+<p>所謂的 <em>Recurrent Neural Network</em> ，是一種把輸出端再接回輸入端的類神經網路，這樣可以把上個時間點的輸出值再傳回來，記錄在神經元中，達成和 <em>latch</em> 類似的效果，使得下個時間點的輸出值，跟上個時間點有關，也就是說，這樣的神經網路是有 <em>記憶</em> 的。</p>
+
+<h2 id="recurrent-neural-network">Recurrent Neural Network</h2>
+
+<p>由一個簡單神經元所構成的 <em>Recurrent Neural Network</em> ，構造如下：</p>
+
+<p><img src="/images/pic/pic_00095.png" alt="" /></p>
+
+<p>這個神經元在 <script type="math/tex">t</script> 時間，訓練資料的輸入值為 <script type="math/tex">x_{t}</script> ，訓練資料的答案為 <script type="math/tex">y_{t}</script> ，神經元 <script type="math/tex">n</script> 的輸出值 <script type="math/tex">n_{out,t}</script> ，可用以下公式表示：</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& n_{in,t} = w_{c}x_{t}+ w_{p}n_{out,t-1} + w_{b} \\
+
+& n_{out,t} = \frac{1}{1+e^{-n_{in,t}}} \\
+
+\end{aligned}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">n_{in,t}</script> 為輸入神經元 <script type="math/tex">n</script> 的值， <script type="math/tex">w_{c}</script> 是給目前的時間(current)時，輸入值 <script type="math/tex">x_{t}</script> 的權重， <script type="math/tex">w_{p}</script> 是給上個時間點(previous)時，輸出值 <script type="math/tex">n_{out,t-1}</script> 的權重，而 <script type="math/tex">w_{b}</script> 為 <em>bias</em> 。從上圖可看出，紫色的線將神經網路的輸出端 <script type="math/tex">n_{out}</script> 連回輸入端 <script type="math/tex">n_{in}</script> ，使得於時間 <script type="math/tex">t</script> 的輸出值跟上個時間點 <script type="math/tex">t-1</script> 的輸出值有關。</p>
+
+<p>可以把這個神經元從時間點 <script type="math/tex">0</script> 到時間點 <script type="math/tex">t</script> 的運算，展開成下圖：</p>
+
+<p><img src="/images/pic/pic_00096.png" alt="" /></p>
+
+<p>從上圖，最左邊開始，依序將 <script type="math/tex">x_{0},x_{1},...,x_{t}</script> 輸入神經元 <script type="math/tex">n</script> ，而依序得出的值為 <script type="math/tex">n_{out,0},n_{out,1},...,n_{out,t}</script> 。神經元 <script type="math/tex">n</script> 在時間點 <script type="math/tex">t-1</script> 的輸出值 <script type="math/tex">n_{out,t-1}</script> ，會接到時間點 <script type="math/tex">t</script> 時的輸入值 <script type="math/tex">n_{in,t}</script> 。 </p>
+
+<h2 id="training-recurrent-neural-network">Training Recurrent Neural Network</h2>
+
+<p>訓練 <em>recurrent neural network</em> 的方法，和訓練 <em>feedforward neural network</em> 的方法一樣，都可以用 <em>back propagation</em> 。但是在 <em>recurrent neural network</em> 中，要依據時間順序，將值從最後一個時間點，回傳到第一個時間點。</p>
+
+<p>在時間點 <script type="math/tex">t</script> 時的 <em>cost function</em> 為：</p>
+
+<script type="math/tex; mode=display">
+
+J=−y_{t}log(n_{out,t})−(1−y_{t})log(1−n_{out,t})
+
+</script>
+
+<p>計算 <em>recurrent neural network</em> 的 <em>back propagation</em> 要分為兩部分來算，先算好時間點位於 <script type="math/tex">t</script> 的偏微分 <script type="math/tex">\dfrac{\partial J}{ \partial n_{in} } </script> 值，再依序往前算出時間點 <script type="math/tex">t</script> 之前的偏微分值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\dfrac{\partial J}{ \partial n_{in,s} } = 
+
+\begin{cases} 
+
+(\dfrac{\partial J}{ \partial n_{out,s} } )
+
+(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } ) & \text{if } s = t \\
+
+(\dfrac{\partial J}{ \partial n_{in,s+1} } )
+
+(\dfrac{ \partial n_{in,s+1}}{\partial n_{out,s} } )
+
+(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )
+
+  & \text{otherwise}
+
+\end{cases}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">s</script> 為 <script type="math/tex">0</script> 到 <script type="math/tex">t</script> 中的其中一個時間點。用 <a href="/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程</a> 所提到的推導方法，可推導出 <script type="math/tex"> (\dfrac{\partial J}{ \partial n_{out,s} } )(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )</script> 、 <script type="math/tex">(\dfrac{ \partial n_{in,s+1}}{\partial n_{out,s} } )</script> 與 <script type="math/tex">(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )</script> 的值，並令 <script type="math/tex"> \delta_{in,s} = \dfrac{\partial J}{ \partial n_{in,s} } </script> 代入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+\delta_{in,s}  = 
+
+\begin{cases} 
+
+n_{out,s} - y_{s}  & \text{if } s = t \\
+
+\delta_{in,s+1} w_{p} n_{out,s} (1-n_{out,s})  & \text{otherwise}
+
+\end{cases}
+
+\end{align}
+
+ %]]></script>
+
+<p>此公是可分為兩部分，當 <script type="math/tex">s = t</script> 時，與  <script type="math/tex">s\neq t</script> 時。計算 <script type="math/tex">\delta_{s}</script> 的方式不同。</p>
+
+<p>在 <script type="math/tex">s = t</script> 時， <script type="math/tex">\delta_{s}</script> 的傳遞過程就如同 <em>feedforward neural network</em> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00097.png" alt="" /></p>
+
+<p>若 <script type="math/tex">s\neq t</script> 時， 要算 <script type="math/tex">\delta_{in,s}</script> 之前，要先從 <script type="math/tex">s+1</script> 時間點將 <script type="math/tex">\delta_{in,s+1}</script> 傳遞過來，傳遞過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00098.png" alt="" /></p>
+
+<p>因為需要把 <script type="math/tex">\delta</script> 從後面的時間點往前面傳，故這個過程又稱為 <em>back propagation through time</em> 。</p>
+
+<p>於時間點 <script type="math/tex">s</script> 計算完 <script type="math/tex">\delta</script> 後，用以下公式將 <script type="math/tex">s</script> 時間點算出的偏微分值，更新到神經元的權重：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{c} \leftarrow w_{c} - 
+
+\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{c}} \\ 
+
+& w_{b} \leftarrow w_{b} - 
+
+\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{b}} \\
+
+& w_{p} \leftarrow w_{p} - 
+
+\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{p}}  \\
+
+\end{align}
+
+ %]]></script>
+
+<p>用 <a href="/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程</a> ，求出 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{c}}</script> 、 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{b}} </script> 和 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{p}}</script> 的值，並換成用 <script type="math/tex">\delta_{in,s}</script> 代替 <script type="math/tex">\dfrac{\partial J}{ \partial n_{in,s} } </script> 代入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{c} \leftarrow w_{c} - \eta \delta_{in,s} x_{s} \\ 
+
+& w_{b} \leftarrow w_{b} - \eta \delta_{in,s} \\
+
+& w_{p} \leftarrow w_{p} - \eta \delta_{in,s} n_{out,s-1} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>此過程如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00099.png" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來是實作的部分，以下是個簡單的應用，用 <em>Recurrent Neural Network</em> 來預測一個字串序列中，下一個可能出現的字是什麼。例如，給定以下字串：</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">001001001
+</span></code></pre></td></tr></table></div></figure>
+
+<p>根據這個字串的特徵，如果連續出現了兩個 <em>0</em> ，可以預測下個出現的為 <em>1</em> ，若前面兩個字為 <em>10</em> 則可預測下個出現的自為 <em>0</em> ，以此類推。</p>
+
+<p>以下為實作部分：</p>
+
+<figure class="code"><figcaption><span>simple_rnn.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">e</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">e</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">x</span><span class="p">))</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">my_rand</span><span class="p">():</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">random</span><span class="p">()</span><span class="o">-</span><span class="mf">0.5</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">rnn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span class="line">    <span class="n">r</span> <span class="o">=</span> <span class="mf">0.05</span>
+</span><span class="line">    <span class="n">w_p</span><span class="p">,</span> <span class="n">w_c</span><span class="p">,</span> <span class="n">w_b</span> <span class="o">=</span> <span class="n">my_rand</span><span class="p">(),</span><span class="n">my_rand</span><span class="p">(),</span><span class="n">my_rand</span><span class="p">()</span>
+</span><span class="line">    <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line">    <span class="n">n_in</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">l</span>
+</span><span class="line">    <span class="n">n_out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">l</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+</span><span class="line">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+</span><span class="line">            <span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_b</span>
+</span><span class="line">            <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span class="line">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+</span><span class="line">            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+</span><span class="line">                <span class="n">k</span> <span class="o">=</span>  <span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">)</span>
+</span><span class="line">                <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">                    <span class="n">d_c</span> <span class="o">=</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">                <span class="k">else</span><span class="p">:</span>
+</span><span class="line">                    <span class="n">d_c</span> <span class="o">=</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">d_c</span>
+</span><span class="line">                <span class="n">w_c</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span> <span class="o">*</span> <span class="n">x</span> <span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span class="line">                <span class="n">w_b</span> <span class="o">=</span> <span class="n">w_b</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span>
+</span><span class="line">                <span class="n">w_p</span> <span class="o">=</span> <span class="n">w_p</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+</span><span class="line">        <span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_b</span>
+</span><span class="line">        <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">n_out</span><span class="p">):</span>
+</span><span class="line">        <span class="k">print</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">w</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>x</code> 為輸入的序列， <code>n_out</code> 為神經元預測的結果。進行這個演算法之前，首先，先給權重 <code>w_p, w_c, w_b</code> 的初始值用介於 <em>-0.5~0.5</em> 之間的隨機值。再來是進行訓練過程，用 <em>for loop</em> 進行了 <em>10000</em> 次的訓練，在每次的訓練過程中，先進行 <em>forward propagation</em> 依時間順序，算出每個時間點的 <code>n_out</code> 。再來是用 <em>back propagation through time</em> 來更新 <code>w_p, w_c, w_b</code> 的值。訓練完後，進行一次 <em>forward propogation</em> 用訓練過程得出的權重來預測序列的下一個字，並將預測結果印出。</p>
+
+<p>到 <em>interactive mode</em> 執行以下程式，輸入序列 <em>001001001</em> 。</p>
+
+<figure class="code"><figcaption><span>simple_rnn.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">smallrnn</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">smallrnn</span><span class="o">.</span><span class="n">rnn</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line"><span class="mi">0</span> <span class="mi">0</span>
+</span><span class="line"><span class="mi">0</span> <span class="mf">0.203697155215</span>
+</span><span class="line"><span class="mi">1</span> <span class="mf">0.93315712478</span>
+</span><span class="line"><span class="mi">0</span> <span class="mf">0.00354811782422</span>
+</span><span class="line"><span class="mi">0</span> <span class="mf">0.215230877663</span>
+</span><span class="line"><span class="mi">1</span> <span class="mf">0.945971073339</span>
+</span><span class="line"><span class="mi">0</span> <span class="mf">0.00455854449755</span>
+</span><span class="line"><span class="mi">0</span> <span class="mf">0.218600850027</span>
+</span><span class="line"><span class="mi">1</span> <span class="mf">0.949254861129</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>左側為輸入序列，右側為預測的結果，可以發現 <em>recurrent neural network</em> 可以預測出下個字可能會是 <em>0</em> 還是 <em>1</em> 。當左側為 <em>1</em> 時，右側的數字會接近於 <em>1</em> 。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>關於 <em>recurrent neural network</em> 可參考 coursera 課程 Geoffrey Hinton. Neural Networks for Machine Learning</p>
+
+<p>https://www.coursera.org/course/neuralnets</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-06-06T09:32:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>9:32 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/back-propagation/'>back_propagation</a>, <a class='category' href='/blog/categories/neural-network/'>neural_network</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/28/neural-network-backward-propagation/" title="Previous Post: 類神經網路 -- Backward Propagation 詳細推導過程">&laquo; 類神經網路 -- Backward Propagation 詳細推導過程</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/10/26/neural-network-neural-turing-machine/" title="Next Post: 類神經網路 -- Neural Turing Machine">類神經網路 -- Neural Turing Machine &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

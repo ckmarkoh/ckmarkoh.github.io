@@ -1,0 +1,536 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Optimization Method -- Gradient Descent With Momentum - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Gradient Descent 在機器學習的過程中，常需要將 Cost Function 的值減小，通常用 Gradient Descent 來做最佳化的方法來達成。但是用 Gradient Descent 有其缺點，例如，很容易卡在 Local Minimum。 Gradient &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Optimization Method -- Gradient Descent With Momentum</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-16T08:01:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:01 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>在機器學習的過程中，常需要將 Cost Function 的值減小，通常用 Gradient Descent 來做最佳化的方法來達成。但是用 Gradient Descent 有其缺點，例如，很容易卡在 Local Minimum。</p>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>關於Gradient Descent的公式解說，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<h2 id="getting-stuck-in-local-minimum">Getting Stuck in Local Minimum</h2>
+
+<p>舉個例子，如果 Cost Function 為 <script type="math/tex">0.3y^{3}+y^{2}+0.3x^{3}+x^{2}</script> ，有 Local Minimum <script type="math/tex">(x=0,y=0)</script> ，畫出來的圖形如下：</p>
+
+<p><img src="/images/pic/pic_00131.png" alt="" /></p>
+
+<!--more-->
+
+<p>當執行 Gradient Descent 的時候，則會卡在 Local Minimum，如下圖：</p>
+
+<p><img src="/images/pic/pic_00132.gif" alt="" /></p>
+
+<p>解決卡在 Local Minimum 的方法，可加入 Momentum ，使它在 Gradient 等於零的時候，還可繼續前進。</p>
+
+<h2 id="gradient-descent-with-momentum">Gradient Descent with Momentum</h2>
+
+<p>Momentum 的概念如下： 當一顆球從斜坡上滾到平地時，球在平地仍會持續滾動，因為球具有動量，也就是說，它的速度跟上一個時間點的速度有關。</p>
+
+<p>模擬 Momentum的方式很簡單，即是把上一個時間點用 Gradient 得出的變化量也考慮進去。</p>
+
+<p><em>Gradient Descent with Momentum</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \Delta_{\textbf{x},t+1 } \leftarrow  \beta \Delta_{\textbf{x},t } +  (1-\beta) \eta \textbf{g}_{t} 
+
+& \text{, where }  0 <  \beta < 1 \\
+
+\\
+
+& \textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \Delta_{\textbf{x},t+1 } 
+
+\end{align}
+
+ %]]></script>
+
+<p>其中 <script type="math/tex"> \Delta_{\textbf{x},t +1} </script> 為 <script type="math/tex">t+1</script> 時間點，修正 <script type="math/tex">\textbf{x}</script> 值所用的變化量，而 <script type="math/tex">\Delta_{\textbf{x},t }</script> 則是 <script type="math/tex">t</script> 時間點的修正量，而 <script type="math/tex"> \beta </script> 則是用來控制在 <script type="math/tex">t+1</script> 時間點中的 <script type="math/tex">\Delta_{\textbf{x},t+1}</script> 具有上個時間點的 <script type="math/tex">\Delta_{\textbf{x},t}</script> 值的比例。 好比說，在 <script type="math/tex">t+1</script> 時間點時，球的速度會跟 <script type="math/tex">t</script> 時間點有關。 而 <script type="math/tex">(1-\beta)</script> ，則是 <script type="math/tex">t+1</script> 時間點算出之 Gradient <script type="math/tex">\textbf{g}_{t}</script> 乘上 Learning Rate <script type="math/tex">\eta</script> 後，在 <script type="math/tex">\Delta_{\textbf{x},t+1}</script> 中所占的比例。</p>
+
+<p>舉前述例子，若起始參數為 <script type="math/tex">(x=3,y=3)</script>  ，畫出目標函數，藍點為起始點 <script type="math/tex">(x,y)</script> 的位置：</p>
+
+<p><img src="/images/pic/pic_00141.png" alt="" /></p>
+
+<p>用 Gradient Descent with Momentum 來更新 <script type="math/tex">x,y</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,t+1 } \leftarrow  \beta \Delta_{x,t } +  (1-\beta) \eta \dfrac{\partial f(x_{t},y_{t})}{\partial x_{t}} \\
+
+& \Delta_{y,t+1 } \leftarrow  \beta \Delta_{y,t } +  (1-\beta) \eta \dfrac{\partial f(x_{t},y_{t})}{\partial y_{t}} \\
+
+& x_{t+1} \leftarrow x_{t} - \Delta_{x,t+1 }  \\
+
+& y_{t+1} \leftarrow y_{t} - \Delta_{y,t+1 } 
+
+
+\end{align}
+
+ %]]></script>
+
+<p>化減後得：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,t+1 } \leftarrow  \beta \Delta_{x,t } +  (1-\beta) \eta (0.9 x_{t}^{2} + 2x_{t} ) \\
+
+& \Delta_{y,t+1 } \leftarrow  \beta \Delta_{y,t } +  (1-\beta) \eta (0.9 y_{t}^{2} + 2y_{t} ) \\
+
+& x_{t+1} \leftarrow x_{t} - \Delta_{x,t+1 }  \\
+
+& y_{t+1} \leftarrow y_{t} - \Delta_{y,t+1 } 
+
+
+\end{align}
+
+ %]]></script>
+
+<p>設初始化值 <script type="math/tex">  \Delta_{x} = 0,  \Delta_{y} = 0 </script> ，參數 <script type="math/tex">\beta = 0.9, \eta = 0.2 </script> ，代入 <script type="math/tex"> x=3,y=3 </script> ，則：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,1 } =  0.9 \times  0 +  (1-0.9)\times 0.2 \times (0.9\times 3^{2}+2\times 3) = 0.282 \\
+
+& \Delta_{y,1 } =  0.9 \times  0 +  (1-0.9)\times 0.2 \times (0.9\times 3^{2}+2\times 3) = 0.282 \\
+
+& x_{1} = 3 - \Delta_{x,1 } = 3 - 0.282 = 2.718 \\
+
+& y_{1} = 3 - \Delta_{y,1 } = 3 - 0.282 = 2.718
+
+\end{align}
+
+ %]]></script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00142.png" alt="" /></p>
+
+<p>再往下走一步， <script type="math/tex"> x,y </script>  的值如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,2 } =  0.9 \times  0.282 +  (1-0.9)\times 0.2 \times (0.9\times 2.718^{2}+2\times 2.718) = 0.4955 \\
+
+& \Delta_{y,2 } =  0.9 \times  0.282 +  (1-0.9)\times 0.2 \times (0.9\times 2.718^{2}+2\times 2.718) = 0.4955\\
+
+& x_{2} = 3 - \Delta_{x,2 } = 2.718  - 0.4955 = 2.2225 \\
+
+& y_{2} = 3 - \Delta_{y,2 } = 2.718  - 0.4955 = 2.2225
+
+\end{align}
+
+ %]]></script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00143.png" alt="" /></p>
+
+<p>在以上兩步中，可發現 <script type="math/tex"> \Delta_{x }, \Delta_{y }</script> 的值逐漸變大。由於一開始 <script type="math/tex"> \Delta_{x }, \Delta_{y }</script> 都是零，它會跟前一個時間點的值有關，所以看起來就好像是球從斜坡上滾下來時，慢慢加速，而在球經過 Local Minimum時，也會慢慢減速，不會直接卡在 Local Minimum 。整個過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00136.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00137.gif" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分</p>
+
+<p>首先，開啟新的檔案 momentum.py 並貼上以下程式碼：</p>
+
+<figure class="code"><figcaption><span>momentum.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">(</span><span class="mf">0.3</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">3</span><span class="o">+</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="mf">0.3</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">3</span><span class="o">+</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">func_grad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">(</span><span class="mf">0.9</span><span class="o">*</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="mf">0.9</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">y</span> <span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">):</span>
+</span><span class="line">  <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">  <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">,</span>
+</span><span class="line">        <span class="n">elev</span><span class="o">=</span><span class="mf">7.</span><span class="p">,</span> <span class="n">azim</span><span class="o">=-</span><span class="mi">175</span><span class="p">)</span>
+</span><span class="line">  <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">))</span>
+</span><span class="line">  <span class="n">Z</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">)</span>
+</span><span class="line">  <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span class="line">    <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">coolwarm</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">(</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">),</span><span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span> <span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&quot;x=</span><span class="si">%.5f</span><span class="s">, y=</span><span class="si">%.5f</span><span class="s">, f(x,y)=</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="n">func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">)))</span>
+</span><span class="line">  <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">  <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_grad</span><span class="p">():</span>
+</span><span class="line">  <span class="n">xt</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line">  <span class="n">yt</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line">  <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.1</span>
+</span><span class="line">  <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+</span><span class="line">    <span class="n">gxt</span><span class="p">,</span> <span class="n">gyt</span> <span class="o">=</span> <span class="n">func_grad</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">)</span>
+</span><span class="line">    <span class="n">xt</span> <span class="o">=</span> <span class="n">xt</span> <span class="o">-</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">gxt</span>
+</span><span class="line">    <span class="n">yt</span> <span class="o">=</span> <span class="n">yt</span> <span class="o">-</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">gyt</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">xt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">xt</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+</span><span class="line">      <span class="k">break</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_momentum</span><span class="p">():</span>
+</span><span class="line">  <span class="n">xt</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line">  <span class="n">yt</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line">  <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.2</span>
+</span><span class="line">  <span class="n">beta</span> <span class="o">=</span> <span class="mf">0.9</span>
+</span><span class="line">  <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">  <span class="n">delta_x</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line">  <span class="n">delta_y</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+</span><span class="line">    <span class="n">gxt</span><span class="p">,</span> <span class="n">gyt</span> <span class="o">=</span> <span class="n">func_grad</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">)</span>
+</span><span class="line">    <span class="n">delta_x</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">delta_x</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">beta</span><span class="p">)</span><span class="o">*</span><span class="n">eta</span><span class="o">*</span><span class="n">gxt</span>
+</span><span class="line">    <span class="n">delta_y</span> <span class="o">=</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">delta_y</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">beta</span><span class="p">)</span><span class="o">*</span><span class="n">eta</span><span class="o">*</span><span class="n">gyt</span>
+</span><span class="line">    <span class="n">xt</span> <span class="o">=</span> <span class="n">xt</span> <span class="o">-</span> <span class="n">delta_x</span>
+</span><span class="line">    <span class="n">yt</span> <span class="o">=</span> <span class="n">yt</span> <span class="o">-</span> <span class="n">delta_y</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">xt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">xt</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+</span><span class="line">      <span class="k">break</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>func(x,y)</code> 為目標函數，<code>func_grad(x,y)</code> 為目標函數的 <em>gradient</em> ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_grad()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_momentum()</code> 用來執行 <em>Gradient Descent with Momentum</em> 。 <code>xt</code> 和 <code>yt</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈，而 <code>if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5</code> 表示，如果 <code>xt</code> 和 <code>yt</code> 超出邊界，則會先結束迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; import momentum
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; momentum.run_grad<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00138.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00139.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00140.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Gradient Descent with Momentum</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; momentum.run_momentum<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00141.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00142.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00143.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
+
+<p>http://imgur.com/a/Hqolp</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-01-16T08:01:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:01 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/optimization/'>optimization</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/12/23/optimization-method-adagrad/" title="Previous Post: Optimization Method -- Gradient Descent & AdaGrad">&laquo; Optimization Method -- Gradient Descent & AdaGrad</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/01/25/optimization-method-newton/" title="Next Post: Optimization Method -- Newton's Method for Optimization">Optimization Method -- Newton's Method for Optimization &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

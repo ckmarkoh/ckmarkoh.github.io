@@ -1,0 +1,526 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器翻譯 -- IBM Model 1 - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 繼續之前統計機器翻譯所提到的，要計算 Translation Model ，即給定某個英文句子 ，則它被翻自成中文句子 的機率是多少？ 計算 Translation Model 需要用到較複雜的模型，例如 IBM Model 。而 IBM Model 1 是最基本的一種 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器翻譯 -- IBM Model 1</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-21T09:31:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>9:31 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>繼續之前<a href="/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>所提到的，要計算 <em>Translation Model</em> <script type="math/tex">p(F∣E)</script> ，即給定某個英文句子 <script type="math/tex">E</script> ，則它被翻自成中文句子 <script type="math/tex">F</script> 的機率是多少？</p>
+
+<p>計算 <em>Translation Model</em> 需要用到較複雜的模型，例如 <em>IBM Model</em> 。而 <em>IBM Model 1</em>  是最基本的一種 <em>IBM Model</em> 。</p>
+
+<h2 id="alignment">Alignment</h2>
+
+<p>在講 <em>IBM Model 1</em> 之前，要先介紹 <em>alignment</em> 是什麼。因為，要將英文翻譯成中文，則中文字詞的順序可能跟英文字詞的順序，不太一樣。例如：</p>
+
+<blockquote>
+  <p>這不是一個蘋果
+This is not an apple </p>
+</blockquote>
+
+<p>這兩個句子，在中文中的 <strong>“不是”</strong> 英文為 <strong>“is not（是不）”</strong> 。為了考慮到字詞順序會變，因此要定義 <em>alignment</em> ，來記錄中文句子中的哪個字，對應到英文句子中的哪個字。</p>
+
+<p><img src="/images/pic/pic_00075.tiff" alt="" /></p>
+
+<p>此例中， <em>alignment</em> 為 <script type="math/tex">\{1\rightarrow 1,3\rightarrow 2,2\rightarrow 3,4 \rightarrow 4,5\rightarrow 5 \}</script>，表示第一個中文字對應到第一個英文字，第二個中文字對應到第三個英文字，以此類推。</p>
+
+<!--more-->
+
+<h2 id="ibm-model-1">IBM Model 1</h2>
+
+<p><em>IBM Model 1</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+P(F\mid E) = \sum_{A} P(F,A \mid E) = \sum_{A} P(F \mid E, A) \times P(A \mid E)
+
+</script>
+
+<p>此公式可分為 <script type="math/tex">P(F \mid E, A)</script> 和 <script type="math/tex">P(A \mid E)</script> 兩部分。</p>
+
+<p>第一部分為 <script type="math/tex">P(F \mid E, A)</script> ，給定一個 <em>alignment</em> <script type="math/tex">A</script> ，和英文句子 <script type="math/tex">E = (e_{1},e_{2}...,e_{I})</script> ，定義中文句子 <script type="math/tex">F = (f_{1},f_{2},...,f_{J})</script> 的出現機率為：</p>
+
+<script type="math/tex; mode=display">
+
+  P(F \mid E, A) = \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}})
+
+
+</script>
+
+<p>其中，<script type="math/tex"> t(f_{j} \mid e_{A_{j}}) </script> 表示在 <em>alignment</em> <script type="math/tex">A</script> 之下，對應到中文字 <script type="math/tex">f_{j}</script>的英文字 <script type="math/tex">e_{A_{j}}</script> ，翻譯成中文字 <script type="math/tex">f_{j}</script> 的機率。</p>
+
+<p>舉例，用先前提到的例句，以此公式算出的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+  P(F \mid E, A) =  
+
+  t(\text{這} \mid \text{this}) \times
+
+  t(\text{不} \mid \text{not}) \times
+
+  t(\text{是} \mid \text{is}) \times
+
+  t(\text{一個} \mid \text{an}) \times
+
+  t(\text{蘋果} \mid \text{apple}) 
+
+</script>
+
+<p>其中， <script type="math/tex">t(\text{這} \mid \text{this})</script> 表示英文字 <strong>“this”</strong> 翻譯成中文字 <strong>“這”</strong> 的機率。 </p>
+
+<p>第二部分為<script type="math/tex">P(A \mid E)</script>，給定長度為 <script type="math/tex">I</script> 的英文句 <script type="math/tex">E</script>，將翻譯成長度為 <script type="math/tex">J</script> 的中文句，則 <em>alignment</em> 為 <script type="math/tex">A</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+  P(A \mid E) = \frac{\epsilon}{(I+1)^{J}}
+
+
+</script>
+
+<p><em>IBM Model 1</em> 採用最簡單的假設：<strong>假設每個alignment所發生的機率都相同</strong> 。如果中文字長度為 <script type="math/tex">J</script> ，英文長度為 <script type="math/tex">I</script> ，則共有 <script type="math/tex">I^{J}</script> 種組合。但實際上，有些中文字（例如：的），沒有相對應的英文字，所以共有 <script type="math/tex">(I+1)^{J}</script> 種可能。另外，公式中的 <script type="math/tex">\epsilon</script> 為一常數。</p>
+
+<p>綜合以上兩項，可以得出 <em>IBM Model 1</em> 的公式為：</p>
+
+<script type="math/tex; mode=display">
+
+\begin{equation}
+
+ P(F\mid E) = \sum_{A} P(F,A \mid E) = \sum_{A} P(F \mid E, A) \times P(A \mid E) \\
+
+ = \sum_{A}  \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}}) \times  \frac{\epsilon}{(I+1)^{J}} \\
+
+\end{equation}
+
+</script>
+
+<p>通常，在求解的時候，不會把每一種 <em>alignment</em> 的結果都加起來，而是求出機率最大的 <em>alignment</em> ，並採用它來計算 <em>IBM Model</em> 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{A} P(F,A \mid E)
+
+= \mathop{\arg\,\max}\limits_{A} \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}}) \times  \frac{\epsilon}{(I+1)^{J}} 
+
+
+</script>
+
+<h2 id="em-algorithm">EM algorithm</h2>
+
+<p>在進行<a href="/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>的演算法時，需從平行語料庫中訓練出模型。但通常平行語料庫中不會標記 <em>alignment</em> ，可是必須要先有 <em>alignment</em> ，才能得出 <script type="math/tex">t(f_{j} \mid e_{A_{j}})</script> 的值，這樣才能用 <em>IBM Model 1</em> 來計算。</p>
+
+<p>這時就需要用到 <em>EM algorithm</em> 從平行語料庫中，計算出 <script type="math/tex">t(f_{j} \mid e_{A_{j}})</script> 的值，以得出機率最大的 <em>alignment</em>。</p>
+
+<p>設 <script type="math/tex">(F^{(k)}, E^{(k)})</script> 為共 <script type="math/tex">k</script> 個句子的 <em>中-英</em> 平行語料庫，其中，<script type="math/tex"> F^{(k)} = (f_{1}^{(k)}, f_{2}^{(k)},...,f_{m_{k}}^{(k)} )</script> 為第 <script type="math/tex">k</script> 個中文句子， <script type="math/tex">f_{1}^{(k)}</script> 為此句第一個中文字，  <script type="math/tex">m_{k}</script> 為句子長度。<script type="math/tex"> E^{(k)} = (e_{1}^{(k)}, e_{2}^{(k)},...,e_{l_{k}}^{(k)} )</script> 為第 <script type="math/tex">k</script> 個英文句子。演算法如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+\text{1} & \text{For all e , f, set } t(f\mid e)  = 1 \mathbin{/} V \\
+
+\text{2} & \textbf{for } s = 1 ... S \\ 
+
+\text{3} & \mspace{20mu} \text{Set all counts } c = 0 \\
+
+\text{4}& \mspace{20mu} \textbf{for } k = 1...N \\
+
+\text{5}& \mspace{40mu} \textbf{for } i = 1...m_{k} \\
+
+\text{6}& \mspace{60mu} \textbf{for } j = 0...l_{k} \\
+
+\text{7}& \mspace{80mu} \delta (k,i,j) = t( f_{i}^{(k)} \mid e_{j}^{(k)}) \mathbin{/}  \Sigma_{j=0}^{l_{k}} t( f_{i}^{(k)} \mid e_{j}^{(k)}) \\
+
+\text{8}& \mspace{80mu} c(e_{j}^{(k)}, f_{i}^{(k)}) \leftarrow c(e_{j}^{(k)}, f_{i}^{(k)})  + \delta (k,i,j) \\
+
+\text{9}& \mspace{80mu} c(e_{j}^{(k)}) \leftarrow c(e_{j}^{(k)})  + \delta (k,i,j) \\
+
+\text{10}& \mspace{20mu} \text{Set all } t(f\mid e) = c(e,f) \mathbin{/}  c(e) \\
+
+\text{11}& \textbf{return } t
+
+
+\end{align}
+
+ %]]></script>
+
+<p>第1行先將所有的<script type="math/tex">t(f \mid e)</script> 初始化為 <script type="math/tex">\frac{1}{V}</script> ，其中，<script type="math/tex">V</script> 為語料庫中的中文詞類數量。</p>
+
+<p>第2行的 <script type="math/tex">S</script> 表示，總共進行了 <script type="math/tex">S</script> 次的運算。</p>
+
+<p>第3行的 <script type="math/tex">c</script> 用來計 <script type="math/tex">t(f \mid e)</script> 累加的值，初始化先設定為 <script type="math/tex">0</script> 。</p>
+
+<p>第4行用迴圈跑平行語料庫中所有的句子</p>
+
+<p>第5到第9行迴圈用來逐一跑中文和英文句中的每一個字。</p>
+
+<p>第5行跑中文句中的中文字。</p>
+
+<p>第6行跑英文字。由於有些中文字，沒有相對應的英文字，故英文句的迴圈從 <em>0</em> （沒有對應到任何字）開始跑。</p>
+
+<p>第7行算出 <script type="math/tex">\delta (k,i,j)</script> 的值，並於第8,9行累加到 <script type="math/tex">c</script> 中。</p>
+
+<p>第10行，算完所有的句子之後，用 <script type="math/tex">c(e,f)</script> 和 <script type="math/tex">c(e)</script> 來更新 <script type="math/tex">t(f\mid e)</script> 的值，再回到第3行，用新的 <script type="math/tex">t</script> 值來計算新的 <script type="math/tex">c</script> 值。</p>
+
+<p>第11行，以上迴圈重複跑過 <script type="math/tex">S</script> 次以後，回傳 <script type="math/tex">t</script> 的值。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>給定以下的平行語料庫</p>
+
+<blockquote>
+  <p>一本書 : a book
+一本雜誌 : a magazine
+這本書 : this book
+這本雜誌 : this magazine </p>
+</blockquote>
+
+<p>可用以下的程式碼 <em>EM Algorithm</em> 算出 <script type="math/tex">t</script> 的值。</p>
+
+<figure class="code"><figcaption><span>ibm1.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="c">#-*- encoding:utf-8 -*-</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">operator</span>
+</span><span class="line"><span class="n">CORPUS_CH</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span><span class="s">&#39;一本&#39;</span><span class="p">,</span><span class="s">&#39;書&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;一本&#39;</span><span class="p">,</span><span class="s">&#39;雜誌&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;這本&#39;</span><span class="p">,</span><span class="s">&#39;書&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;這本&#39;</span><span class="p">,</span><span class="s">&#39;雜誌&#39;</span><span class="p">],</span> <span class="p">]</span>
+</span><span class="line"><span class="n">CORPUS_EN</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;book&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;magazine&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;this&#39;</span><span class="p">,</span><span class="s">&#39;book&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;this&#39;</span><span class="p">,</span><span class="s">&#39;magazine&#39;</span><span class="p">],</span> <span class="p">]</span>
+</span><span class="line"><span class="n">f_word</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span><span class="n">CORPUS_CH</span><span class="p">)))</span>
+</span><span class="line"><span class="n">e_word</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span><span class="n">CORPUS_EN</span><span class="p">)))</span>
+</span><span class="line"><span class="n">T</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="p">:</span>
+</span><span class="line">  <span class="n">C</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">m</span><span class="p">,</span><span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">CORPUS_CH</span><span class="p">,</span><span class="n">CORPUS_EN</span><span class="p">):</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">      <span class="k">for</span> <span class="n">fi</span> <span class="ow">in</span> <span class="n">m</span><span class="p">:</span>
+</span><span class="line">        <span class="k">for</span> <span class="n">ej</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+</span><span class="line">          <span class="k">if</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
+</span><span class="line">            <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span>  <span class="o">=</span>  <span class="mf">1.0</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">e_word</span><span class="p">)</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+</span><span class="line">      <span class="n">sum_t</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span> <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span> <span class="k">for</span> <span class="n">ej</span> <span class="ow">in</span> <span class="n">l</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1.0</span>
+</span><span class="line">      <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">ej</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+</span><span class="line">        <span class="n">delta</span> <span class="o">=</span> <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span> <span class="o">/</span> <span class="n">sum_t</span>
+</span><span class="line">        <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">,</span> <span class="n">fi</span><span class="p">)]</span> <span class="o">=</span>  <span class="n">C</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">,</span> <span class="n">fi</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta</span>
+</span><span class="line">        <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">)]</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta</span>
+</span><span class="line">  <span class="k">print</span> <span class="s">&quot;---iteration:</span><span class="si">%s</span><span class="s">---&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
+</span><span class="line">    <span class="k">print</span> <span class="n">key</span><span class="p">,</span><span class="s">&quot;:&quot;</span><span class="p">,</span><span class="n">T</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">f_word</span><span class="p">:</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_word</span><span class="p">:</span>
+</span><span class="line">      <span class="k">if</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="n">C</span> <span class="ow">and</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="ow">in</span> <span class="n">C</span><span class="p">:</span>
+</span><span class="line">        <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">e</span><span class="p">)]</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">)]</span> <span class="o">/</span> <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">print</span> <span class="s">&quot;---iteration:</span><span class="si">%s</span><span class="s">---&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
+</span><span class="line">  <span class="k">print</span> <span class="n">key</span><span class="p">,</span><span class="s">&quot;:&quot;</span><span class="p">,</span><span class="n">T</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行 <em>python ibm1.py</em> 計算結果：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line">&gt; python ibm1.py
+</span><span class="line">---iteration:0---
+</span><span class="line">雜誌<span class="p">|</span>magazine : 0.25
+</span><span class="line">書<span class="p">|</span>this : 0.25
+</span><span class="line">這本<span class="p">|</span>book : 0.25
+</span><span class="line">這本<span class="p">|</span>this : 0.25
+</span><span class="line">一本<span class="p">|</span>magazine : 0.25
+</span><span class="line">雜誌<span class="p">|</span>a : 0.25
+</span><span class="line">雜誌<span class="p">|</span>this : 0.25
+</span><span class="line">書<span class="p">|</span>book : 0.25
+</span><span class="line">一本<span class="p">|</span>a : 0.25
+</span><span class="line">這本<span class="p">|</span>magazine : 0.25
+</span><span class="line">一本<span class="p">|</span>book : 0.25
+</span><span class="line">書<span class="p">|</span>a : 0.25
+</span><span class="line">...
+</span><span class="line">---iteration:5---
+</span><span class="line">雜誌<span class="p">|</span>magazine : 0.941176470588
+</span><span class="line">書<span class="p">|</span>this : 0.0294117647059
+</span><span class="line">這本<span class="p">|</span>book : 0.0294117647059
+</span><span class="line">這本<span class="p">|</span>this : 0.941176470588
+</span><span class="line">一本<span class="p">|</span>magazine : 0.0294117647059
+</span><span class="line">雜誌<span class="p">|</span>a : 0.0294117647059
+</span><span class="line">雜誌<span class="p">|</span>this : 0.0294117647059
+</span><span class="line">書<span class="p">|</span>book : 0.941176470588
+</span><span class="line">一本<span class="p">|</span>a : 0.941176470588
+</span><span class="line">這本<span class="p">|</span>magazine : 0.0294117647059
+</span><span class="line">一本<span class="p">|</span>book : 0.0294117647059
+</span><span class="line">書<span class="p">|</span>a : 0.0294117647059
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中，初始值的 <script type="math/tex">t</script> ，不管是哪個中文字對應到哪個英文字，都是 <em>0.25</em> 。經過了五次的迴圈運算後，  <script type="math/tex">t</script> 值會逐漸收斂，漸與訓練資料吻合。例如 <script type="math/tex">t(\text{雜誌} \mid \text{magazine}) = 0.941</script> ，大於 <script type="math/tex">t(\text{一本} \mid \text{magazine}) = 0.029</script> 。表示英文字 <em>magazine</em> 較可能翻譯成中文字詞 <strong>“雜誌”</strong> ，而不是 <strong>“一本”</strong> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlangp</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-02-21T09:31:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>9:31 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/" title="Previous Post: 資訊檢索 -- Boolean Retrieval">&laquo; 資訊檢索 -- Boolean Retrieval</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/" title="Next Post: 類神經網路 -- Neural Probabilistic Language Model ">類神經網路 -- Neural Probabilistic Language Model  &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,616 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器學習 -- Logistic Regression Model (3D) - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 這次來講一下機器學習(Machine Learning)的Logistic Model 搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何 至於機器學習（Machine Learning）是什麼？ 簡而言之,Machine &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器學習 -- Logistic Regression Model (3D)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-15T01:47:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:47 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>這次來講一下機器學習(Machine Learning)的Logistic Model</p>
+
+<p>搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何</p>
+
+<p>至於機器學習（Machine Learning）是什麼？</p>
+
+<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
+
+<p>Logistic Regression是一種機器學習的Model,可以用來處理分類問題</p>
+
+<p>從input data的feature,可以判斷出output data該歸到那一類</p>
+
+<p>Logistic Regression的model如下</p>
+
+<script type="math/tex; mode=display">
+
+h(x)=\frac{1}{1+e^{-W^{T} X }}
+
+</script>
+
+<p>其中 <script type="math/tex">h(x)</script> 是hypothesis,藉由hypothesis,可以用已知的data來預知未知的data</p>
+
+<p><script type="math/tex">X</script>是input data, <script type="math/tex">W</script> 是weight,這兩者皆是矩陣</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">
+
+X=
+
+\begin{bmatrix}
+
+	x_{0}\\
+
+  x_{1}\\
+
+  x_{2}\\
+
+\end{bmatrix},
+
+W=
+
+\begin{bmatrix}
+
+	w_{0}\\
+
+  w_{1}\\
+
+  w_{2}\\
+
+\end{bmatrix}, \mspace{20mu} W^{T} X =w_{0}x_{0}+w_{1}x_{1}+w_{2}x_{2} 
+
+</script>
+
+<p>用error function <script type="math/tex">E_{in}</script> 的gradient,調整 <script type="math/tex">W</script> ,可以讓h(x)根據data建立出一個的model,作出準確的預測</p>
+
+<script type="math/tex; mode=display">
+
+\bigtriangledown E_{in}(W)=\frac{1}{1+e^{-y W^{T} X }} \cdot (-yX) \\
+
+W\leftarrow  W-\eta \bigtriangledown E_{in}(W)
+
+</script>
+
+<p>其中,<script type="math/tex">y</script> 是實際的結果,藉此可比對 <script type="math/tex">h(x)</script> 預測出的結果,和實際結果是否相等</p>
+
+<p><script type="math/tex">\eta</script> 是學習速度,可以調整演算法收斂的速度</p>
+
+<p>在此不提詳細理論,</p>
+
+<p>若想更深入了解,請看coursea機器學習的線上課程 </p>
+
+<h2 id="draw-3d-logistic-model">2. Draw 3D Logistic Model</h2>
+
+<p>接著來畫畫看3D的Logistic Model是什麼樣子</p>
+
+<p>首先,開一個新的檔案 <em>plot_logistic.py</em> ,載入以下模組</p>
+
+<figure class="code"><figcaption><span>plot_logistic.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後寫個function來畫圖</p>
+
+<figure class="code"><figcaption><span>plot_logistic.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_logistic</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">):</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">X1</span><span class="p">,</span> <span class="n">X2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.25</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.25</span><span class="p">]</span>
+</span><span class="line">    <span class="n">X0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span class="line">    <span class="n">Z</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">X0</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">X1</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w2</span><span class="p">,</span><span class="n">X2</span><span class="p">))</span> <span class="p">))</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_wireframe</span><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">((</span><span class="s">&quot;w0=</span><span class="si">%s</span><span class="s">, w1=</span><span class="si">%s</span><span class="s">, w2=</span><span class="si">%s</span><span class="s">&quot;</span><span class="p">)</span><span class="o">%</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這個function可以讓我們輸入不同的weight,畫出不一樣的圖</p>
+
+<p>其中 <code>w0,w1,w2</code> 是weight,</p>
+
+<p><code>Z=np.divide(1,1+np.exp(np.multiply(w0,X0)+np.multiply(w1,X1)+np.multiply(w2,X2)))</code></p>
+
+<p>是logistic Model</p>
+
+<p>接著到interactive mode來跑剛剛寫的function</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">plot_logistic</span> <span class="kn">as</span> <span class="nn">pl</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>首先,用不同的w0畫畫看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh3.googleusercontent.com/-jCPyrHFtLTw/UyP_03T4BkI/AAAAAAAAAcc/cPuCsRbEs2I/w480-h320-no/logistic1.png" /></p>
+
+<p><img src="http://lh3.googleusercontent.com/-FihSXpokG6c/UyP_05hcLTI/AAAAAAAAAcY/iQ13UbUUFqA/w480-h320-no/logistic2.png" /></p>
+
+<p><img src="http://lh4.googleusercontent.com/-IxWybG4zcBE/UyP_140FJYI/AAAAAAAAAc8/TdMEnA7m81A/w480-h320-no/logistic3.png" /></p>
+
+<p>再改變不同的w1來畫</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pl</span><span class="o">.</span><span class="n">plot_logistic</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh3.googleusercontent.com/-jCPyrHFtLTw/UyP_03T4BkI/AAAAAAAAAcc/cPuCsRbEs2I/w480-h320-no/logistic1.png" /></p>
+
+<p><img src="http://lh5.googleusercontent.com/-ElJA7s-qR5w/UyP_1oAHn3I/AAAAAAAAAdA/33SZMCbcrUY/w480-h320-no/logistic4.png" /></p>
+
+<p><img src="http://lh4.googleusercontent.com/-NGiKStaFfJE/UyP_1nbKXiI/AAAAAAAAAcs/oBSw0gc7djE/w480-h320-no/logistic5.png" /></p>
+
+<p>改變w2的結果和改變w1的結果呈對稱,在此省略</p>
+
+<h2 id="learning-by-logistic-model">3. Learning by Logistic Model</h2>
+
+<p>接著來看看如何用logistic model來進行機器學習</p>
+
+<p>開一個新的檔案 <em>logistic_model.py</em> ,並載入必要模組</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>假設有這些data</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">X0</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">,</span>
+</span><span class="line">              <span class="mf">1.</span><span class="p">,</span>  <span class="mf">1.</span><span class="p">])</span>
+</span><span class="line"><span class="n">X1</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span> <span class="mf">0.56084642</span><span class="p">,</span>  <span class="mf">1.3977301</span> <span class="p">,</span>  <span class="mf">1.37559576</span><span class="p">,</span>  <span class="mf">1.25336531</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.90734535</span><span class="p">,</span>
+</span><span class="line">              <span class="mf">1.41981271</span><span class="p">,</span>  <span class="mf">0.96873065</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.95225824</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.65156755</span><span class="p">,</span>  <span class="mf">0.84391794</span><span class="p">,</span>
+</span><span class="line">              <span class="mf">1.37463405</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.90385285</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.9961716</span> <span class="p">,</span> <span class="o">-</span><span class="mf">1.53774446</span><span class="p">,</span>  <span class="mf">0.62736126</span><span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="n">X2</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.54631195</span><span class="p">,</span>  <span class="mf">1.9883947</span> <span class="p">,</span> <span class="o">-</span><span class="mf">1.77695809</span><span class="p">,</span>  <span class="mf">1.74944549</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.99031191</span><span class="p">,</span>
+</span><span class="line">              <span class="mf">1.6854447</span> <span class="p">,</span> <span class="o">-</span><span class="mf">1.78734606</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.46925818</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.72241882</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.68654333</span><span class="p">,</span>
+</span><span class="line">              <span class="mf">1.70881411</span><span class="p">,</span>  <span class="mf">1.22240194</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.87704629</span><span class="p">,</span>  <span class="mf">1.10556042</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.892201</span>  <span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="n">Y</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.2041112</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.10358391</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.69506218</span><span class="p">,</span>  <span class="mf">0.01788122</span><span class="p">,</span>  <span class="mf">4.42147236</span><span class="p">,</span>
+</span><span class="line">            <span class="o">-</span><span class="mf">0.35981413</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.88860354</span><span class="p">,</span>  <span class="mf">4.87603575</span><span class="p">,</span>  <span class="mf">1.39744193</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.86841621</span><span class="p">,</span>
+</span><span class="line">            <span class="o">-</span><span class="mf">0.25309822</span><span class="p">,</span>  <span class="mf">5.96338706</span><span class="p">,</span>  <span class="mf">3.9784108</span> <span class="p">,</span>  <span class="mf">5.14938121</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.27926322</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著,寫出畫圖的function</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_data</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">&#39;data1&#39;</span><span class="p">):</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s">&#39;^&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著到interactive mode來跑剛剛寫的function</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">logistic_model</span> <span class="kn">as</span> <span class="nn">lm</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">lm</span><span class="o">.</span><span class="n">plot_data</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh5.googleusercontent.com/-03OAk99aDVQ/UyQTVzt5JiI/AAAAAAAAAd8/uDW14eX_vi0/w480-h320-no/data1.png" /></p>
+
+<p>再來看看,把剛剛的model加進來看看會怎樣</p>
+
+<p>在 <em>logistic_model.py</em> 加入一個function</p>
+
+<p>和剛剛的類似,但這個function有加入logistic model</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_data_and_model</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">):</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s">&#39;^&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="c">##---Logistic Model---- </span>
+</span><span class="line">    <span class="n">GX1</span><span class="p">,</span> <span class="n">GX2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mgrid</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.25</span><span class="p">,</span> <span class="o">-</span><span class="mi">2</span><span class="p">:</span><span class="mi">2</span><span class="p">:</span><span class="mf">0.25</span><span class="p">]</span>
+</span><span class="line">    <span class="n">GX0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">GX1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span class="line">    <span class="n">Z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">GX0</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">GX1</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w2</span><span class="p">,</span><span class="n">GX2</span><span class="p">))))</span>
+</span><span class="line">    <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_wireframe</span><span class="p">(</span><span class="n">GX1</span><span class="p">,</span> <span class="n">GX2</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">    <span class="c">##---------------------</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>到interactive mode重新載入 <em>logistic_model.py</em> ,再畫畫看</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">lm</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;logistic_model&#39;</span> <span class="kn">from</span> <span class="s">&#39;logistic_model.py&#39;</span><span class="o">&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">lm</span><span class="o">.</span><span class="n">plot_data_and_model</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="" /></p>
+
+<p>看起來,這個model跟data好像差得很遠</p>
+
+<p>沒關係,我們用h(x)的gradient來調整w0,w1,w2</p>
+
+<script type="math/tex; mode=display">
+
+\bigtriangledown E_{in}(W)=\frac{1}{1+e^{-y W^{T} X }} \cdot (-y X) \\
+
+W\leftarrow  W-\eta \bigtriangledown E_{in}(W)
+
+</script>
+
+<p>接著我們要用以上公式來調整 <script type="math/tex">W</script> ,達到最佳化</p>
+
+<p>在 <em>logistic_model.py</em> 加入以下function</p>
+
+<figure class="code"><figcaption><span>logistic_model.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">learning_logistic</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+</span><span class="line">    <span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+</span><span class="line">        <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.1</span>
+</span><span class="line">        <span class="n">temp_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">((</span><span class="n">Y</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">X0</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">X1</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">w2</span><span class="p">,</span><span class="n">X2</span><span class="p">))))</span>
+</span><span class="line">        <span class="n">e0</span> <span class="o">=</span> <span class="n">eta</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">temp_err</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">Y</span><span class="o">*</span><span class="n">X0</span><span class="p">))</span>
+</span><span class="line">        <span class="n">e1</span> <span class="o">=</span> <span class="n">eta</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">temp_err</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">Y</span><span class="o">*</span><span class="n">X1</span><span class="p">))</span>
+</span><span class="line">        <span class="n">e2</span> <span class="o">=</span> <span class="n">eta</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">temp_err</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">Y</span><span class="o">*</span><span class="n">X2</span><span class="p">))</span>
+</span><span class="line">        <span class="n">w0</span> <span class="o">=</span> <span class="n">w0</span><span class="o">-</span><span class="n">e0</span>
+</span><span class="line">        <span class="n">w1</span> <span class="o">=</span> <span class="n">w1</span><span class="o">-</span><span class="n">e1</span>
+</span><span class="line">        <span class="n">w2</span> <span class="o">=</span> <span class="n">w2</span><span class="o">-</span><span class="n">e2</span>
+</span><span class="line">    <span class="n">plot_data_and_model</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>簡而言之,這個function用一個迴圈,逐次來調整w0,w1,w2,把error降低</p>
+
+<p>times是這個迴圈要跑幾次,</p>
+
+<p>eta是學習速率,如果eta越小,就越慢收斂</p>
+
+<p>但eta太大,有可能會錯過最佳解</p>
+
+<p>接著,重新載入修改好的程式</p>
+
+<p>分別讓迴圈跑1次,10次到10000次來看看,結果如何</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">ml</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;logistic_model&#39;</span> <span class="kn">from</span> <span class="s">&#39;logistic_model.py&#39;</span><span class="o">&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ml</span><span class="o">.</span><span class="n">learning_logistic</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ml</span><span class="o">.</span><span class="n">learning_logistic</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ml</span><span class="o">.</span><span class="n">learning_logistic</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ml</span><span class="o">.</span><span class="n">learning_logistic</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ml</span><span class="o">.</span><span class="n">learning_logistic</span><span class="p">(</span><span class="mi">10000</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<p><img src="http://lh5.googleusercontent.com/-7zj7cOhJPEI/UyQUdiwAp9I/AAAAAAAAAf0/nwRWG2AQHi4/w480-h320-no/model_1.png" /></p>
+
+<p><img src="http://lh4.googleusercontent.com/-NAOxS1hvShE/UyQUdmlxMRI/AAAAAAAAAgI/461egO-xJWw/w480-h320-no/model_10.png" /></p>
+
+<p><img src="http://lh3.googleusercontent.com/-SdDWeaxWkwA/UyQUePGcZOI/AAAAAAAAAfw/Mmdzl_eWWlU/w480-h320-no/model_100.png" /></p>
+
+<p><img src="http://lh4.googleusercontent.com/-BDGOyehak7A/UyQUeoJNGoI/AAAAAAAAAgE/pcR_NCORpd4/w480-h320-no/model_1000.png" /></p>
+
+<p><img src="http://lh6.googleusercontent.com/-ZndSShsS7ZU/UyQUfHgvlpI/AAAAAAAAAgA/BEwdIT-QwVc/w480-h320-no/model_10000.png" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="http://lh3.googleusercontent.com/-QBkEkySQAEI/UyVEwjNnd-I/AAAAAAAAAi8/kvoOH4-g514/w480-h320-no/model_motion.gif" /></p>
+
+<p>很明顯地,我們可以看到機器正在學習,依照data來把model做調整</p>
+
+<p>model可以符合大部分的data都可以達到準確預測</p>
+
+<p>但還是有些例外,例如,右上角的藍色的點,不符合model的預測</p>
+
+<p>這種data不符合大多數data的情形,就可能noice了</p>
+
+<h2 id="further-reading">4. Further Reading</h2>
+
+<p>以上是Logistic Model很簡單的實作</p>
+
+<p>想要學習Machine Learning的理論與應用</p>
+
+<p>請到coursera上線上課程</p>
+
+<p>主要有以下兩門課,雖然難易度不同,但都講得很好</p>
+
+<h4 id="andrew-ng-machine-learning">1.Andrew Ng. <em>Machine Learning</em></h4>
+
+<p>Andrew Y. Ng 是Stanford University的知名教授,也是Google Brain開發團隊的成員之一</p>
+
+<p>這門課基本概念講得很清楚,基本的概念以及應用都有提到,淺顯易懂,適合一般大眾</p>
+
+<p>https://www.coursera.org/course/ml</p>
+
+<h4 id="machine-learning-foundations">2.林軒田 <em>機器學習基石 (Machine Learning Foundations)</em></h4>
+
+<p>林軒田教授是台大資工系的教授,也曾經帶領學生參加資料探勘比賽KDDCUP獲得世界冠軍</p>
+
+<p>這門課有很多數學理論推導,作業多,難度頗高,適合想要成為機器學習的高手的人</p>
+
+<p>https://www.coursera.org/course/ntumlone</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-15T01:47:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:47 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/machine-learning/'>machine_learning</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/13/python-nltk-logic-2/" title="Previous Post: Python nltk -- Logic 2 : Lambda Calculus">&laquo; Python nltk -- Logic 2 : Lambda Calculus</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/15/machine-learning-perceptron-algorithm/" title="Next Post: 機器學習 -- Perceptron Algorithm">機器學習 -- Perceptron Algorithm &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

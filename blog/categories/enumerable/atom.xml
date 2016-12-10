@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Enumerable | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/enumerable/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Ruby -- Enumerable 1 : Collect , Inject]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/30/ruby-enumerable-1/"/>
+    <updated>2014-04-30T15:06:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/30/ruby-enumerable-1</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>在 <em>ruby</em>  裡面, 也有類似 <em>functional programming style</em> 的東西, 像是 <em>map</em> , <em>reduce</em> 之類的</p>
+
+<p>但是這些不是像 <em>python</em> 那樣是屬於 <em>build in function</em> , 像這樣</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>map(lambda x:x*2 ,[1,2,3,4])
+[2, 4, 6, 8]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在 <em>ruby</em> 裡面的 <em>map</em> 是這樣, 如下</p>
+
+<p>```ruby
+irb(main):001:0&gt; [1,2,3,4].map{|x| x*2}
+=&gt; [2, 4, 6, 8]</p>
+
+<p>```</p>
+
+<p>它是 <em>Enumerable Type</em> 的 <em>Method</em> </p>
+
+<p>除此之外, <em>map</em> 和 <em>reduce</em> 在 <em>ruby</em> 裡面還有其他的別名, 就是 <em>collect</em> 和 <em>inject</em></p>
+
+<!--more-->
+
+<h2 id="collect-and-map">collect and map</h2>
+
+<p>給定一個 <em>array</em>, <code>a1</code></p>
+
+<p>```ruby
+irb(main):010:0&gt; a1 = [1,2,3,4,5]
+=&gt; [1, 2, 3, 4, 5]</p>
+
+<p>```</p>
+
+<p><em>collect</em> 和 <em>map</em> 的意思是一樣的</p>
+
+<p>我們如果要把每個元素乘上三再加二, 可以用以下方法</p>
+
+<p>```ruby
+irb(main):011:0&gt; a1.collect{|x| x<em>3+2 }
+=&gt; [5, 8, 11, 14, 17]
+irb(main):012:0&gt; a1.map{|x| x</em>3+2 }
+=&gt; [5, 8, 11, 14, 17]</p>
+
+<p>```</p>
+
+<p>與 <em>python</em> 不同的是, <em>python</em> 只可以寫 <em>in-line</em> 的 <em>anonymous function</em> , 如果要寫多行的, 就要重新寫個 <code>def function():</code></p>
+
+<p><em>ruby</em> 可以直接寫多行的 <em>anonymous function</em> , 方法如下</p>
+
+<p>```ruby
+irb(main):004:0&gt; a1.collect do |x|
+irb(main):005:1* y = x+3
+irb(main):006:1&gt; x = y<em>2
+irb(main):007:1&gt; end
+=&gt; [8, 10, 12, 14, 16]
+irb(main):008:0&gt; a1.map do |x|
+irb(main):009:1</em> y = x+3
+irb(main):010:1&gt; x = y*2
+irb(main):011:1&gt; end
+=&gt; [8, 10, 12, 14, 16]</p>
+
+<p>```</p>
+
+<h2 id="collectconcat-and-flatmap">collect_concat and flat_map</h2>
+
+<p>如果我們要處理的是 <em>array of array</em></p>
+
+<p>```ruby
+irb(main):012:0&gt; a2 = [[-1, 5], [-2, 8], [-3, 11], [-4, 14], [-5, 17]]
+=&gt; [[-1, 5], [-2, 8], [-3, 11], [-4, 14], [-5, 17]]</p>
+
+<p>```</p>
+
+<p>希望做完運算以後可以把結果合併成同一個 <em>array</em> , 而不是<em>array of array</em> , 用 <em>collection</em> 就不夠了</p>
+
+<p>```ruby
+irb(main):013:0&gt; a2.collect{|x| [-x,x*3+2] }
+=&gt; [[-1, 5], [-2, 8], [-3, 11], [-4, 14], [-5, 17]]</p>
+
+<p>```</p>
+
+<p>這時就要用 <em>collect_concat</em> 或 <em>flat_map</em></p>
+
+<p>```ruby
+irb(main):014:0&gt; a2.collect_concat{|x| [-x,x<em>3+2] }
+=&gt; [-1, 5, -2, 8, -3, 11, -4, 14, -5, 17]
+irb(main):015:0&gt; a2.flat_map{|x| [-x,x</em>3+2] }
+=&gt; [-1, 5, -2, 8, -3, 11, -4, 14, -5, 17]</p>
+
+<p>```</p>
+
+<h2 id="inject-and-reduce">inject and reduce</h2>
+
+<p>假設有這樣一個 <em>string of array</em> , 從 ‘2’ 到 ‘6’ </p>
+
+<p>```ruby
+irb(main):033:0&gt; a3 = [‘2’,’3’,’4’,’5’,’6’]
+=&gt; [“2”, “3”, “4”, “5”, “6”]</p>
+
+<p>```</p>
+
+<p>如果我們希望把同一個 <em>array</em> 中所有的 <em>string</em> 都合併起來, 可以用 <em>+</em> 這個 <em>operation</em> , 進行 <em>reduce</em>, 或是寫 <em>anonymous function</em> 用 <em>inject</em></p>
+
+<p>```ruby
+irb(main):034:0&gt; a3.reduce(:+)
+=&gt; “23456”
+irb(main):035:0&gt; a3.inject { |sum, n| sum + n }
+=&gt; “23456”</p>
+
+<p>```</p>
+
+<p>如果起始的第一個 <em>element</em> , 不在 <em>array</em> 中, 例如 <em>1</em> 不在 <code>a3</code> 裡面, 則可以用以下方法</p>
+
+<p>```ruby
+irb(main):036:0&gt; a3.reduce(‘1’,:+)
+=&gt; “123456”
+irb(main):037:0&gt; a3.inject(‘1’){ |sum, n| sum + n }
+=&gt; “123456”</p>
+
+<p>```</p>
+
+<p>當然, <em>reduce</em> 和 <em>inject</em> 也可以寫成 <em>multiple line</em> 的 <em>anonymous function</em> , 如下</p>
+
+<p>```ruby
+irb(main):039:0&gt; %w{ cat sheep bear }.reduce do |memo, word|
+irb(main):040:1*    memo.length &gt; word.length ? memo : word
+irb(main):041:1&gt; end
+=&gt; “sheep”
+irb(main):042:0&gt; %w{ cat sheep bear }.inject do |memo, word|
+irb(main):043:1*    memo.length &gt; word.length ? memo : word
+irb(main):044:1&gt; end
+=&gt; “sheep”</p>
+
+<p>```</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>http://www.ruby-doc.org/core-2.1.0/Enumerable.html</p>
+]]></content>
+  </entry>
+  
+</feed>

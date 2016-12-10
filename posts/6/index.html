@@ -1,0 +1,773 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="本篇是我在使用xpath中遇到的一些案例,做些筆記 xpath是什麼,簡而言之,就是可以把網頁的html碼當成Tree 並且用xpath去取得Tree中的某些nodes或leaves 若想了解更多關於xpath是什麼,可以考以下網站 http://www.w3schools.com/XPath/ &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/posts/6/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/13/note-on-xpath-parsing/">Note on Xpath Parsing</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-13T06:45:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:45 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本篇是我在使用xpath中遇到的一些案例,做些筆記</p>
+
+<p>xpath是什麼,簡而言之,就是可以把網頁的html碼當成Tree</p>
+
+<p>並且用xpath去取得Tree中的某些nodes或leaves</p>
+
+<p>若想了解更多關於xpath是什麼,可以考以下網站</p>
+
+<p>http://www.w3schools.com/XPath/default.asp</p>
+
+<p>以下的xpath實作是以jquery的$$x(“xpath”)`經由chrome brwser的console來操作</p>
+
+<p>至於xpath的實際應用,可以用在web crawler中從網頁中擷取想要的東西</p>
+
+<p>這樣就不需要自己寫個parser來處理html了</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/13/note-on-xpath-parsing/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/12/ruby-struct-vs-openstruct/">Ruby -- Struct v.s openStruct</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-12T15:26:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>3:26 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="struct">1.Struct</h2>
+
+<p>在 <em>Ruby</em> 程式語言裡面, 如果想要定義一個新的類別, 但又覺得重新寫一個 <em>class</em> 太麻煩, </p>
+
+<p>有比較方便的方法, </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="n">irb</span><span class="o">&gt;</span> <span class="no">Customer</span> <span class="o">=</span> <span class="no">Struct</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="ss">:name</span><span class="p">,</span> <span class="ss">:phone</span><span class="p">)</span> <span class="k">do</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span>   <span class="k">def</span> <span class="nf">say_hello</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span>    <span class="s2">&quot;Hello, I&#39;m </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">!&quot;</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span>   <span class="k">end</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span> <span class="k">end</span>
+</span><span class="line"><span class="o">=&gt;</span> <span class="no">Customer</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span> <span class="no">Gary</span> <span class="o">=</span> <span class="no">Customer</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;Gary&quot;</span><span class="p">,</span> <span class="s2">&quot;0923-355-599&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="o">=&gt;</span> <span class="c1">#&lt;struct Customer name=&quot;Gary&quot;, phone=&quot;0923-355-599&quot;&gt;</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span> <span class="no">Gary</span><span class="o">.</span><span class="n">phone</span>
+</span><span class="line"><span class="o">=&gt;</span> <span class="s2">&quot;0923-355-599&quot;</span>
+</span><span class="line"><span class="n">irb</span><span class="o">&gt;</span> <span class="no">Gary</span><span class="o">.</span><span class="n">say_hello</span>
+</span><span class="line"><span class="o">=&gt;</span> <span class="s2">&quot;Hello, I&#39;m Gary!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/12/ruby-struct-vs-openstruct/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/11/python-standard-library-urlparse/">Python Standard Library -- Urlparse</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-11T02:56:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:56 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>今天來談到URL parse(URL剖析)</p>
+
+<p>在製作web crawler(爬網頁程式)的時候</p>
+
+<p>常常會需要用到URL剖析</p>
+
+<h2 id="url">1.URL的組成架構</h2>
+
+<p>URL的組成架構如下：</p>
+
+<p><strong>[scheme]:/[net_loc]/[path];[params]?[query]#[fragment]</strong></p>
+
+<p>舉個例子</p>
+
+<p><strong>http://www.espn.com:80/basketball/nba/index.html;lang=engl?team=dallas#Roster</strong></p>
+
+<p>則此URL的架構為：</p>
+
+<p>[scheme]      http</p>
+
+<p>[net_loc]     www.espn.com:80</p>
+
+<p>[path]        /basketball/nba/index.html</p>
+
+<p>[params]      lang=engl</p>
+
+<p>[query]       team=dallas</p>
+
+<p>[fragment]    Roster</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/11/python-standard-library-urlparse/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/09/python-nltk-sinica-treebank/">Python Nltk -- Sinica Treebank</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T07:41:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:41 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>今天我們來談談如何用python nltk做中文的的自然語言處理</p>
+
+<p>nltk有內建的中文treebank,是中研院的sinica treebank</p>
+
+<p><strong>是免費的中文treebank</strong></p>
+
+<p>至於要如何使用呢？</p>
+
+<p>首先 先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="kn">import</span> <span class="n">sinica_treebank</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接下來我們來看看treebank裡面的東西：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/09/python-nltk-sinica-treebank/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/02/28/python-nltk-tree/">Python Nltk -- Tree</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-02-28T16:36:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:36 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>今天我們來看看nltk.Tree要怎麼用</p>
+
+<p>先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">Tree</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="build-syntax-tree">1.build syntax tree</h2>
+
+<p>舉個例子</p>
+
+<p>Gary plays baseball</p>
+
+<p>此句子的剖析樹(syntax tree)是這樣：</p>
+
+<p><img src="http://lh3.googleusercontent.com/-BoNaoH3Va-g/UyF3tY8MRiI/AAAAAAAAAXM/1-YLB7zww3k/w299-h238-no/nltk1.png" alt="nltk1.png" /></p>
+
+<p>用nltk.Tree來建構tree：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">=</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;Gary&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>           <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VP&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VT&#39;</span><span class="p">,[</span><span class="s">&#39;plays&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>                     <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;baseball&#39;</span><span class="p">])])])</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>即可將剖析樹畫出來</p>
+
+<p>若沒安裝 python-tk,你也可以這樣把tree印出</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(S (NP Gary) (VP (VT plays) (NP baseball)))&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/02/28/python-nltk-tree/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/02/16/python-list-comprehension/">Python -- List Comprehension</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-02-16T04:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:13 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。</p>
+
+<p>可以將很多行的for迴圈縮在短短一行之內，很方便！</p>
+
+<h2 id="section">1.</h2>
+
+<p>假如我們現在有一個list–l1</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l1</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>若我們想要建立一個新表單l2,是把l1中的每一個元素加上二,最先想到的寫法是：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">:</span>
+</span><span class="line">   <span class="n">l2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>知道怎麼用List comprehension的話，我們可以用列表示: </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣看起來就簡潔多了！</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/02/16/python-list-comprehension/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/02/15/hello-world/">Hello World</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-02-15T18:04:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:04 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Hi, This a demo post of <a href="http://logdown.com">Logdown</a>. </p>
+
+<p>Logdown use Markdown as main syntax, you can find more example by reading this <a href="http://en.wikipedia.org/wiki/Markdown">document on Wikipedia</a></p>
+
+<p>Logdown also support drag &amp; drop image uploading. The picture syntax is like this:</p>
+
+<p><img src="/images/pic/pic_00000.png" alt="" /></p>
+
+<h2 id="bloging-with-code-snippet">Bloging with code snippet:</h2>
+
+<p><code>inline code</code></p>
+
+<h3 id="plain-code">Plain Code</h3>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">puts "Hello World!"
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="code-with-language">Code with Language</h3>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="nb">puts</span> <span class="s2">&quot;Hello World!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="code-with-title">Code with Title</h3>
+
+<figure class="code"><figcaption><span>hello_world.rb</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="nb">puts</span> <span class="s2">&quot;Hello World!&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="mathjax-example">MathJax Example</h2>
+
+<h3 id="mathjax">Mathjax</h3>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+x = \dfrac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+
+\\\\
+
+	\newcommand\T{\Rule{0pt}{1em}{.3em}}
+
+	\begin{array}{|c|c|}
+
+	\hline X & P(X = i) \T \\\hline
+
+	  1 \T 
+
+    \begin{array}{|c|c|}
+
+    \hline X & P(X = i) \T \\\hline
+
+    \hline X & P(X = i) \T \\\hline
+
+		\end{array}
+
+    \\\hline
+
+	  2 \T & 1/6 \\\hline
+
+	  3 \T & 1/6 \\\hline
+
+	  4 \T & 1/6 \\\hline
+
+	  5 \T & 1/6 \\\hline
+
+	  6 \T & 1/6 \\\hline
+
+	\end{array}
+
+
+
+ %]]></script>
+
+<script type="math/tex; mode=display">
+
+\begin{array}{|c|}
+
+\hline y \\ \hline
+
+\\
+
+  \begin{array}{|c|}
+
+     \hline x  \\ \hline
+
+      woman(x) \\
+
+     \hline
+
+   \end{array}
+
+    \Rightarrow
+
+  \begin{array}{|c|}
+
+     \hline \\[8pt]  \hline
+
+      walk(x) \\
+
+     \hline
+
+   \end{array}
+
+\\
+
+y=? \\
+
+smoke(y) \\
+
+\hline
+
+\end{array}
+
+</script>
+
+<h3 id="inline-mathjax">Inline Mathjax</h3>
+
+<p>The answser is <script type="math/tex">a^2 + b^2 = c^2</script>.</p>
+
+<h2 id="table-example">Table Example</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tables</th>
+      <th style="text-align: center">Are</th>
+      <th style="text-align: right">Cool</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>col 1</td>
+      <td style="text-align: center">Hello</td>
+      <td style="text-align: right">$1600</td>
+    </tr>
+    <tr>
+      <td>col 2</td>
+      <td style="text-align: center">Hello</td>
+      <td style="text-align: right">$12</td>
+    </tr>
+    <tr>
+      <td>col 3</td>
+      <td style="text-align: center">Hello</td>
+      <td style="text-align: right">$1</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2 id="multiple-line-bracket">multiple line bracket</h2>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+
+\begin{cases} 
+
+1 & x>1 \\
+
+0 & \text{otherwise}
+
+\end{cases}
+
+ %]]></script>
+
+<h2 id="align">align</h2>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&x=1  &y=1 \\
+
+&x=2  &y=2
+
+\end{align}
+
+ %]]></script>
+
+<script type="math/tex; mode=display">
+
+\exists e(butter(e), agent(e,John), theme(e,toast))
+
+</script>
+
+<p><em>Logistic Regression</em> 的 <em>cost function</em> 如下：</p>
+
+<script type="math/tex; mode=display">
+
+J(\theta) = \frac{-1}{m}[\sum_{i}^{m}y^{(i)}log( h_{\theta}(x^{(i)})) + (1-y^{(i)})log (1 -h_{\theta}(x^{(i)} ) ) ]
+
+</script>
+
+<p>而類神經網路的 <em>cost function</em> 如下：</p>
+
+<script type="math/tex; mode=display">
+
+J(\theta) = \frac{-1}{m}[\sum_{i}^{m}\sum_{k}^{K}y_{k}^{(i)}log( h_{\theta}(x^{(i)})_{k}) + (1-y_{k}^{(i)})log (1 -h_{\theta}(x^{(i)} )_{k} ) ]
+
+</script>
+
+<script type="math/tex; mode=display">
+
+\begin{bmatrix}
+
+r_{0}  \\[0.3em]
+
+r_{1}  \\[0.3em]
+
+r_{2}  \\[0.3em]
+
+\end{bmatrix}
+
+</script>
+
+<p>test line1: <script type="math/tex"> \mid A\mid  </script></p>
+
+<p>test line2: <script type="math/tex"> p(A\mid B) </script></p>
+
+<p>test line3: <script type="math/tex"> KL(A\mid \mid B) </script></p>
+
+</div>
+  
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/posts/5">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Web_crawler | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/web-crawler/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Note on Xpath Parsing]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/03/13/note-on-xpath-parsing/"/>
+    <updated>2014-03-13T06:45:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/03/13/note-on-xpath-parsing</id>
+    <content type="html"><![CDATA[<p>本篇是我在使用xpath中遇到的一些案例,做些筆記</p>
+
+<p>xpath是什麼,簡而言之,就是可以把網頁的html碼當成Tree</p>
+
+<p>並且用xpath去取得Tree中的某些nodes或leaves</p>
+
+<p>若想了解更多關於xpath是什麼,可以考以下網站</p>
+
+<p>http://www.w3schools.com/XPath/default.asp</p>
+
+<p>以下的xpath實作是以jquery的$$x(“xpath”)`經由chrome brwser的console來操作</p>
+
+<p>至於xpath的實際應用,可以用在web crawler中從網頁中擷取想要的東西</p>
+
+<p>這樣就不需要自己寫個parser來處理html了</p>
+
+<!--more-->
+
+<h2 id="following-sibling-preceding-sibling">1.following-sibling, preceding-sibling:</h2>
+
+<p>首先來看以下這種情況</p>
+
+<p>```html example1.html
+1<br /> 2<br /> 3 <br /> 4 </p>
+
+<p>```</p>
+
+<p>這些數字是和br相鄰,而不是被它給包住</p>
+
+<p>這時就要用到sibling來把數字取出</p>
+
+<p>```javascript</p>
+
+<blockquote>
+  <p>$x(“//br[3]/following-sibling::text()”)
+[” 4 “]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//br[2]/following-sibling::text()”)
+[ “ 3 “ , “ 4 “ ]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//br[1]/following-sibling::text()”)
+[” 2 “, “ 3 “ , “ 4 “ ]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//br[2]/preceding-sibling::text()”)
+[” 2 “, “ 1 “]</p>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以把text和br的位置互換</p>
+
+<p>```</p>
+
+<blockquote>
+  <p>$x(“//text()[following-sibling::br[3]]”)
+[ “ 1 “ ]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//text()[following-sibling::br[2]]”)
+[ “ 1 “ , “ 2 “ ]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//text()[following-sibling::br[1]]”)
+[ “ 1 “ , “ 2 “ , “ 3 “ ]</p>
+</blockquote>
+
+<blockquote>
+  <p>$x(“//text()[preceding-sibling::br[2]]”)
+[ “ 3 “ , “ 4 “ ]</p>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="table-position--last">2.table position() , last()</h2>
+
+<p>如果我們要取出以下表格中的某幾個column</p>
+
+<p>```html example2.html</p>
+<table>
+    <tbody>
+         <tr> <td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td> </tr>
+        <tr> <td>21</td><td>22</td><td>23</td><td>24</td><td>25</td><td>26</td> </tr>
+    </tbody>
+<table>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>
+</span><span class='line'>
+</span><span class='line'>可以用這個方法
+</span><span class='line'>
+</span><span class='line'>
+</span></code></pre></td></tr></table></div></figure>javascript
+
+&gt; $x("//table/tbody/tr/td[last()]/text()")
+[ "16" , "26" ]
+
+&gt; $x("//table/tbody/tr/td[last()-1]/text()")
+[ "15" , "25" ]
+
+&gt; $x("//table/tbody/tr/td[position() mod 3 = 1]/text()")
+[ "11" , "14" , "21" , "24" ]
+
+&gt; $x("//table/tbody/tr/td[position() mod 3 = 2]/text()")
+[ "12" , "15" , "22" , "25" ]
+
+```
+
+
+##結語
+
+
+以上是很簡單的幾個例子
+
+除了使用jquery以外,python也有提供xpath的library
+
+例如lxml
+
+可參考以下這篇
+
+http://lxml.de/xpathxslt.html
+</table></table>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Standard Library -- Urlparse]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/03/11/python-standard-library-urlparse/"/>
+    <updated>2014-03-11T02:56:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/03/11/python-standard-library-urlparse</id>
+    <content type="html"><![CDATA[<p>今天來談到URL parse(URL剖析)</p>
+
+<p>在製作web crawler(爬網頁程式)的時候</p>
+
+<p>常常會需要用到URL剖析</p>
+
+<h2 id="url">1.URL的組成架構</h2>
+
+<p>URL的組成架構如下：</p>
+
+<p><strong>[scheme]:/[net_loc]/[path];[params]?[query]#[fragment]</strong></p>
+
+<p>舉個例子</p>
+
+<p><strong>http://www.espn.com:80/basketball/nba/index.html;lang=engl?team=dallas#Roster</strong></p>
+
+<p>則此URL的架構為：</p>
+
+<p>[scheme]      http</p>
+
+<p>[net_loc]     www.espn.com:80</p>
+
+<p>[path]        /basketball/nba/index.html</p>
+
+<p>[params]      lang=engl</p>
+
+<p>[query]       team=dallas</p>
+
+<p>[fragment]    Roster</p>
+
+<!--more-->
+
+<h2 id="python-urlparse">2.python urlparse</h2>
+
+<p>接著我們來看看如何用python來剖析URL</p>
+
+<p>首先 載入urlparse模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import urlparse </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來我們看看如何做URL剖析</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result=urlparse.urlparse(“http://www.espn.com:80/basketball/nba/index.html;lang=engl?team=dallas#Roster”)
+print result
+ParseResult(scheme=’http’, netloc=’www.espn.com:80’, path=’/basketball/nba/index.html’, params=’lang=engl’, query=’team=dallas’, fragment=’Roster’)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>取出結果中各個成分的方法,如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result.path
+‘/basketball/nba/index.html’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result.query
+‘team=dallas’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="python-urljoin">3.python urljoin</h2>
+
+<p>urljoin是當我們要從一個網頁要跳到另外一個網頁時,會需要用到的</p>
+
+<p>例如要從這個網頁</p>
+
+<p>http://blog.storysensecomputing.com/whatsthenumber-zh/</p>
+
+<p>跳到另外一個網頁</p>
+
+<p>http://blog.storysensecomputing.com/info/</p>
+
+<p>但是在html碼的超連結是這樣的,</p>
+
+<p><code>&lt;a href="http://ckmarkoh.github.io/info/"&gt;我們公司 / Our Company&lt;/a&gt;</code></p>
+
+<p>如何從html碼中得出正確網址</p>
+
+<p>就要用到urljoin了,用法如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>urlparse.urljoin(“http://blog.storysensecomputing.com/whatsthenumber-zh/”,”/info/”)
+‘http://blog.storysensecomputing.com/info/’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>還有其他各種變化形的url位置,沒關係,urljoin都可以處理,例如：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>urlparse.urljoin(“http://www.abc.com/aaa/bbb/ccc”,”/ddd/”)
+‘http://www.abc.com/ddd/’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>urlparse.urljoin(“http://www.abc.com/aaa/bbb/ccc”,”../ddd/”)
+‘http://www.abc.com/aaa/ddd/’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>urlparse.urljoin(“http://www.abc.com/aaa/bbb/ccc”,”../../ddd/”)
+‘http://www.abc.com/ddd/’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>urlparse.urljoin(“http://www.abc.com/aaa/bbb/ccc”,”//www.ddd.com/”)
+‘http://www.ddd.com/’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="section">結語：</h2>
+
+<p>以上是urlparse很簡單的介紹</p>
+
+<p>想要更深入了解</p>
+
+<p>關於urlparse的用法,可參考：http://docs.python.org/2/library/urlparse.html</p>
+
+<p>網頁爬蟲的實作,可參考：http://faculty.cs.byu.edu/~rodham/cs240/crawler/</p>
+
+<p>或：http://staypython.blogspot.tw/2012/06/python_25.html</p>
+]]></content>
+  </entry>
+  
+</feed>

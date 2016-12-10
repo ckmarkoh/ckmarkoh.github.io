@@ -1,0 +1,460 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Hmm | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/hmm/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Hidden Markov Model]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/03/natural-language-processing-hidden-markov-models/"/>
+    <updated>2014-04-03T03:38:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/03/natural-language-processing-hidden-markov-models</id>
+    <content type="html"><![CDATA[<h2 id="markov-model">1.Markov Model</h2>
+
+<p><em>Hidden Markov Model</em> 在 <em>natural language processing</em> 中,</p>
+
+<p>常用於 <em>part-of speech tagging</em></p>
+
+<p>想要了解 <em>Hidden Markov Model</em> ,就要先了解什麼是 <em>Markov Model</em></p>
+
+<p>例如, 可以把語料庫中,各種字串的機率分佈,</p>
+
+<p>看成是一個Random varaible 的 sequence , <script type="math/tex">X=(X_{1},X_{2},...,X_{T}) </script></p>
+
+<p>其中, <script type="math/tex">X</script> 的值是 alphabet (字)的集合 : <script type="math/tex">S=\{s_{1},s_{2},...,s_{n}\}</script></p>
+
+<p>如果想要知道一個字串出現的機率, 則可以把字串拆解成Bigram, 逐一用前一個字,來推估下一個字的機率是多少</p>
+
+<p>但是要先假設以下的 <em>Markov Assumption</em> </p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align*}
+
+&\text{Limited Horizon : } 
+
+P(X_{t+1} = s_{k}  \mid   X_{1},...,X_{t}  )  = P(X_{t+1} = s_{k} \mid X_{t} ) \\
+
+&\text{Time Invariant : } 
+
+P(X_{t+1} = s_{k} \mid X_{t} ) = P(X_{2} = s_{k} \mid X_{1})
+
+\end{align*} 
+
+ %]]&gt;</script>
+
+<p>其中, </p>
+
+<p><strong>Limited Horizon</strong> 的意思是, </p>
+
+<p>每個 <script type="math/tex">X_{t+1}</script> 是什麼字 <script type="math/tex">(s_{i})</script> 的機率, 只會受到上一個字 <script type="math/tex">X_{t}</script> 的影響</p>
+
+<p><strong>Time Invariant</strong> 的意思是, </p>
+
+<p>每個 <script type="math/tex">X_{t+1}</script> 是什麼字 <script type="math/tex">(s_{i})</script> 的機率, 和前一個字 <script type="math/tex">X_{t}</script> 的機率關係, 不會因為在字串中的位置不同, 而有所改變</p>
+
+<p><em>註：事實上, 這兩種假設是為了簡化計算, 在真實的自然語言中, 以上兩種假設都不成立</em></p>
+
+<p>做完以上兩個假設之後, </p>
+
+<p>再用語料庫, 把上一個字是 <script type="math/tex">s_{i}</script> 時, 這個字是 <script type="math/tex">s_{j}</script> 的機率, 建立成 <em>Transition Matrix</em> : <script type="math/tex">A</script>  , 則 <script type="math/tex">A</script> 中的元素可以寫成：</p>
+
+<script type="math/tex; mode=display">
+
+a_{i,j} = P(X_{t+1} =s_{j} \mid X_{t}=s_{i})
+
+</script>
+
+<p>也可以用 <em>Transition Diagram</em> 來表示：</p>
+
+<p><img src="/images/pic/pic_00010.png" alt="hmm1" /></p>
+
+<p>如果想要計算字串 <script type="math/tex">(s_{1},s_{2},...,s_{T})</script> 在 <em>Model</em> 中出現的機率, 可以從第一個字開始, 用 <em>Transition Matrix</em> 逐字推算下去</p>
+
+<p>設 <em>Initial State</em> (第一個字）的機率, <script type="math/tex">P(X_{1} = s_{1} )=\pi_{s_{1}}</script> , 則 Random sequence, <script type="math/tex">(X_{1},X_{2},...,X_{T})</script> ,的機率為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(X_{1} = s_{1} ,X_{2} = s_{2} ,...,X_{T} = s_{T}) \\[6pt]
+
+&=P(X_{1}= s_{1})P(X_{2}= s_{s}\mid X_{1}= s_{1})...P(X_{T}= s_{T}\mid X_{T-1}= s_{T-1}) \\[6pt]
+
+&=\pi_{s_{1}} \prod_{t=2}^{T} P(X_{t}= s_{t}\mid X_{t-1}= s_{t-1}) \\[6pt]
+
+&=\pi_{s_{1}} \prod_{t=2}^{T} a_{X_{t},X_{t+1}}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>舉個例子</p>
+
+<p>假設有個 <em>Markov Model</em>,  </p>
+
+<p><em>alphabet</em> 的集合為 <script type="math/tex">S=\{ 0, 1 \}</script> </p>
+
+<p><em>Initial State</em> 的機率為 <script type="math/tex">\pi_{0}=0.2,\pi_{1}=0.8</script> </p>
+
+<p><em>Transition Matrix</em>  為</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{X_{t}}\setminus _{X_{t+1}} & 0  & 1 \\\hline
+
+    \hline 0 & 0.3 & 0.7 \\
+
+    \hline 1 & 0.6 & 0.4 \\
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>用 <em>Transition Diagram</em> 表示成：</p>
+
+<p><img src="/images/pic/pic_00011.png" alt="hmm2" /></p>
+
+<p>則在此 <em>Model</em> 中, 出現字串 1011 的機率為： </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(X_{1}=1,X_{2}=0,X_{3}=1,X_{4}=1) \\[6pt]
+
+&=\pi_{1} \times P(X_{2}= 0 \mid X_{1} = 1)  \times P(X_{3}= 1 \mid X_{2} = 0) 
+
+ \times P(X_{4}= 1 \mid X_{3} = 1)  \\[6pt]
+
+&= 0.8 \times 0.6 \times 0.7 \times 0.4 \\[6pt]
+
+&= 0.1344
+
+\end{align}
+
+ %]]&gt;</script>
+
+<h2 id="hidden-markov-model">2.Hidden Markov Model</h2>
+
+<p>所謂的 <em>Hidden Markov Model</em> , 就是從表面上看不到 <em>state</em> 是什麼 </p>
+
+<p>例如在做 <em>part-of speech tagging</em> 的時候, <em>tag</em> 為 <em>state</em>, 不知道哪個字要給哪個 <em>tag</em></p>
+
+<p>只能看到表面上的字, 從 <em>words(observable)</em> 去推斷 <em>tag(hidden state)</em>  是什麼</p>
+
+<p>其中, <em>observable</em> 為一個集合 : <script type="math/tex">O=\{o_{1},o_{2},...,o_{n}\}</script></p>
+
+<p><em>hidden state</em> 為一集合 : <script type="math/tex">Q=\{q_{1},q_{2},...,q_{n}\}</script></p>
+
+<p>則表示當某個字的 <em>tag</em> 為<script type="math/tex">i</script>時, 這個字為 <script type="math/tex">o_{k}</script> 的機率, 可用 <em>Output Matrix</em>  : <script type="math/tex">B</script> 表示, 則` $B$$ 中的元素可以寫成：</p>
+
+<script type="math/tex; mode=display">
+
+b_{i}(o_{k})=P(X_{t}=o_{k} \mid q_{t} = i)
+
+</script>
+
+<p>則當上一個 <em>tag</em> 為 <script type="math/tex">j</script> 時, 這個字的 <em>tag</em> 為 <script type="math/tex">i</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+a_{j,i} = P(q_{t} =i \mid q_{t-1}=j)
+
+</script>
+
+<p>則我們可以算在上一個 <em>tag</em> 為 <script type="math/tex">j</script> 時,  這個字的 <em>tag</em> 為<script type="math/tex">i</script> , 且這個字為<script type="math/tex">o_{k}</script> 的機率：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(q_{t} =i \mid q_{t-1}=j) (X_{t}=o_{k} \mid q_{t} = i) \\
+
+&= a_{j,i}  \times b_{i}(k) \\
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果我們要計算, 出現字串 <script type="math/tex">(o_{1},o_{2},...,o_{T})</script> 且 <em>tag</em> 為 <script type="math/tex">(r_{1},r_{2},...,r_{T})</script> 的機率:</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(X_{1} = o_{1} ,X_{2} = o_{2} ,...,X_{T} = o_{T}, q_{1}=r_{1},q_{2}=r_{2},...,q_{T}=r_{T}) \\[6pt]
+
+&=
+
+P(q_{1}= r_{1}) 
+
+P(X_{1}=o_{1} \mid q_{1} = r_{1} ) 
+
+\times 
+
+
+P(q_{2} =r_{2} \mid q_{1}=r_{1}) 
+
+P(X_{2}= o_{2} \mid q_{2} = r_{2} )
+
+
+\times... \\
+
+& 
+
+\times 
+
+P(q_{T} =r_{T} \mid q_{T-1}=r_{T-1})
+
+P(X_{T}= o_{T} \mid q_{T} = r_{T} ) 
+
+
+\\[6pt]
+
+&=\pi_{r_{1}}  P(X_{1}=o_{1} \mid q_{1} = r_{1} ) 
+
+\prod_{t=2}^{T} 
+
+P(q_{t} =r_{t} \mid q_{t-1}=r_{t-1}) P(X_{t}= o_{t} \mid q_{t} = r_{t} ) 
+
+\\[6pt]
+
+&=\pi_{r_{1}}  b_{r_{1}}(o_{1}) 
+
+\prod_{t=2}^{T} 
+
+a_{r_{t-1},r_{t}} b_{r_{t}}(o_{t})
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果要求出這個字串最有可能個 <em>tag</em> , </p>
+
+<p>則找出 <script type="math/tex">r</script> 的序列, 可以讓 <script type="math/tex">P(X_{1} = o_{1} ,X_{2} = o_{2} ,...,X_{T} = o_{T}, q_{1}=r_{1},q_{2}=r_{2},...,q_{T}=r_{T})</script> 為最大值</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{r_{i},r_{m},r_{n} \in Q} 
+
+
+\pi_{r_{i}}  b_{r_{i}}(o_{1}) 
+
+\prod_{t=2}^{T} 
+
+a_{ r_{n} , r_{m} } b_{r_{m}}(o_{k})
+
+
+</script>
+
+<p>舉個例子, </p>
+
+<p>有個研究者, 想根據某地人們生活日記中, 記載每天吃冰淇淋的數量, 來推斷當時的天氣變化如何</p>
+
+<p>在某個地點有兩種天氣, 分別是 <em>Hot</em> 和 <em>Cold</em> , 而當地的人們會記錄他們每天吃冰淇淋的數量, 數量分別為 <em>1</em> , <em>2</em> 或 <em>3</em> , </p>
+
+<p>則可以把天氣變化的機率, 以及天氣吃冰淇淋數量的關係, 用 <em>Hidden Markov Model</em> 表示,</p>
+
+<p>由於天氣是未知的, 為 <em>hidden state</em> , 天氣的集合為 <script type="math/tex">Weather=\{HOT,COLD\}</script></p>
+
+<p>天氣的 <em>Transition Matrix</em> :</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{Day_{t}}\setminus _{Day_{t+1}} & HOT  & COLD \\\hline
+
+    \hline HOT & 0.7 & 0.3 \\
+
+    \hline COLD & 0.4 & 0.6 \\
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>而冰淇淋數量是已知的, 為 <em>observable</em> , 冰淇淋數量的集合為 <script type="math/tex">Icecream=\{1,2,3\}</script></p>
+
+<p>天氣變化對於冰淇淋數量的 <em>Output Matrix</em> : </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{Weather}\setminus _{Icecream} & 1  & 2 & 3 \\\hline
+
+    \hline HOT & 0.2 & 0.4 & 0.4 \\
+
+    \hline COLD & 0.5 & 0.4 & 0.1\\
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>而 <em>Initial State</em> 的機率為 <script type="math/tex">\pi_{HOT}=0.8, \pi_{COLD}=0.2</script></p>
+
+<p>根據這個 <em>Model</em> , 假設有個吃冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 想要預測當時的天氣如何,</p>
+
+<p>例如, 出現天氣序列為 <em>HCH</em> 且 冰淇淋的記錄為 <script type="math/tex">(3,1,3)</script> 的機率如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P (X_{1} = 3 ,X_{2} = 1 ,X_{3} = 3 , q_{1}=H , q_{2}= C, q_{3}=H ) \\[6pt]
+
+&=P(q_{1}=H)P(X_{1}=3 \mid q_{1}=H) 
+
+\times P(q_{2}=C \mid q_{1}=H ) P(X_{2}=1 \mid q_{2}=C)\\
+
+&\times P(q_{3}=H \mid q_{2}=C) P(X_{3}=3 \mid q_{3}=H) \\[6pt]
+
+&=0.8 \times 0.4 \times 0.3 \times 0.5 \times 0.4 \times 0.4 \\[6pt]
+
+&=0.00768
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果有冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 但不知道當時天氣如何, 想要預測當時的天氣如何,</p>
+
+<p>可以把所有可能的天氣序列都列出來：</p>
+
+<p><em>HHH	HHC HCH HCC CHH CHC CCH CCC</em></p>
+
+<p>然後分別計算, 哪個天氣序列和冰淇淋的記錄為 <script type="math/tex">(3,1,3)</script> 共同發生的機率, 看看哪個機率最高</p>
+
+<h2 id="implementation">3.Implementation</h2>
+
+<p>接著來實作 <em>Hidden Markov Model</em></p>
+
+<p>根據上一個例子, 建立出以下的 <em>Model</em> 以及演算法</p>
+
+<p>```python hmm.py
+_STATE=[‘H’,’C’]
+_PI={‘H’:.8, ‘C’:.2}
+_A={ ‘H’:{‘H’:.7, ‘C’:.3 }, ‘C’:{‘H’:.4,’C’:.6} }
+_B={‘H’:{1:.2,2:.4,3:.4}, ‘C’:{1:.5,2:.4,3:.1} }</p>
+
+<p>def p_aij(i, j):
+    return _A[i][j]</p>
+
+<p>def p_bik(i, k):
+    return _B[i][k]</p>
+
+<p>def p_pi(i):
+    return _PI[i]</p>
+
+<p>def seq_probability(obs_init):
+    seq_val=[]; 
+    def rec(obs, val_pre, qseq_pre):
+        if len(obs) &gt;0:
+            for q in _STATE:
+                if len(qseq_pre) == 0 :
+                    val = val_pre * p_pi(q) * p_bik(q, obs[0])
+                else:
+                    q_pre = qseq_pre[-1]
+                    val = val_pre * p_aij(q_pre,q) * p_bik(q, obs[0])
+                qseq = qseq_pre + [q]
+                rec(obs[1:], val, qseq)
+        else:
+            seq_val.append((qseq_pre, val_pre))
+    rec(obs_init, 1, [])
+    for (seq,val) in seq_val:
+        print ‘seq : %s , value : %s’%(seq, val)
+    print ‘max_seq : %s  max_val : %s’%( reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, seq_val))</p>
+
+<p>```</p>
+
+<p>其中,</p>
+
+<p><code>_STATE=['H','C']</code> 是天氣的種類</p>
+
+<p><code>_PI={'H':.8, 'C':.2}</code> 是 <em>initial state</em> 的機率</p>
+
+<p><code>_A={ 'H':{'H':.7, 'C':.3 }, 'C':{'H':.4,'C':.6} }</code> 是 <em>Transition Matrix</em> </p>
+
+<p><code>_B={'H':{1:.2,2:.4,3:.4}, 'C':{1:.5,2:.4,3:.1} }</code> 是 <em>Output Matrix</em> </p>
+
+<p><code>p_aij(i, j)</code> , <code>p_bik(i, k)</code> , <code>p_pi(i)</code> 是 <em>Model</em> 和演算法的interface</p>
+
+<p><code>seq_probability(obs_init)</code> 是計算 <em>sequence probability</em> 的演算法</p>
+
+<p>這個演算法,會根據 <em>observable</em> 把每種天氣序列的機率都算出來, 並求出最有可能的序列是哪個</p>
+
+<p>接著到interactive mode試看看剛剛的例子</p>
+
+<p>輸入了冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 程式會把每種可能的天氣序列都列出來, 並求得最有可能者, 如下：</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import hmm
+hmm.seq_probability([3,1,3])
+seq : [‘H’, ‘H’, ‘H’] , value : 0.012544
+seq : [‘H’, ‘H’, ‘C’] , value : 0.001344
+seq : [‘H’, ‘C’, ‘H’] , value : 0.00768
+seq : [‘H’, ‘C’, ‘C’] , value : 0.00288
+seq : [‘C’, ‘H’, ‘H’] , value : 0.000448
+seq : [‘C’, ‘H’, ‘C’] , value : 4.8e-05
+seq : [‘C’, ‘C’, ‘H’] , value : 0.00096
+seq : [‘C’, ‘C’, ‘C’] , value : 0.00036
+max_seq : [‘H’, ‘H’, ‘H’]  max_val : 0.012544</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>程式算出答案, 最有可能的序列為 <code>['H', 'H', 'H']</code> ,機率為 <code>0.012544</code></p>
+
+<p>其實, 把所有的序列都列出來, 這樣的演算法是非常沒有效率的</p>
+
+<p>假設序列長度為 <script type="math/tex">T</script>, <em>state</em> 有 <script type="math/tex">N</script> 種, 則所有可能的序列有 <script type="math/tex">N^{T}</script> 種</p>
+
+<p>事實上, 我們要求機率最高的序列, 不需要把所有的序列都算出來, 用 <em>Dynamic Programming</em> 的技巧, 就可以了, </p>
+
+<p>有一種演算法, 叫 <em>Viterbi Algorithm</em> 是將 <em>Dynamic Programming</em> 應用於 <em>Hidden Markov Model</em> </p>
+
+<p>想知道什麼是 <em>Viterbi Algorithm</em> , 請看：<a href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm">Natural Language Processing – Viterbi Algorithm</a></p>
+
+<h2 id="reference">4. Reference</h2>
+
+<p>本文參考至兩本教科書</p>
+
+<p><a href="http://www.amazon.com/Foundations-Statistical-Natural-Language-Processing/dp/0262133601">Foundations of Statistical Natural Language Processing</a></p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+]]></content>
+  </entry>
+  
+</feed>

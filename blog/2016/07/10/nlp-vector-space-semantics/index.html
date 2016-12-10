@@ -1,0 +1,503 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>自然語言處理 -- Vector Space of Semantics - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子： The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">自然語言處理 -- Vector Space of Semantics</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-10T14:06:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
+
+<blockquote>
+  <p>The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird sleep.</p>
+</blockquote>
+
+<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
+
+<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c|c c c c c c c c c }
+
+     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
+
+ dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
+
+ cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
+
+ bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
+
+\end{array}
+
+ %]]></script>
+
+<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
+
+<!--more-->
+
+<h2 id="vector-space-of-semantics">Vector Space of Semantics</h2>
+
+<p>有了向量就可以用 <em>cosine similarity</em> 來計算語意相近程度。</p>
+
+<p>給定兩向量 <script type="math/tex">A = (a_1,a_2,...,a_n)</script> 和<script type="math/tex">B = (b_1,b_2,...,b_n)</script> ，則這兩向量的 <em>cosine similarity</em> 為：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{A \cdot B}{|A||B|}=  \frac{\sum a_i b_i}{\sqrt{\sum_i a_i^2}\sqrt{\sum_i b_i^2}}
+
+</script>
+
+<p><em>cosine similarity</em> 算出來的值，即是計算 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 兩向量的夾角的 <em>cosine</em> 值。 <em>cosine</em> 值越接近 1 ，表示兩向量夾角越小，表示兩向量的語意越接近。</p>
+
+<p>根據以上例子， <em>dog</em> ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) 和 <em>cat</em> ( 1, 0, 0, 0, 0, 0, 1, 1, 1, 2 )  的 <em>cosine similarity</em> 為：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 1 \times 1 + 1 \times 1 + 1 \times 2 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 + 2^2} } \\
+
+& = \frac{ 6 }{ \sqrt{ 8 } \sqrt{ 8} } 
+
+= 0.75 
+
+\end{align}
+
+ %]]></script>
+
+<p>而 <em>bird</em> 的向量為：( 1, 0, 0, 0, 0, 1, 0, 0, 1, 1 )  ，計算 <em>dog</em>  和  <em>bird</em> 的 <em>cosine similarity</em> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 0 \times 0 + 1 \times 0 + 1 \times 1 + 1 \times 1 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 0^2 + 0^2 + 1^2 + 1^2} }  \\
+
+& = \frac{ 4 }{ \sqrt{ 8 } \sqrt{ 4} } 
+
+\approx 0.707106781187 
+
+\end{align}
+
+ %]]></script>
+
+<p>由於 0.75 &gt; 0.707 ，因此 <em>dog</em> 和 <em>cat</em> 語意比較接近， <em>dog</em> 和 <em>bird</em> 語意比較不同。</p>
+
+<p>此種語意向量有個缺點，就是向量的維度等於總字彙量。例如英文單字種共有好幾萬種，那麼，向量就有好幾萬個維度，向量維度過大的缺點，會造成資料過度稀疏，以及占記憶體的空間。</p>
+
+<p>降低向量維度的方式，有兩種方法，分別是：</p>
+
+<ol>
+  <li>
+    <p><a href="https://ccjou.wordpress.com/2009/09/01/%E5%A5%87%E7%95%B0%E5%80%BC%E5%88%86%E8%A7%A3-svd/">singular value decompisition (SVD)</a></p>
+  </li>
+  <li>
+    <p><a href="http://blog.csdn.net/itplus/article/details/37969519">word2vec</a></p>
+  </li>
+</ol>
+
+<p>本文先不詳細介紹這部分。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>在此實作將文字轉成向量，並用 SVD 降為至二維，作視覺化</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line">
+</span><span class="line"><span class="n">text</span> <span class="o">=</span> <span class="p">[</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;dog&quot;</span><span class="p">,</span> <span class="s">&quot;run&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;run&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="s">&quot;dog&quot;</span><span class="p">,</span> <span class="s">&quot;sleep&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;sleep&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="s">&quot;dog&quot;</span><span class="p">,</span> <span class="s">&quot;bark&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;meows&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;bird&quot;</span><span class="p">,</span> <span class="s">&quot;fly&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line">    <span class="p">[</span><span class="s">&quot;a&quot;</span><span class="p">,</span> <span class="s">&quot;bird&quot;</span><span class="p">,</span> <span class="s">&quot;sleep&quot;</span><span class="p">,</span> <span class="p">],</span>
+</span><span class="line"><span class="p">]</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">build_word_vector</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+</span><span class="line">    <span class="n">word2id</span> <span class="o">=</span> <span class="p">{</span><span class="n">w</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">,</span> <span class="n">text</span><span class="p">)))))}</span>
+</span><span class="line">    <span class="n">id2word</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">word2id</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+</span><span class="line">    <span class="n">wvectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">word2id</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">word2id</span><span class="p">)))</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">sentence</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+</span><span class="line">        <span class="k">for</span> <span class="n">word1</span><span class="p">,</span> <span class="n">word2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sentence</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sentence</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+</span><span class="line">            <span class="n">id1</span><span class="p">,</span> <span class="n">id2</span> <span class="o">=</span> <span class="n">word2id</span><span class="p">[</span><span class="n">word1</span><span class="p">],</span> <span class="n">word2id</span><span class="p">[</span><span class="n">word2</span><span class="p">]</span>
+</span><span class="line">            <span class="n">wvectors</span><span class="p">[</span><span class="n">id1</span><span class="p">,</span> <span class="n">id2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class="line">            <span class="n">wvectors</span><span class="p">[</span><span class="n">id2</span><span class="p">,</span> <span class="n">id1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">wvectors</span><span class="p">,</span> <span class="n">word2id</span><span class="p">,</span> <span class="n">id2word</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">cosine_sim</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))))</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">visualize</span><span class="p">(</span><span class="n">wvectors</span><span class="p">,</span> <span class="n">id2word</span><span class="p">):</span>
+</span><span class="line">    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">U</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">Vh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">wvectors</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">axis</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">id2word</span><span class="p">:</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">U</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">U</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">id2word</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>本程式中， <code>text</code> 是輸入的文字， <code>build_word_vector</code> 將文字轉成向量：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; wvectors, word2id, <span class="nv">id2word</span> <span class="o">=</span> build_word_vector<span class="o">(</span>text<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>wvectors</code> 是根據前後文統計後，得出各文字的向量：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; print wvectors
+</span><span class="line"><span class="o">[[</span> 0.  0.  1.  1.  2.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  0.  0.  1.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 1.  0.  0.  0.  0.  1.  0.  0.  1.  1.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 1.  0.  0.  0.  0.  0.  1.  1.  1.  2.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  1.  0.  0.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  0.  1.  0.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  0.  1.  1.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  1.  1.  1.  0.  0.  0.  0.  0.<span class="o">]</span>
+</span><span class="line"> <span class="o">[</span> 0.  0.  1.  2.  1.  0.  0.  0.  0.  0.<span class="o">]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>每一橫排（或直排）代表著某個字的向量，但從它看不出是哪個字，所以 <code>word2id</code> 則是給定文字，找出是第幾個向量，而 <code>id2word</code> 則是給定第幾個向量，找出所對應的文字。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; print word2id
+</span><span class="line"><span class="o">{</span><span class="s1">&#39;a&#39;</span>: 0, <span class="s1">&#39;fly&#39;</span>: 5, <span class="s1">&#39;run&#39;</span>: 7, <span class="s1">&#39;the&#39;</span>: 9, <span class="s1">&#39;dog&#39;</span>: 4, <span class="s1">&#39;cat&#39;</span>: 3,
+</span><span class="line"><span class="s1">&#39;meows&#39;</span>: 6, <span class="s1">&#39;sleep&#39;</span>: 8, <span class="s1">&#39;bark&#39;</span>: 1, <span class="s1">&#39;bird&#39;</span>: 2<span class="o">}</span>
+</span><span class="line">
+</span><span class="line">&gt;&gt;&gt; print id2word
+</span><span class="line"><span class="o">{</span>0: <span class="s1">&#39;a&#39;</span>, 1: <span class="s1">&#39;bark&#39;</span>, 2: <span class="s1">&#39;bird&#39;</span>, 3: <span class="s1">&#39;cat&#39;</span>, 4: <span class="s1">&#39;dog&#39;</span>, 5: <span class="s1">&#39;fly&#39;</span>,
+</span><span class="line">6: <span class="s1">&#39;meows&#39;</span>, 7: <span class="s1">&#39;run&#39;</span>, 8: <span class="s1">&#39;sleep&#39;</span>, 9: <span class="s1">&#39;the&#39;</span><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>例如 <em>dog</em> 是在 <code>wvectors</code> 中， 第 5 排的向量（註：index 從0開始算），用 <code>word2id</code> 可從 <code>wvector</code> 中，取出其對應向量：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; print wvectors<span class="o">[</span>word2id<span class="o">[</span><span class="s2">&quot;dog&quot;</span><span class="o">]]</span>
+</span><span class="line"><span class="o">[</span> 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>程式碼中的 <code>cosine_sim</code> ，則可計算兩向量間的 <em>cosine similarity</em> ，例如，</p>
+
+<p>計算 <em>dog</em> 和 <em>cat</em> 與 <em>dog</em> 和 <em>bird</em> 之間的  <em>cosine similarity</em>  ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; print cosine_sim<span class="o">(</span>wvectors<span class="o">[</span>word2id<span class="o">[</span><span class="s2">&quot;dog&quot;</span><span class="o">]]</span>, wvectors<span class="o">[</span>word2id<span class="o">[</span><span class="s2">&quot;cat&quot;</span><span class="o">]])</span>
+</span><span class="line">0.75
+</span><span class="line">
+</span><span class="line">&gt;&gt;&gt; print cosine_sim<span class="o">(</span>wvectors<span class="o">[</span>word2id<span class="o">[</span><span class="s2">&quot;dog&quot;</span><span class="o">]]</span>, wvectors<span class="o">[</span>word2id<span class="o">[</span><span class="s2">&quot;bird&quot;</span><span class="o">]])</span>
+</span><span class="line">0.707106781187
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是用 <code>visualize</code> 將這些語意向量在平面上作視覺化：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; visualize<span class="o">(</span>wvectors, id2word<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在平面上作視覺化的方法，是用 SVD 將語意向量降為至二維，就可以把這些向量所對應的字，畫在平面上，結果如下：</p>
+
+<p><img src="/images/pic/pic_00186.png" alt="" /></p>
+
+<p>此結果顯示，   <em>dog</em> 、 <em>cat</em> 和 <em>bird</em> 是語意相近的一群， <em>a</em> 和 <em>the</em> 語意相近，以此類推。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>Simple Word Vector representations</p>
+
+<p>http://cs224d.stanford.edu/lectures/CS224d-Lecture2.pdf</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-07-10T14:06:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:06 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/07/09/pgm-gibbs-sampling/" title="Previous Post: 機率圖模型 -- Gibbs Sampling">&laquo; 機率圖模型 -- Gibbs Sampling</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/" title="Next Post: 類神經網路 -- word2vec (part 1 : Overview)">類神經網路 -- word2vec (part 1 : Overview) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

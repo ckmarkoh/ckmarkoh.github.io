@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Standard Library -- Copy - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 在python裡面, = 這個符號, 有可能是 pass by value 或是 pass by reference 如果 = 右方的 variable 是 value , 例如 int 則 = 是 pass by value ,如下 1
+2
+3
+4
+5
+6
+7
+8 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/01/python-standard-library-copy/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Standard Library -- Copy</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-01T16:23:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>4:23 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在python裡面, <code>=</code> 這個符號,</p>
+
+<p>有可能是 <em>pass by value</em> 或是 <em>pass by reference</em></p>
+
+<p>如果 <code>=</code> 右方的 <em>variable</em> 是 <em>value</em> , 例如 <em>int</em></p>
+
+<p>則 <code>=</code> 是 <em>pass by value</em> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x2</span><span class="o">=</span><span class="n">x1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">+=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x1</span>
+</span><span class="line"><span class="mi">2</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x2</span>
+</span><span class="line"><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00001.tiff" alt="p1" /></p>
+
+<!--more-->
+
+<p>我們讓 <code>x2=x1</code> , 但 <code>x1</code> 的值變了, <code>x1</code> 的值不變</p>
+
+<p>但如果  <code>=</code> 右方的 <em>variable</em> 是 <em>object</em> , 例如 <em>list</em></p>
+
+<p>這個時候 <code>=</code> 就只是把 <em>pointer</em> 複製而已</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y2</span><span class="o">=</span><span class="n">y1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00002.tiff" alt="p2" /></p>
+
+<p>如上圖, <code>y2</code> 和 <code>y1</code> 共同指向一個 <em>list</em> , </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">+=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y1</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00003.tiff" alt="p3" /></p>
+
+<p>如果 <code>y1</code> 改變, <code>y2</code> 也一起改變</p>
+
+<h2 id="copycopy">2.copy.copy</h2>
+
+<p>先載入 <code>copy</code> 模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">copy</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果要把 <em>variable</em> 所指到的 <em>object</em> 一起複製, </p>
+
+<p>而不是只複製 <em>pointer</em> , 就要用到 <code>copy.copy</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y2</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00004.tiff" alt="p4" /></p>
+
+<p>如上圖, <code>y1</code> 所指的 <em>list</em> 也被複製了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">+=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y1</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00005.tiff" alt="p5" /></p>
+
+<p>所以當 <code>y1</code> 改變的時候, <code>y2</code> 不變</p>
+
+<p>但是如果是多層的 <em>list</em> ,</p>
+
+<p>使用 <code>copy.copy</code> 就可能會出問題了</p>
+
+<p>因為 <code>copy.copy</code> 只會複製一層的 <em>object</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y0</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">=</span><span class="p">[</span><span class="n">y0</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y2</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[[]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00006.tiff" alt="p6" /></p>
+
+<p>複製超過一層以後,剩下的就只複製 <em>pointer</em>, 如上圖：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y0</span><span class="o">+=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y0</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y1</span>
+</span><span class="line"><span class="p">[[</span><span class="mi">1</span><span class="p">]]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[[</span><span class="mi">1</span><span class="p">]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00007.tiff" alt="p7" /></p>
+
+<p>這個時候 <code>y0</code> 改變了, <code>y1</code> 和 <code>y2</code> 都會變</p>
+
+<h2 id="copydeepcopy">3.copy.deepcopy</h2>
+
+<p>如果要把每一層所有的 <em>object</em> 都複製,</p>
+
+<p>而不要複製 <em>pointer</em></p>
+
+<p>就要用 <code>copy.deepcopy</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y0</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span><span class="o">=</span><span class="p">[</span><span class="n">y0</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y2</span><span class="o">=</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[[]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00008.tiff" alt="p8" /></p>
+
+<p>如上圖, <code>copy.deepcopy</code> 會把每層的 <em>object</em> 都複製</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">y0</span><span class="o">+=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y0</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y1</span>
+</span><span class="line"><span class="p">[[</span><span class="mi">1</span><span class="p">]]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">y2</span>
+</span><span class="line"><span class="p">[[]]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00009.tiff" alt="p9" /></p>
+
+<p>這個時候若 <code>y0</code> 改變了, 只有 <code>y1</code>會變 , 而 <code>y2</code> 不會變</p>
+
+<h2 id="reference">4.Reference</h2>
+
+<p>https://docs.python.org/2/library/copy.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-01T16:23:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>4:23 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/python-standard-library/'>python_standard_library</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/01/python-standard-library-copy/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/01/python-standard-library-copy/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/31/python-standard-library-argparse/" title="Previous Post: Python Standard Library -- argparse">&laquo; Python Standard Library -- argparse</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/" title="Next Post: 自然語言處理 -- Hidden Markov Model">自然語言處理 -- Hidden Markov Model &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

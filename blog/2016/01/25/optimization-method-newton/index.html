@@ -1,0 +1,802 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Optimization Method -- Newton's Method for Optimization - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Gradient Descent 機器學習中，用 Gradient Descent 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：Optimization Method – Gradient Descent &amp; AdaGrad 對於 Cost &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Optimization Method -- Newton's Method for Optimization</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-25T16:56:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>機器學習中，用 <em>Gradient Descent</em> 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ，在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時， <em>Gradient Descent</em>  走的方向為  <script type="math/tex">  -\nabla f(\textbf{x})</script> 。也就是，用泰勒展開式展開後，用一次微分 <script type="math/tex">f(\textbf{x})</script> 來趨近的方向，如下圖：</p>
+
+<p><img src="/images/pic/pic_00144.png" alt="" /></p>
+
+<p>註：考慮到 <script type="math/tex">\textbf{x}</script> 為向量的情形，故一次微分寫成  <script type="math/tex">\nabla f(\textbf{x})</script> 。 </p>
+
+<p>其中， <script type="math/tex">f(\textbf{x})</script> 為原本的 <em>Cost function</em> ，而 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為泰勒展開式取一次微分逼近的。 而 <em>Gradient Descent</em> 走的方向為 <script type="math/tex"> - \nabla f(\textbf{x}) </script> ，為沿著 <script type="math/tex">\tilde{f}(\textbf{x})</script> 的方向。</p>
+
+<!--more-->
+
+<p>這會有個問題，如果原本的 <em>Cost function</em> 為較高次函數，只用一次項來逼近是不夠的，有時候，失真情形很嚴重，例如， <em>Cost function</em> 為橢圓 <script type="math/tex">f(x,y) = x^{2}+9y^{2} </script>， 此函數的等高線圖，如下圖：</p>
+
+<p><img src="/images/pic/pic_00145.png" alt="" /></p>
+
+<p>如果起始點為 <script type="math/tex">(x,y) = (-4,2.5)</script> ，沿著 <script type="math/tex"> - \nabla f(x) </script> 的方向走，也就是說，走梯度最陡的方向（即與等高線垂直的方向），可能會需要多次折返，才能走到最小值，如下圖：</p>
+
+<p><img src="/images/pic/pic_00146.gif" alt="" /></p>
+
+<h2 id="second-order-taylor-approximation">Second-Order Taylor Approximation</h2>
+
+<p>根據前面的例子得知，只考慮一次微分項，是不夠的，現在要來考慮二次微分項。</p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ， 在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時，用泰勒展開式展開後，分別用一次微分與二次微分來逼近，如下圖：</p>
+
+<p><img src="/images/pic/pic_00147.png" alt="" /></p>
+
+<p>其中，橘色的 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為只用了一次微分的逼近，而紫色的 <script type="math/tex">\hat{f}(\textbf{x})</script> 為用了一次與二次微分向的逼近，由此可見， <script type="math/tex">\hat{f}(\textbf{x})</script>  較 <script type="math/tex">\tilde{f}(\textbf{x})</script> 接近原本的 <script type="math/tex">f(\textbf{x})</script></p>
+
+<p>如果要求 <script type="math/tex">f(\textbf{x})</script> 的最小值，可以往 <script type="math/tex">\hat{f}(\textbf{x})</script> 為最小值的方向，一步一步走下去。要找出 <script type="math/tex">\hat{f}(\textbf{x})</script> 的最小值，即：</p>
+
+<script type="math/tex; mode=display">
+
+\min_{x} \hat{f} (\textbf{x})  =  \min_{\textbf{x}}  f(\textbf{x}_{t}) + \nabla f(\textbf{x}_{t})^{T}\textbf{x} + \frac{1}{2} \textbf{x}^{T} \nabla^{2}f(\textbf{x}_{t}) \textbf{x} 
+
+</script>
+
+<p>將 <script type="math/tex">\hat{f}(\textbf{x})</script> 對 <script type="math/tex">\textbf{x}</script> 微分，令微分結果為 <script type="math/tex">0</script> ，得：</p>
+
+<script type="math/tex; mode=display">
+
+0 =  \nabla f(\textbf{x}_{t}) +  \nabla^{2}f(\textbf{x}_{t}) \textbf{x} 
+
+</script>
+
+<p>得 </p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x} = -  \nabla^{2}f(\textbf{x}_{t})^{-1} \nabla f(\textbf{x}_{t}) 
+
+</script>
+
+<p>可以用此 <script type="math/tex">\textbf{x}</script> ，來當作位於 <script type="math/tex">\textbf{x}=\textbf{x}_{t}</script> 時，想走往 <script type="math/tex">f(\textbf{x})</script> 的最小值，要走的方向（與距離）。用一次與二次微分所得出的方向，一步步走下去，最後走到最小值，這種方法即為 <em>Newton’s Method</em> 。</p>
+
+<h2 id="newtons-method-for-optimization">Newton’s Method for Optimization</h2>
+
+<p><em>Newton’s Method</em> 即是考慮二次微分的 <em>Gradient Descent</em> 方法，公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta   \textbf{H}_{t}^{-1} \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex"> \eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex"> \textbf{H}_{t} = \nabla^{2}f(\textbf{x}_{t}) </script> （ 稱為 <em>Hessian</em> ）， <script type="math/tex">\textbf{g}_{t}=\nabla f(\textbf{x}_{t}) </script> （ 稱為 <em>Gradient</em> ）。</p>
+
+<p>再來看看用 <em>Newton’s Method</em> 來解決 <em>Cost function</em> 為橢圓 <script type="math/tex">f(x,y) = x^{2}+9y^{2} </script> 的情形。首先，畫出起始點 <script type="math/tex">(-4, 2.5) </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00148.png" alt="" /></p>
+
+<p>先來算 <script type="math/tex">\textbf{g}</script> 和 <script type="math/tex">\textbf{H}^{-1}</script> ，分別為：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{g} = 
+
+\begin{bmatrix}
+
+  \dfrac{ \partial f(x,y) }{\partial x}  \\[0.3em]
+
+  \dfrac{\partial f(x,y) } {\partial y}  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  2x  \\[0.3em]
+
+  18y \\[0.3em]
+
+\end{bmatrix} 
+
+</script>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\textbf{H}^{-1} = 
+
+\begin{bmatrix}
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial x^{2}}  &  
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial xy}
+
+  \\[0.3em]
+
+  \dfrac{ \partial^{2} f(x,y) } {\partial xy} &
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial y^{2}}   
+
+  \\[0.3em]
+
+\end{bmatrix} ^{-1}
+
+= 
+
+\begin{bmatrix}
+
+  2  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  18 
+
+  \\[0.3em]
+
+\end{bmatrix} ^{-1}
+
+=
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+ %]]></script>
+
+<p>設 <script type="math/tex"> \eta = 0.5 </script> ，代入起始點  <script type="math/tex">(x_{0},y_{0}) = (-4, 2.5) </script> 、 <script type="math/tex">\textbf{g}</script> 和 <script type="math/tex">\textbf{H}^{-1}</script> 到 <em>Newton’s Method</em> 的公式： <script type="math/tex">\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta   \textbf{H}_{t}^{-1} \textbf{g}_{t}</script> ，得：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{1}
+
+  \\[0.3em]
+
+  y_{1} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -4 
+
+  \\[0.3em]
+
+  2.5  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 0.5 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-4)  \\[0.3em]
+
+  18 \times 2.5 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  -2  
+
+  \\[0.3em]
+
+  1.25
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]></script>
+
+<p>更新圖上的點， <script type="math/tex">(x_{1},y_{1}) = (-2, 1.25) </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00155.png" alt="" /></p>
+
+<p>再往下走一步，求 <script type="math/tex">(x_{2},y_{2})</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{2}
+
+  \\[0.3em]
+
+  y_{2} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -2 
+
+  \\[0.3em]
+
+  1.25  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 0.5 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-2)  \\[0.3em]
+
+  18 \times 1.25 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  -1  
+
+  \\[0.3em]
+
+  0.625
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]></script>
+
+<p><img src="/images/pic/pic_00150.png" alt="" /></p>
+
+<p>從以上過程發現，  <em>Newton’s Method</em>  方向不需要一直折返，可以直接往最小值處走下去 ，整個過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00151.gif" alt="" /></p>
+
+<p>註：事實上，由於本例的 <em>Cost function</em> <script type="math/tex">f(x,y)</script> 為二次函數，如果是用二次的泰勒展開式逼近，則可以完全貼合 <script type="math/tex">f(x,y)</script> 。所以用  <em>Newton’s Method</em> 的話， 位於 <script type="math/tex">\textbf{x}_{t}</script> 時， <script type="math/tex"> -  \nabla^{2}f(\textbf{x}_{t})^{-1} \nabla f(\textbf{x}_{t}) </script> 即是泰勒展開式最小值的 <script type="math/tex">\textbf{x}</script> 解，也是 <script type="math/tex">f(x,y)</script> 的最小值解，如果設 <script type="math/tex"> \eta = 1 </script> ，只要走一步就可以走到最小值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{1}
+
+  \\[0.3em]
+
+  y_{1} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -4 
+
+  \\[0.3em]
+
+  2.5  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-4)  \\[0.3em]
+
+  18 \times 2.5 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  0
+
+  \\[0.3em]
+
+  0
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]></script>
+
+<p>過程如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00152.png" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分</p>
+
+<p>首先，開啟新的檔案 newtons.py 並貼上以下程式碼：</p>
+
+<figure class="code"><figcaption><span>newtons.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line">
+</span><span class="line"><span class="n">A</span> <span class="o">=</span> <span class="mi">1</span>
+</span><span class="line"><span class="n">B</span> <span class="o">=</span> <span class="mi">9</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">obj_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span class="line">    <span class="n">z</span> <span class="o">=</span> <span class="n">A</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="n">B</span><span class="o">*</span><span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">z</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">obj_func_grad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">2</span><span class="o">*</span><span class="n">A</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">y</span><span class="p">])</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">obj_func_hessian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">2</span><span class="o">*</span><span class="n">A</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+</span><span class="line">                     <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">B</span><span class="p">]</span>
+</span><span class="line">                     <span class="p">])</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_func</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+</span><span class="line">    <span class="n">delta</span> <span class="o">=</span> <span class="mf">0.1</span>
+</span><span class="line">    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">5.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</span><span class="line">    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span>
+</span><span class="line">    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">Z</span> <span class="o">=</span> <span class="n">obj_func</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+</span><span class="line">    <span class="n">CS</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">contour</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">xt</span><span class="p">,</span> <span class="n">yt</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">):</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&quot;x=</span><span class="si">%.5f</span><span class="s">, y=</span><span class="si">%.5f</span><span class="s">, f(x, y)=</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">xts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">yts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">obj_func</span><span class="p">(</span><span class="n">xts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">yts</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">clabel</span><span class="p">(</span><span class="n">CS</span><span class="p">,</span> <span class="n">inline</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_gd</span><span class="p">():</span>
+</span><span class="line">    <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">])</span>
+</span><span class="line">    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.1</span>
+</span><span class="line">    <span class="n">xts</span> <span class="o">=</span> <span class="p">[</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+</span><span class="line">    <span class="n">yts</span> <span class="o">=</span> <span class="p">[</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">):</span>
+</span><span class="line">        <span class="n">gxy</span> <span class="o">=</span> <span class="n">obj_func_grad</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">xy</span> <span class="o">-=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">gxy</span>
+</span><span class="line">        <span class="n">xts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="line">        <span class="n">yts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">plot_func</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_newtons</span><span class="p">():</span>
+</span><span class="line">    <span class="n">xy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mf">2.5</span><span class="p">])</span>
+</span><span class="line">    <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.5</span>
+</span><span class="line">    <span class="n">xts</span> <span class="o">=</span> <span class="p">[</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+</span><span class="line">    <span class="n">yts</span> <span class="o">=</span> <span class="p">[</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">):</span>
+</span><span class="line">        <span class="n">gxy</span> <span class="o">=</span> <span class="n">obj_func_grad</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">hxy</span> <span class="o">=</span> <span class="n">obj_func_hessian</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">deltax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">hxy</span><span class="p">),</span> <span class="n">gxy</span><span class="p">)</span>
+</span><span class="line">        <span class="n">xy</span> <span class="o">-=</span> <span class="n">eta</span> <span class="o">*</span> <span class="n">deltax</span>
+</span><span class="line">        <span class="n">xts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="line">        <span class="n">yts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">plot_func</span><span class="p">(</span><span class="n">xts</span><span class="p">,</span> <span class="n">yts</span><span class="p">,</span> <span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>obj_func(x,y)</code> 為目標函數， <code>obj_func_grad(x,y)</code> 為 <script type="math/tex">\textbf{g}</script> ， <code>obj_func_hessian(x,y)</code>  <script type="math/tex">\textbf{H}</script> ，而 <code>plot_function(xt,yt,c='r')</code> 可畫出目標函數的等高線圖， <code>run_gd()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_newtons()</code> 用來執行 <em>Newton’s Method</em> 。 <code>xy</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<figure class="code"><figcaption><span>newtons.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">newtons</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span>newtons.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">newtons</span><span class="o">.</span><span class="n">run_gd</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00153.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00154.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Newton’s Method</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span>newtons.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">netons</span><span class="o">.</span><span class="n">run_newtons</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00155.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00156.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="comment">Comment</h2>
+
+<p><em>Newton’s Method</em> 需要計算二次微分 <em>Hessian</em> 矩陣的反矩陣，如果 <em>variable</em> 為高維度向量，則計算這個矩陣的時間複雜度會很高，而且很占記憶體空間，因此有人提出一些 <em>Hessian</em> 矩陣的近似求法，例如 <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS"><em>L-BFGS</em></a> 。但如果用在像是 <em>Deep Learning</em> 這種有超多 <em>variable</em> 的模型，近似求法仍然太慢，因此解 <em>Deep Learning</em> 問題，通常只會用一次微分的方法，例如 <a href="/blog/2015/12/23/optimization-method-adagrad"><em>Adagrad</em></a>之類的。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至以下教科書：</p>
+
+<p>Stephen Boyd &amp; Lieven Vandenberghe. Convex Optimization. Chapter 5 Duality.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-01-25T16:56:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:56 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/optimization/'>optimization</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/01/16/optimization-method-momentum/" title="Previous Post: Optimization Method -- Gradient Descent with Momentum">&laquo; Optimization Method -- Gradient Descent with Momentum</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/02/08/optimization-method-adadelta/" title="Next Post: Optimization Method -- AdaDelta">Optimization Method -- AdaDelta &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,853 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器學習 -- Model Selection - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Motivation 本文接續先前提到的 Overfitting and Regularization Machine Learning – Overfitting and Regularization 探討如何避免 Overfitting 並選出正確的 Model 因為 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/17/machine-learning-model-selection/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器學習 -- Model Selection</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-17T07:15:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:15 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="motivation">1.Motivation</h2>
+
+<p>本文接續先前提到的 <em>Overfitting and Regularization</em></p>
+
+<p><a href="/blog/2014/04/13/machine-learning-overfitting-and-regularization">Machine Learning – Overfitting and Regularization</a></p>
+
+<p>探討如何避免 <em>Overfitting</em> 並選出正確的 <em>Model</em></p>
+
+<p>因為 <em>Overfitting</em> 的緣故, 所以無法用 <script type="math/tex">E_{in}</script> 來選擇要用哪個 <em>Model</em> </p>
+
+<p>在上一篇文章中, 可以把 <script type="math/tex">E_{out}</script> 最小的 <em>Model</em> 當成是最佳的 <em>Model</em> , 但是在現實生活的應用中, 無法這樣選擇, 因為, <strong>在訓練 <em>Model</em> 時,無法事先知道 <em>Testing Data</em> 的預測結果是什麼</strong> ,所以就不可能用 <script type="math/tex">E_{out}</script> 來選擇 <em>Model</em> </p>
+
+<p>既然這樣, 要怎麼辦呢？ 既然不可以用 <script type="math/tex">E_{in}</script> 來選擇 <em>Model</em> , 又無法事先算出 <script type="math/tex">E_{out}</script></p>
+
+<!--more-->
+
+<h2 id="validation-set">2.Validation Set</h2>
+
+<p>例如, 用高次多項式做 <em>Linear Regression</em> , 假設只有一群 <em>Training Data</em> , 如下圖藍色點, 沒有 <em>Testing Data</em> , 要怎麼辦呢？</p>
+
+<p><img src="/images/pic/pic_00035.png" alt="data1" /></p>
+
+<p>有個解決方法, 就是在 <em>Training Data</em> 中, 隨機選取某一部份 <strong>當作</strong> <em>Testing Data</em> , 在訓練過程中不去使用, 這些 <em>Data</em> 稱為 <em>Validation Set</em> ,如下圖紫色的點</p>
+
+<p><img src="/images/pic/pic_00036.png" alt="data2" /></p>
+
+<p>用圖中藍色的點, 訓練出一個 <em>Model</em> , 如下圖 </p>
+
+<p><img src="/images/pic/pic_00037.png" alt="data_model" /></p>
+
+<p>訓練完之後, 再用 <em>Validation Set</em>  算 <em>Error</em> , 這個 <em>Error</em>  稱作 <em>Validation Error</em> , <script type="math/tex">E_{val}</script> ,可用於挑選最佳的 <em>Model</em> </p>
+
+<p>至於 <em>Validation Set</em>  要挑多少 <em>Data</em> ? , 挑太多會導致 <em>Training Data</em> 的量大減少太多, 而無法訓練出準確的 <em>Model</em> , 但挑太少則會使得 <em>Validation Error</em> 被少數的點給 <em>Bias</em> , 所以, 通常是選取 <em>Training Data</em> 的 <script type="math/tex">\frac{1}{3}</script> ~ <script type="math/tex">\frac{1}{5}</script> 左右的量, 作為 <em>Validation Set</em> </p>
+
+<h2 id="implementation-of-validation-set">3.Implementation of Validation Set</h2>
+
+<p>接著來實作, 先來看看 <em>Training Data</em> 要怎麼切割</p>
+
+<p>開新的檔案 <em>mdselect.py</em> 並貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>mdselect.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+</span><span class="line">
+</span><span class="line"><span class="n">data_tr</span><span class="o">=</span><span class="p">[</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.9310</span><span class="p">,</span><span class="o">-</span><span class="mf">0.3209</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.3103</span><span class="p">,</span><span class="o">-</span><span class="mf">1.1853</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7241</span><span class="p">,</span><span class="mf">0.8071</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.6552</span><span class="p">,</span><span class="o">-</span><span class="mf">1.1979</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0000</span><span class="p">,</span><span class="mf">0.9587</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.5172</span><span class="p">,</span><span class="mf">0.1218</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3793</span><span class="p">,</span><span class="mf">1.0747</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7931</span><span class="p">,</span><span class="mf">0.9202</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1724</span><span class="p">,</span><span class="mf">0.9259</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.2414</span><span class="p">,</span><span class="o">-</span><span class="mf">0.8748</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.5862</span><span class="p">,</span><span class="o">-</span><span class="mf">0.0751</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.2414</span><span class="p">,</span><span class="mf">0.9573</span><span class="p">),</span> <span class="p">(</span><span class="mf">1.0000</span><span class="p">,</span><span class="o">-</span><span class="mf">0.2715</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.6552</span><span class="p">,</span><span class="mf">0.3408</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.3793</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0831</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.0345</span><span class="p">,</span><span class="o">-</span><span class="mf">0.2877</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5172</span><span class="p">,</span><span class="o">-</span><span class="mf">0.0876</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3103</span><span class="p">,</span><span class="mf">0.5422</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.9310</span><span class="p">,</span><span class="mf">0.7560</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7931</span><span class="p">,</span><span class="o">-</span><span class="mf">0.2613</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.8621</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0038</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1724</span><span class="p">,</span><span class="o">-</span><span class="mf">0.3660</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.0345</span><span class="p">,</span><span class="o">-</span><span class="mf">0.5762</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1034</span><span class="p">,</span><span class="mf">0.4364</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.8621</span><span class="p">,</span><span class="mf">0.5780</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.5862</span><span class="p">,</span><span class="mf">0.1347</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1034</span><span class="p">,</span><span class="o">-</span><span class="mf">1.1036</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7241</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0032</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.4483</span><span class="p">,</span><span class="o">-</span><span class="mf">0.5247</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.4483</span><span class="p">,</span><span class="mf">0.6258</span><span class="p">),</span>
+</span><span class="line"><span class="p">]</span>
+</span><span class="line"><span class="n">data_ts</span><span class="o">=</span><span class="p">[</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.1034</span><span class="p">,</span><span class="mf">0.4559</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5172</span><span class="p">,</span><span class="mf">0.6431</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1724</span><span class="p">,</span><span class="o">-</span><span class="mf">1.1199</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7931</span><span class="p">,</span><span class="o">-</span><span class="mf">0.9601</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7241</span><span class="p">,</span><span class="o">-</span><span class="mf">1.4629</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.6552</span><span class="p">,</span><span class="mf">1.1571</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.0345</span><span class="p">,</span><span class="o">-</span><span class="mf">0.3840</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.2414</span><span class="p">,</span><span class="mf">0.9064</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5862</span><span class="p">,</span><span class="o">-</span><span class="mf">0.2830</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0000</span><span class="p">,</span><span class="mf">0.8299</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.1724</span><span class="p">,</span><span class="mf">1.1434</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3103</span><span class="p">,</span><span class="mf">0.7773</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.3103</span><span class="p">,</span><span class="o">-</span><span class="mf">1.3973</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.9310</span><span class="p">,</span><span class="mf">0.5383</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.4483</span><span class="p">,</span><span class="o">-</span><span class="mf">0.6886</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.5172</span><span class="p">,</span><span class="o">-</span><span class="mf">0.2233</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.2414</span><span class="p">,</span><span class="o">-</span><span class="mf">0.7119</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1034</span><span class="p">,</span><span class="o">-</span><span class="mf">0.3853</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7241</span><span class="p">,</span><span class="mf">0.9869</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7931</span><span class="p">,</span><span class="mf">0.9888</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">0.6552</span><span class="p">,</span><span class="o">-</span><span class="mf">0.8112</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.8621</span><span class="p">,</span><span class="mf">0.9862</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.3793</span><span class="p">,</span><span class="o">-</span><span class="mf">1.0019</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3793</span><span class="p">,</span><span class="mf">0.6254</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0345</span><span class="p">,</span><span class="o">-</span><span class="mf">0.1150</span><span class="p">),</span>
+</span><span class="line"><span class="p">(</span><span class="mf">1.0000</span><span class="p">,</span><span class="o">-</span><span class="mf">0.0712</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.8621</span><span class="p">,</span><span class="o">-</span><span class="mf">0.8452</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.4483</span><span class="p">,</span><span class="mf">0.0301</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5862</span><span class="p">,</span><span class="o">-</span><span class="mf">0.4771</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.9310</span><span class="p">,</span><span class="o">-</span><span class="mf">0.7827</span><span class="p">),</span>
+</span><span class="line"><span class="p">]</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">data_split</span><span class="p">(</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">data_tr</span><span class="p">[:</span><span class="n">s1</span><span class="p">]</span><span class="o">+</span><span class="n">data_tr</span><span class="p">[</span><span class="n">s2</span><span class="p">:]</span> <span class="p">,</span> <span class="n">data_tr</span><span class="p">[</span><span class="n">s1</span><span class="p">:</span><span class="n">s2</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_data</span><span class="p">(</span> <span class="n">d_tr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">d_val</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">d_ts</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">d_m</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+</span><span class="line">    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">d</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="p">[(</span><span class="n">d_tr</span><span class="p">,</span><span class="s">&#39;bo&#39;</span><span class="p">),(</span><span class="n">d_val</span><span class="p">,</span><span class="s">&#39;mo&#39;</span><span class="p">),(</span><span class="n">d_ts</span><span class="p">,</span><span class="s">&#39;ro&#39;</span><span class="p">)]:</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">d</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class="line">            <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="n">d</span><span class="p">),</span> <span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">d</span><span class="p">),</span> <span class="n">c</span> <span class="p">)</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">d_m</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="n">d_m</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">d_m</span><span class="p">)),</span> <span class="s">&#39;k--&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 , <code>data_tr</code> 和 <code>data_t</code> 分別是 <em>Training Data</em> 和 <em>Testing Data</em> , 這些 <em>Data</em> 都已經先隨機洗牌過,因此用 <em>Index</em> 的順序抽出的 <em>Data</em> 都已經是隨機的, 不會依序剛好抽到一筆連續的 <em>Data</em> , 而 <code>data_split</code> 是用來切割 <em>Data</em> 用的 <em>function</em> , <code>plot_data</code> 是畫圖用的</p>
+
+<p>到 <em>python</em> 的 <em>interactive mode</em> 載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">mdselect</span> <span class="kn">as</span> <span class="nn">ms</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用 <code>data_split(s1,s2)</code> 就可以把 <em>Training Data</em> 分開, 例如我想要把第 <em>1~10</em> 筆資料抽出來, 作為 <em>Validation Set</em> , 方法如下 </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dtr</span><span class="p">,</span><span class="n">dval</span><span class="o">=</span><span class="n">ms</span><span class="o">.</span><span class="n">data_split</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dtr</span>
+</span><span class="line"><span class="p">[(</span><span class="mf">0.5862</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0751</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.2414</span><span class="p">,</span> <span class="mf">0.9573</span><span class="p">),</span> <span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2715</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.6552</span><span class="p">,</span> <span class="mf">0.3408</span><span class="p">),</span>    \
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.3793</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0831</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.0345</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2877</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.5172</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0876</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3103</span><span class="p">,</span> <span class="mf">0.5422</span><span class="p">),</span> \
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.931</span><span class="p">,</span> <span class="mf">0.756</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7931</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2613</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.8621</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0038</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.1724</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.366</span><span class="p">),</span>   \
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.0345</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5762</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.1034</span><span class="p">,</span> <span class="mf">0.4364</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.8621</span><span class="p">,</span> <span class="mf">0.578</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5862</span><span class="p">,</span> <span class="mf">0.1347</span><span class="p">),</span>  \
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">0.1034</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1036</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.7241</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0032</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.4483</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5247</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.4483</span><span class="p">,</span> <span class="mf">0.6258</span><span class="p">)]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dval</span>
+</span><span class="line"><span class="p">[(</span><span class="mf">0.931</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.3209</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.3103</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1853</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7241</span><span class="p">,</span> <span class="mf">0.8071</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.6552</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.1979</span><span class="p">),</span> \
+</span><span class="line"><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.9587</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.5172</span><span class="p">,</span> <span class="mf">0.1218</span><span class="p">),</span> <span class="p">(</span><span class="mf">0.3793</span><span class="p">,</span> <span class="mf">1.0747</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.7931</span><span class="p">,</span> <span class="mf">0.9202</span><span class="p">),</span>      \
+</span><span class="line"><span class="p">(</span><span class="mf">0.1724</span><span class="p">,</span> <span class="mf">0.9259</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.2414</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.8748</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>dtr</code> 是 <em>Training Data</em> , <code>dval</code> 是 <em>Validation Set</em></p>
+
+<p>再來, 用 <code>plot_data</code> 把資料畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">plot_data</span><span class="p">(</span><span class="n">d_tr</span><span class="o">=</span><span class="n">dtr</span><span class="p">,</span><span class="n">d_val</span><span class="o">=</span><span class="n">dval</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00038.png" alt="i0" /></p>
+
+<p>再來, 就是用 <em>Training Data</em> 來訓練 <em>Model</em> , 用 <em>Validation Set</em> 計算 <em>Validation Error</em></p>
+
+<p>到 <em>mdselect.py</em> 貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>mdselect.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">model_train</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">show_eout</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="bp">None</span> <span class="p">:</span>
+</span><span class="line">        <span class="n">d_tr</span><span class="p">,</span> <span class="n">d_val</span>  <span class="o">=</span> <span class="n">data_split</span><span class="p">(</span><span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">        <span class="n">d_ary</span> <span class="o">=</span> <span class="p">[</span> <span class="n">d_tr</span><span class="p">,</span> <span class="n">d_val</span><span class="p">,</span> <span class="n">data_ts</span> <span class="p">]</span>
+</span><span class="line">    <span class="k">else</span> <span class="p">:</span>
+</span><span class="line">        <span class="n">d_ary</span> <span class="o">=</span> <span class="p">[</span> <span class="n">data_tr</span><span class="p">,</span> <span class="n">data_ts</span> <span class="p">]</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">X_ary</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span>
+</span><span class="line">                              <span class="nb">map</span><span class="p">(</span><span class="nb">pow</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">order</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="o">+</span><span class="mi">1</span><span class="p">)),</span> <span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">d</span> <span class="p">)))</span>
+</span><span class="line">                           <span class="p">,</span> <span class="n">d_ary</span> <span class="p">)</span>
+</span><span class="line">    <span class="n">Y_ary</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">d</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">d</span><span class="p">))</span> <span class="p">,</span> <span class="n">d_ary</span> <span class="p">)</span>
+</span><span class="line">    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span> <span class="n">X_ary</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="p">)</span><span class="o">*</span><span class="n">Y_ary</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+</span><span class="line">    <span class="n">y_ary</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">X</span> <span class="p">:</span> <span class="p">(</span><span class="n">X</span><span class="o">*</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="p">,</span> <span class="n">X_ary</span> <span class="p">)</span>
+</span><span class="line">    <span class="n">E_ary</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">Y</span><span class="p">,</span><span class="n">y</span> <span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">Y</span> <span class="o">-</span> <span class="n">y</span><span class="p">))</span> <span class="p">,</span> <span class="n">Y_ary</span> <span class="p">,</span> <span class="n">y_ary</span> <span class="p">)</span>
+</span><span class="line">
+</span><span class="line">    <span class="n">p_model</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">add</span> <span class="p">,</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span> <span class="p">:</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">d_ary</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span>
+</span><span class="line">                        <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">j</span> <span class="p">:</span> <span class="n">y_ary</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="n">j</span><span class="p">],</span> <span class="nb">range</span><span class="p">(</span><span class="n">y_ary</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+</span><span class="line">                      <span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d_ary</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">))),</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">plot</span> <span class="o">!=</span> <span class="bp">False</span><span class="p">:</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>  <span class="n">d_val</span> <span class="o">=</span> <span class="n">d_ary</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span> <span class="n">d_val</span><span class="o">=</span> <span class="bp">None</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">show_eout</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span> <span class="n">d_out</span> <span class="o">=</span> <span class="n">d_ary</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span> <span class="n">d_out</span> <span class="o">=</span> <span class="bp">None</span>
+</span><span class="line">        <span class="n">plot_data</span><span class="p">(</span><span class="n">d_ary</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">d_val</span> <span class="p">,</span> <span class="n">d_out</span><span class="p">,</span> <span class="n">p_model</span><span class="p">,</span><span class="s">&quot;order=</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">order</span><span class="p">))</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">E_ary</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第一個參數是 <code>order</code> 是多項式的次數, 第二個參數是 <code>split</code> 就是要切出來做 <em>Validation Set</em> 的 <em>Data</em> ,  預設為 <code>split=None</code> 表示把所有的 <em>Training Data</em> 都當成 <em>Training Data</em> , 剩下的參數, <code>plot</code> 選擇是否要畫圖, <code>show_eout</code> 選擇是否要在圖上顯示 <script type="math/tex">E_{out}</script></p>
+
+<p>修改完 <em>mdselect.py</em> 要重新載入</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">ms</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;mdselect&#39;</span> <span class="kn">from</span> <span class="s">&#39;mdselect.py&#39;</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果是用六次多項式來訓練, 而 <em>Validation Set</em> 是第 <em>1~10</em> 筆資料, 用法如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_train</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</span><span class="line"><span class="p">[</span><span class="mf">0.085523976119494666</span><span class="p">,</span> <span class="mf">0.34656284169000939</span><span class="p">,</span> <span class="mf">0.16791141763767087</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這個 <em>function</em> 會回傳三個參數, 依序為 <script type="math/tex">E_{in},E_{val},E_{out}</script> , 並會自動畫出以下圖形</p>
+
+<p><img src="/images/pic/pic_00039.png" alt="i1_no_eout" /></p>
+
+<p>如果要在圖上顯示  <script type="math/tex">E_{out}</script> , 則設定參數 <code>show_eout=True</code> , 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_train</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">show_eout</span><span class="o">=</span><span class="bp">True</span> <span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mf">0.085523976119494666</span><span class="p">,</span> <span class="mf">0.34656284169000939</span><span class="p">,</span> <span class="mf">0.16791141763767087</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00040.png" alt="i1_has_eout" /></p>
+
+<p>接著, 要找出 <script type="math/tex">E_{val}</script> 最小的 <em>Model</em> 是哪一個, 需要依序用不同的 <em>Order</em> 來訓練不同的 <em>Model</em> </p>
+
+<p>再到  <em>mdselect.py</em>  貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>mdselect.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">model_select</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">o1</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">o2</span><span class="o">=</span><span class="mi">11</span><span class="p">):</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span> <span class="p">:</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">model_train</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">split</span><span class="p">,</span> <span class="n">plot</span><span class="o">=</span><span class="bp">False</span><span class="p">)),</span> <span class="nb">range</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">rmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">order</span><span class="p">,</span><span class="n">err</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class="line">            <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eval:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">order</span><span class="p">,</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">err</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">err</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">            <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">order</span><span class="p">,</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">err</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&quot;Min Result:&quot;</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eval:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">rmin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+</span><span class="line">    <span class="k">else</span><span class="p">:</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">rmin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="n">plot_model_select</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="n">split</span><span class="p">,</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_model_select</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="n">split</span><span class="p">,</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">):</span>
+</span><span class="line">    <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">order</span> <span class="k">for</span> <span class="n">order</span><span class="p">,</span><span class="n">_</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+</span><span class="line">    <span class="n">d</span><span class="o">=</span><span class="p">[</span><span class="n">err</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span><span class="n">err</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+</span><span class="line">    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">split</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+</span><span class="line">        <span class="n">tp_ary</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="s">&#39;bo&#39;</span><span class="p">,</span><span class="s">&#39;b--&#39;</span><span class="p">,</span><span class="s">&#39;Ein&#39;</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;mo&#39;</span><span class="p">,</span><span class="s">&#39;m--&#39;</span><span class="p">,</span><span class="s">&#39;Eval&#39;</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="s">&#39;ro&#39;</span><span class="p">,</span><span class="s">&#39;r--&#39;</span><span class="p">,</span><span class="s">&#39;Eout&#39;</span><span class="p">)]</span>
+</span><span class="line">    <span class="k">else</span><span class="p">:</span>
+</span><span class="line">        <span class="n">tp_ary</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="s">&#39;bo&#39;</span><span class="p">,</span><span class="s">&#39;b--&#39;</span><span class="p">,</span><span class="s">&#39;Ein&#39;</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;ro&#39;</span><span class="p">,</span><span class="s">&#39;r--&#39;</span><span class="p">,</span><span class="s">&#39;Eout&#39;</span><span class="p">)]</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">tp_ary</span> <span class="p">:</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="n">tp</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">d</span><span class="p">)</span> <span class="p">,</span> <span class="n">tp</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="n">tp</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="n">tp</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span><span class="n">d</span><span class="p">)</span> <span class="p">,</span> <span class="n">tp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Order&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Error&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>修改完 <em>mdselect.py</em> 重新載入</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">ms</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;mdselect&#39;</span> <span class="kn">from</span> <span class="s">&#39;mdselect.py&#39;</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這個 <em>function</em> 會依序從 <script type="math/tex">Order = 3</script> 訓練到 <script type="math/tex">Order = 10</script> , 並把 <script type="math/tex">E_{in},E_{val},E_{out}</script> 的值畫成圖表, 以及找出 <script type="math/tex">E_{val}</script> 最小的 <em>Order</em> 是哪一個</p>
+
+<p>例如用第 <em>1~10</em> 筆為 <em>Validation Set</em> ,選出最佳的 <em>Model</em> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_select</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">))</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.24487</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.55254</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.44307</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.23451</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.58775</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.44250</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.08565</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.32730</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.16432</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.08552</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.34656</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.16791</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06510</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.13649</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.13285</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06497</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.15669</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.13948</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06431</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.14018</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.13009</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.05805</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.99262</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.42279</span>
+</span><span class="line"><span class="n">Min</span> <span class="n">Result</span><span class="p">:</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06510</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.13649</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.13285</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果顯示, 在 <script type="math/tex">Order = 7</script> 時 , 有最小的 <script type="math/tex">E_{val}</script> , <script type="math/tex">E_{out}</script> 也為最小, 程式畫出圖表如下</p>
+
+<p><img src="/images/pic/pic_00041.png" alt="plot1" /></p>
+
+<p>圖中有三條線, 其中紫色的線為 <script type="math/tex">E_{val}</script> , 這條線的趨勢和紅色的線 <script type="math/tex">E_{out}</script> 類似, 所以可以用來選擇最佳的 <em>Model</em></p>
+
+<p>可以把 <script type="math/tex">Order = 7</script> 的 <em>Model</em> 也畫出來看看, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_train</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">10</span><span class="p">),</span> <span class="n">show_eout</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mf">0.065103000120556462</span><span class="p">,</span> <span class="mf">0.13648767336843776</span><span class="p">,</span> <span class="mf">0.13284787573861817</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00042.png" alt="i2_has_eout" /></p>
+
+<h2 id="train-again-">4.Train Again !</h2>
+
+<p>由於選出 <em>Validation Set</em> 會使得原本的 <em>Training Data</em> 變少, 但是用更多的 <em>Training Data</em> 來訓練, 是有可能使 <script type="math/tex">E_{out}</script> 降得更低</p>
+
+<p>所以, 在選好 <em>Model</em> 以後, 可以把 <em>Validation Set</em> 也併入 <em>Training Data</em> , 再訓練一次, 這樣就有可能把 <script type="math/tex">E_{out}</script> 降低</p>
+
+<p>用 <code>model_train</code> 訓練剛才得出的最佳 <em>Order</em> , 也就是 <script type="math/tex">Order = 7</script> , 但這次用參數 <code>split=None</code> , 就是不要切割出 <em>Validation Set</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_train</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">show_eout</span><span class="o">=</span><span class="bp">True</span> <span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mf">0.071946203316513205</span><span class="p">,</span> <span class="mf">0.096047913185552308</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00043.png" alt="i3_has_eout" /></p>
+
+<p>得出以上結果, 可知, 用所有的 <em>Training Data</em> 做訓練, 結果為 <script type="math/tex">E_{out} \approx 0.09605 </script> 比起剛剛, 有切出 <em>Validation Set</em> 的 <script type="math/tex">E_{out} \approx 0.13285</script> 下降一些</p>
+
+<p>所以經由 <em>Validation Set</em> 找出了參數 <em>Order</em> 以後, 再用全部的 <em>Training Data</em> 都訓練過一次, 的確可以把 <script type="math/tex">E_{out}</script> 降低</p>
+
+<p>來看看用全部的 <em>Training Data</em> 訓練來挑 <em>Order</em> 參數, 誰的 <script type="math/tex">E_{out}</script> 最小,用 <code>model_select</code> 參數輸入 <code>split=None</code> , 結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_select</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.34432</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.43882</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.34271</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.43519</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.13194</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12439</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.12855</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12578</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.07195</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.09605</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06991</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.10288</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06987</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.10224</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06754</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.10167</span>
+</span><span class="line"><span class="n">Min</span> <span class="n">Result</span><span class="p">:</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.07195</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.09605</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00044.png" alt="plot2" /></p>
+
+<p>這次運氣很好, 用 <em>Validation Set</em> 就成功挑出了 <script type="math/tex">E_{out}</script> 最小的 <em>Order</em> 參數, 但事實上, 未必每次運氣都這麼好</p>
+
+<h2 id="v-fold-cross-validation">5.V-fold Cross Validation</h2>
+
+<p>運氣不好的時候, 選的 <em>Validation Set</em> , 和 <script type="math/tex">E_{out}</script> 的分佈型態有所差距, 以至於用 <script type="math/tex">E_{val}</script> 無法找出 <script type="math/tex">E_{out}</script> 最小的<em>Model</em>  </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_select</span><span class="p">(</span><span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">25</span><span class="p">))</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.45906</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.13305</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.45137</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.45786</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.12820</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.44651</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.10279</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.31029</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12523</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.09748</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.30769</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12489</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.03825</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.17898</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.09523</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.02848</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.22228</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.11895</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.02838</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.23299</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12376</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.02832</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.25718</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12957</span>
+</span><span class="line"><span class="n">Min</span> <span class="n">Result</span><span class="p">:</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.45786</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.12820</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.44651</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00045.png" alt="plot3" /></p>
+
+<p>由上圖紫色的線看到, <script type="math/tex">E_{val}</script> 的趨勢和 <script type="math/tex">E_{in} , E_{out}</script> 很不一樣, 把 <script type="math/tex">Ordr = 4 </script> 的 <em>Model</em> 畫出來, 看看出了什麼問題</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">model_train</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">25</span><span class="p">),</span> <span class="n">show_eout</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mf">0.45785961181234375</span><span class="p">,</span> <span class="mf">0.12819567955706512</span><span class="p">,</span> <span class="mf">0.44650895269797458</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>從下圖可知, 我們運氣真的很不好, 因為挑到的點的 <em>y</em> 值都在中間, 所以會選出這樣的 <em>Model</em></p>
+
+<p><img src="/images/pic/pic_00046.png" alt="i4_has_out" /></p>
+
+<p>那這種情況要怎麼避免呢？</p>
+
+<p>有種方法叫作 <em>V-fold Cross Validation</em> , 就是把 <em>Training Data</em> 切成 <script type="math/tex">V</script> 份, 總共訓練 <script type="math/tex">V</script> 次, 每次訓練從 <script type="math/tex">V</script> 份中挑一份作為 <em>Validation Set</em> , 剩下的 <script type="math/tex">V-1</script> 份當作 <em>Training set</em> , 最後再把每一次計算所得出的 <em>Error</em> 平均起來, 詳細過程如下</p>
+
+<p>把 <em>Training Data</em>  <script type="math/tex">X</script> 切成  <script type="math/tex">X_{1},X_{2},X_{3},...,X_{V-1},X_{V}</script> , 先挑一份作為 <em>Validation Set</em></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \text{Training Set: }\mspace{10mu} X_{1},...,X{i-1},X_{i+1},...,X_{V} \\[5pt]
+
+& \text{Validation Set: }\mspace{10mu} X_{i} \\[5pt]
+
+\end{align}
+
+ %]]></script>
+
+<p>得出 <em>Validation Error</em> : <script type="math/tex">E_{val_{i}}</script></p>
+
+<p>再挑一份不同的 <em>Data</em> 為 <em>Validation Set</em> , 如下</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \text{Training Set: }\mspace{10mu} X_{1},...,X{j-1},X_{j+1},...,X_{V} \\[5pt]
+
+& \text{Validation Set: }\mspace{10mu} X_{j}, \mspace{10mu} \text{where } j \neq i \\[5pt]
+
+\end{align}
+
+ %]]></script>
+
+<p>得出 <em>Validation Error</em> : <script type="math/tex">E_{val_{j}}</script></p>
+
+<p>這樣重複進行 <script type="math/tex">V</script> 次, 直到每一份 <script type="math/tex">X_{i}</script> 都當過 <em>Validation Set</em> , 再把所有算出來的 <em>Validation Error</em> 平均起來</p>
+
+<script type="math/tex; mode=display">
+
+ E_{val} = \frac{1}{V}\sum_{i=1}^{v} E_{val_{i}}
+
+</script>
+
+<p>這樣可避免  <em>Validation Error</em>  受到運氣不好的 <em>Validation Set</em> 的影響, 而選出不好的 <em>Model</em></p>
+
+<h2 id="implementation-of-v-fold-cv">Implementation of V-fold CV</h2>
+
+<p>再到  <em>mdselect.py</em>  貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>mdselect.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">v_fold</span><span class="p">(</span><span class="n">o1</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span><span class="n">o2</span><span class="o">=</span><span class="mi">11</span><span class="p">):</span>
+</span><span class="line">    <span class="n">result</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span> <span class="p">:</span> <span class="p">(</span><span class="n">o</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">(</span>
+</span><span class="line">                            <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span> <span class="p">:</span> <span class="n">model_train</span><span class="p">(</span><span class="n">o</span><span class="p">,</span><span class="n">split</span><span class="o">=</span><span class="p">(</span><span class="n">s</span><span class="o">*</span><span class="mi">6</span><span class="p">,(</span><span class="n">s</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="mi">6</span><span class="p">),</span> <span class="n">plot</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)))</span>
+</span><span class="line">                            <span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span> <span class="nb">range</span><span class="p">(</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">rmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">order</span><span class="p">,</span><span class="n">err</span> <span class="ow">in</span> <span class="n">result</span><span class="p">:</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eval:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">order</span><span class="p">,</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&quot;Min Result:&quot;</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&quot;Order:</span><span class="si">%s</span><span class="s">, Ein:</span><span class="si">%.5f</span><span class="s">, Eval:</span><span class="si">%.5f</span><span class="s">, Eout:</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">rmin</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span><span class="n">rmin</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+</span><span class="line">    <span class="n">plot_vfold</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_vfold</span><span class="p">(</span><span class="n">result</span><span class="p">,</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">):</span>
+</span><span class="line">    <span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="n">order</span> <span class="k">for</span> <span class="n">order</span><span class="p">,</span><span class="n">_</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+</span><span class="line">    <span class="n">y_ary</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span> <span class="p">:</span> <span class="p">[</span><span class="n">err</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span><span class="n">err</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span> <span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+</span><span class="line">    <span class="n">tp_ary</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span><span class="s">&#39;bo&#39;</span><span class="p">,</span><span class="s">&#39;b--&#39;</span><span class="p">,</span><span class="s">&#39;Ein&#39;</span><span class="p">),(</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;mo&#39;</span><span class="p">,</span><span class="s">&#39;m--&#39;</span><span class="p">,</span><span class="s">&#39;Eval&#39;</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="s">&#39;ro&#39;</span><span class="p">,</span><span class="s">&#39;r--&#39;</span><span class="p">,</span><span class="s">&#39;Eout&#39;</span><span class="p">)]</span>
+</span><span class="line">    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">tp_ary</span> <span class="p">:</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_ary</span><span class="p">[</span><span class="n">tp</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="p">,</span> <span class="n">tp</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">label</span> <span class="o">=</span> <span class="n">tp</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_ary</span><span class="p">[</span><span class="n">tp</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="p">,</span> <span class="n">tp</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">o1</span><span class="p">,</span><span class="n">o2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Order&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Error&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>v_fold</code> 就是 <em>V-fold Cross Validation</em> 演算法 , 在這 <em>function</em> 中, <script type="math/tex">V=5</script> 也就是把 <em>Training Data</em> 切成五份 , 並把其中一份挑出來做 <em>Validation Set</em></p>
+
+<p>修改完 <em>mdselect.py</em> 重新載入</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">ms</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;mdselect&#39;</span> <span class="kn">from</span> <span class="s">&#39;mdselect.py&#39;</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行 <code>v_fold</code> ,結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ms</span><span class="o">.</span><span class="n">v_fold</span><span class="p">()</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.33048</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.48405</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.45466</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">4</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.32709</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.51738</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.45618</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.12095</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.27391</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.14044</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">6</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.11037</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.45183</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.17004</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06660</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.12957</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.10250</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">8</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06446</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.13500</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.11171</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">9</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06402</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.18829</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.12179</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">10</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06035</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.50482</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.18569</span>
+</span><span class="line"><span class="n">Min</span> <span class="n">Result</span><span class="p">:</span>
+</span><span class="line"><span class="n">Order</span><span class="p">:</span><span class="mi">7</span><span class="p">,</span> <span class="n">Ein</span><span class="p">:</span><span class="mf">0.06660</span><span class="p">,</span> <span class="n">Eval</span><span class="p">:</span><span class="mf">0.12957</span><span class="p">,</span> <span class="n">Eout</span><span class="p">:</span><span class="mf">0.10250</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>v_fold</code> 找出了 <script type="math/tex">Order = 7</script>  時, 有最小的 <script type="math/tex">E_{val}</script> , 也有最小的 <script type="math/tex">E_{out}</script> </p>
+
+<p><img src="/images/pic/pic_00047.png" alt="plot4" /></p>
+
+<p>以上圖表顯示 , 紫色的線和紅色的線, 趨勢也不會差太遠, <script type="math/tex">E_{val}</script> 也可用於選擇  <script type="math/tex">E_{out}</script> 最小的 <em>Model</em></p>
+
+<p>事實上, <em>V-fold Cross Validation</em> 未必每次都能找出  <script type="math/tex">E_{out}</script> 最小的 <em>Model</em> , 因為它是由各種不同的結果所平均起來的, 也會受到較差結果者的影響, 但至少比較不會因為 <strong>運氣不好</strong> 而挑到不好的 <em>Validation Set</em> </p>
+
+<h2 id="reference">6.Reference</h2>
+
+<p>本文參考至以下兩門 <em>Coursera</em> 線上課程</p>
+
+<h4 id="andrew-ng-machine-learning">1.Andrew Ng. Machine Learning</h4>
+
+<p>https://www.coursera.org/course/ml</p>
+
+<h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
+
+<p>https://www.coursera.org/course/ntumlone</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-17T07:15:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:15 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/machine-learning/'>machine_learning</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/17/machine-learning-model-selection/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/17/machine-learning-model-selection/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/14/natural-language-processing-tf-idf/" title="Previous Post: 自然語言處理 -- TF-IDF">&laquo; 自然語言處理 -- TF-IDF</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/23/python-built-in-functions-exec/" title="Next Post: Python Built-in Functions -- eval and execute">Python Built-in Functions -- eval and execute &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

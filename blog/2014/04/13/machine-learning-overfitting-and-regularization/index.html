@@ -1,0 +1,638 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器學習 -- Overfitting and Regularization - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Overfitting 所謂 Overfitting 指的就是過度訓練, 意思就是說機器學習所學到的 Hypothesis 過度貼近 Training Data , 而導致和 Testing Data 的時候, Error 變得更大 假設有一筆資料如下圖, 藍色的為 Training Data &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/13/machine-learning-overfitting-and-regularization/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器學習 -- Overfitting and Regularization</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-13T06:46:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:46 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="overfitting">1.Overfitting</h2>
+
+<p>所謂 <em>Overfitting</em> 指的就是過度訓練, 意思就是說機器學習所學到的 <em>Hypothesis</em> 過度貼近 <em>Training Data</em> , 而導致和 </p>
+
+<p><em>Testing Data</em> 的時候, <em>Error</em>  變得更大</p>
+
+<p>假設有一筆資料如下圖, 藍色的為 <em>Training Data</em> , 紅色的為 <em>Testing Data</em> ,</p>
+
+<p><img src="/images/pic/pic_00020.png" alt="input" /></p>
+
+<p>想要用高次多項式的 <em>Hypothesis</em> ,<script type="math/tex">h(w)</script>,  做 <em>Linear Regression</em> </p>
+
+<script type="math/tex; mode=display">
+
+	h(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n}
+
+</script>
+
+<p>其中, <script type="math/tex">w</script> 是 <em>weight</em>, <script type="math/tex">n</script> 表示這個多項式的次數 ( <em>Order</em> )</p>
+
+<!--more-->
+
+<p>如果多項式的 <em>Order</em> 不夠大, 則無法使 <em>Hypothesis</em> 貼近 <em>Training data</em>  , 如下圖</p>
+
+<p><img src="/images/pic/pic_00021.png" alt="osmall" /></p>
+
+<p>如果 <em>Order</em> 大小適中, 則可以使 <em>Hypothesis</em> 貼近 <em>Training data</em> 以及 <em>Testing Data</em>, 此時, <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> 都會降低, 如下圖</p>
+
+<p><img src="/images/pic/pic_00022.png" alt="omedium" /></p>
+
+<p>如果 <em>Order</em> 太大,  則會使 <em>Hypothesis</em> 過度貼近 <em>Training data</em>  , 因此遠離 <em>Testing Data</em>, 造成 <script type="math/tex">E_{out}</script> 變大, 如下圖</p>
+
+<p><img src="/images/pic/pic_00023.png" alt="olarge" /></p>
+
+<p>由此可知,  <em>Order</em> 並不是越大, 就可以讓 <em>Hypothesis</em> 越準確, 當 <em>Order</em> 太大的時候, 造成 <script type="math/tex">E_{out}</script> 變大, 這種情形稱作 <em>Overfitting</em></p>
+
+<p>接著來實際操作看看 <em>Overfitting</em> 這種情形</p>
+
+<h2 id="implementation-1">2.Implementation 1</h2>
+
+<p>首先, 開一個新的檔案, 命名為 <em>overfitting.py</em></p>
+
+<p>載入必要的模組, 並輸入data, 如下</p>
+
+<figure class="code"><figcaption><span>overfitting.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="n">x</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="o">-</span><span class="mf">1.</span>        <span class="p">,</span> <span class="o">-</span><span class="mf">0.93103448</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.86206897</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.79310345</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.72413793</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.65517241</span><span class="p">,</span>
+</span><span class="line">           <span class="o">-</span><span class="mf">0.5862069</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.51724138</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.44827586</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.37931034</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.31034483</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.24137931</span><span class="p">,</span>
+</span><span class="line">           <span class="o">-</span><span class="mf">0.17241379</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.10344828</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.03448276</span><span class="p">,</span>  <span class="mf">0.03448276</span><span class="p">,</span>  <span class="mf">0.10344828</span><span class="p">,</span>  <span class="mf">0.17241379</span><span class="p">,</span>
+</span><span class="line">           <span class="mf">0.24137931</span><span class="p">,</span>  <span class="mf">0.31034483</span><span class="p">,</span>  <span class="mf">0.37931034</span><span class="p">,</span>  <span class="mf">0.44827586</span><span class="p">,</span>  <span class="mf">0.51724138</span><span class="p">,</span>  <span class="mf">0.5862069</span> <span class="p">,</span>
+</span><span class="line">           <span class="mf">0.65517241</span><span class="p">,</span>  <span class="mf">0.72413793</span><span class="p">,</span>  <span class="mf">0.79310345</span><span class="p">,</span>  <span class="mf">0.86206897</span><span class="p">,</span>  <span class="mf">0.93103448</span><span class="p">,</span>  <span class="mf">1.</span>        <span class="p">,</span> <span class="p">]])</span>
+</span><span class="line"><span class="n">y_train</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span> <span class="mf">0.72679128</span><span class="p">,</span>  <span class="mf">0.88352371</span><span class="p">,</span>  <span class="mf">0.55848839</span><span class="p">,</span>  <span class="mf">0.9960148</span> <span class="p">,</span>  <span class="mf">0.27727561</span><span class="p">,</span>  <span class="mf">1.58193644</span><span class="p">,</span>
+</span><span class="line">            <span class="mf">0.35519674</span><span class="p">,</span>  <span class="mf">0.40919248</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.66450448</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.02347355</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.71433077</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.97857498</span><span class="p">,</span>
+</span><span class="line">           <span class="o">-</span><span class="mf">0.9542627</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.85186192</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00210849</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00559543</span><span class="p">,</span>  <span class="mf">0.6545823</span> <span class="p">,</span>  <span class="mf">0.82926143</span><span class="p">,</span>
+</span><span class="line">            <span class="mf">0.3728542</span> <span class="p">,</span>  <span class="mf">1.60336863</span><span class="p">,</span>  <span class="mf">1.20548029</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.20721056</span><span class="p">,</span>  <span class="mf">0.44713523</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.49832341</span><span class="p">,</span>
+</span><span class="line">           <span class="o">-</span><span class="mf">0.34765828</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.51883285</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.95758709</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.83135465</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.90942741</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.10016318</span><span class="p">,</span> <span class="p">]])</span>
+</span><span class="line"><span class="n">y_test</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span> <span class="mf">0.79521635</span><span class="p">,</span>  <span class="mf">0.32523979</span><span class="p">,</span>  <span class="mf">0.63212171</span><span class="p">,</span>  <span class="mf">1.60522123</span><span class="p">,</span>  <span class="mf">0.72400525</span><span class="p">,</span>  <span class="mf">1.33408882</span><span class="p">,</span>
+</span><span class="line">          <span class="o">-</span><span class="mf">0.42555819</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.19726661</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.66041197</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.65470685</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.93661018</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.87634342</span><span class="p">,</span>
+</span><span class="line">          <span class="o">-</span><span class="mf">0.84363868</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.95689774</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1376653</span> <span class="p">,</span>  <span class="mf">0.40842111</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.20794503</span><span class="p">,</span>  <span class="mf">0.15057061</span><span class="p">,</span>
+</span><span class="line">           <span class="mf">0.50331016</span><span class="p">,</span>  <span class="mf">1.54413185</span><span class="p">,</span>  <span class="mf">0.01230807</span><span class="p">,</span>  <span class="mf">0.38623098</span><span class="p">,</span>  <span class="mf">0.32021572</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.02133113</span><span class="p">,</span>
+</span><span class="line">          <span class="o">-</span><span class="mf">0.28643186</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.91730531</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.65369342</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.68990553</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.73800708</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.56659495</span><span class="p">,</span> <span class="p">]])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來, 新增兩個function如下</p>
+
+<figure class="code"><figcaption><span>overfitting.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_data</span><span class="p">(</span> <span class="n">y_model</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+</span><span class="line">    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span> <span class="p">,</span>
+</span><span class="line">            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">y_model</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y_model</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span> <span class="p">,</span>
+</span><span class="line">            <span class="s">&#39;k--&#39;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="s">&#39;bo&#39;</span> <span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="s">&#39;ro&#39;</span> <span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">linear_regression</span><span class="p">(</span><span class="n">order</span><span class="p">):</span>
+</span><span class="line">    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+</span><span class="line">    <span class="n">w</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span> <span class="n">X</span> <span class="p">)</span><span class="o">*</span><span class="n">y_train</span><span class="o">.</span><span class="n">T</span>
+</span><span class="line">    <span class="n">y_model</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">*</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</span><span class="line">    <span class="n">e_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_train</span> <span class="o">-</span> <span class="n">y_model</span><span class="p">))</span>
+</span><span class="line">    <span class="n">e_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_test</span> <span class="o">-</span> <span class="n">y_model</span><span class="p">))</span>
+</span><span class="line">    <span class="n">status_str</span> <span class="o">=</span> <span class="s">&quot;Order=</span><span class="si">%s</span><span class="s">, Ein=</span><span class="si">%.6f</span><span class="s">, Eout=</span><span class="si">%.6f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">order</span><span class="p">,</span><span class="n">e_in</span><span class="p">,</span><span class="n">e_out</span><span class="p">)</span>
+</span><span class="line">    <span class="k">print</span> <span class="n">status_str</span>
+</span><span class="line">    <span class="n">plot_data</span><span class="p">(</span><span class="n">y_model</span> <span class="p">,</span> <span class="n">status_str</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中,  <code>plot_data( y_model, title='')</code> 是用來畫圖的 <em>function</em> ,而 <code>linear_regression(order)</code> 是用來做 <em>Linear Regression</em> 的 <em>function</em> , 參數 <code>order</code> 即為多項式的次數</p>
+
+<p>然後, 到 <em>interactive mode</em> 載入剛剛的檔案</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">overfitting</span> <span class="kn">as</span> <span class="nn">ovf</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>試試看不同 <em>Order</em> 的多項式, 得出的 <em>Hypothesis</em> 有什麼不一樣</p>
+
+<p>例如, 輸入 <code>8</code> 和 <code>15</code> 這兩種 <em>Order</em> , 所得出的結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">linear_regression</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+</span><span class="line"><span class="n">Order</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.128044</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.175504</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">linear_regression</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+</span><span class="line"><span class="n">Order</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.111843</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.208729</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>所得出的圖形分別如下</p>
+
+<p><img src="/images/pic/pic_00024.png" alt="o8" /></p>
+
+<p><img src="/images/pic/pic_00025.png" alt="o15" /></p>
+
+<p>多嘗試幾種不同的 <em>Order</em> 看看</p>
+
+<p>然後將不同 <em>Order</em> 所得出的 <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> , 列成表格</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c|c}
+
+
+Order & 4 & 6 & 7 & 8 & 9 & 10 & 12 & 15 & 20 & 30 \\ \hline 
+
+E_{in} & 0.4845 & 0.1949 & 0.1835 & 0.1280 & 0.1276 & 0.1254 & 0.1164 & 0.1118 & 0.0824 & 0.0000 \\
+
+E_{out} & 0.3433 & 0.1815 & 0.1910 & 0.1755 & 0.1730 & 0.1847 & 0.2026 & 0.2087 & 0.1974 & 0.2103 
+
+ 
+
+\end{array}
+
+ %]]></script>
+
+<p>並根據這些資料來畫圖表</p>
+
+<p><img src="/images/pic/pic_00026.png" alt="plot1" /></p>
+
+<p>以上結果顯示, 當 <em>Order = 9</em> 時, 有最小的 <script type="math/tex">E_{out}</script> , 通常會選擇 <script type="math/tex">E_{out}</script> 最小的 <em>Hypothesis</em> , 為成最佳的 <em>Hypothesis</em> </p>
+
+<p>把 <em>Order</em> 由小逐漸增大的過程, 做成動畫, 如下：</p>
+
+<p><img src="/images/pic/pic_00027.gif" alt="oanim" /></p>
+
+<h2 id="regularization">3.Regularization</h2>
+
+<p>如果我們避免 <em>Overfitting</em> , 除了從 <em>Order</em> 較低的 <em>Hypothesis</em> 逐一嘗試之外, 還有一種方式叫做 <em>Regularization</em></p>
+
+<p><em>Regularization</em> 的概念就是, 限制 <em>weight</em> 的平方和, 為某一個常數</p>
+
+<script type="math/tex; mode=display">
+
+	h(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...w_{n}x^{n} \\ \text{subject to} \mspace{10mu} 
+
+  \sum_{i=0}^{n}w_{i}^{2} \leq C
+
+
+</script>
+
+<p>為什麼這樣就可以避免 <em>Over Fitting</em> ？</p>
+
+<p>例如,如果要用一個三次的多項式 <script type="math/tex">h_{3}</script> 做為 <em>Hypothesis</em> </p>
+
+<script type="math/tex; mode=display">
+
+	h_{3}(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+w_{3}x^{3}
+
+</script>
+
+<p>可以把 <script type="math/tex">h_{3}</script> 看成是一個 <script type="math/tex">n</script> 次的多項式, 但是次數大於 <em>3</em> 的 <em>weight</em> 都等於 <em>0</em> , 如下</p>
+
+<script type="math/tex; mode=display">
+
+	h_{3}(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n} \\ 
+
+  \text{subject to} \mspace{10mu} 
+
+  w_{4}=w_{5}=...=w_{n}=0
+
+</script>
+
+<p>可以把 <script type="math/tex">h_{3}</script> 推廣成這樣</p>
+
+<script type="math/tex; mode=display">
+
+	h_{3}'(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n} \\ 
+
+  \text{subject to} \mspace{10mu} 
+
+  \sum_{i=0}^{n} \left[  w_{i} \neq 0 \right]  \leq 3+1
+
+</script>
+
+<p>由以上式子可知, <script type="math/tex"> h_{3}(w) \subset h_{3}'(w)</script> </p>
+
+<p>但是對於 <script type="math/tex"> \left[  w_{i} \neq 0 \right] </script> 的最佳化問題, 是 <em>NP-Hard</em> , 所以就改成平方和</p>
+
+<script type="math/tex; mode=display">
+
+	h_{3}''(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...w_{n}x^{n} \\ \text{subject to} \mspace{10mu} 
+
+  \sum_{i=0}^{n}w_{i}^{2} \leq C
+
+
+</script>
+
+<p>因此, 可以用 <em>Regularization</em> 來避免多項式的 <em>weight</em> 平方和過大, 間接降低多項式的次數</p>
+
+<p>此推導過程參考於 <em>Coursera</em> 線上課程 <a href="https://www.coursera.org/course/ntumlone">機器學習基石</a></p>
+
+<p>至於如何將 <em>Regularization</em> 用於 <em>Linear Regression</em> , 我們先來看看 <em>Linear Regression</em> 的 <em>Weight</em> 是如何計算的,</p>
+
+<script type="math/tex; mode=display">
+
+w=(X^{T}X)^{-1}X^{T}y
+
+</script>
+
+<p>加上 <em>Regularization</em> 以後會變成這樣, 其中 <script type="math/tex">\lambda=\frac{1}{C}</script></p>
+
+<script type="math/tex; mode=display">
+
+w=(X^{T}X+\lambda I)^{-1}X^{T}y
+
+</script>
+
+<p>在此不推導此公式, 請參考 <em>Coursera</em> 線上課程 <a href="!https://www.coursera.org/course/ml">Machine Learning</a></p>
+
+<h2 id="implementation-2">4.Implementation 2</h2>
+
+<p>來實作 <em>Regularization</em> , 看看它如何避免 <em>overfitting</em> 的發生</p>
+
+<p>新增一個 <em>function</em> 到 <em>overfitting.py</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">regularization</span><span class="p">(</span><span class="n">C</span><span class="p">):</span>
+</span><span class="line">    <span class="n">order</span><span class="o">=</span><span class="mi">30</span>
+</span><span class="line">    <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">**</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="p">]</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+</span><span class="line">    <span class="n">w</span> <span class="o">=</span> <span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">pinv</span><span class="p">(</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="n">X</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">C</span><span class="p">)</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="p">)</span><span class="o">*</span><span class="n">X</span><span class="o">.</span><span class="n">T</span> <span class="p">)</span><span class="o">*</span><span class="n">y_train</span><span class="o">.</span><span class="n">T</span>
+</span><span class="line">    <span class="n">y_model</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">*</span><span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+</span><span class="line">    <span class="n">e_in</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_train</span> <span class="o">-</span> <span class="n">y_model</span><span class="p">))</span>
+</span><span class="line">    <span class="n">e_out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_test</span> <span class="o">-</span> <span class="n">y_model</span><span class="p">))</span>
+</span><span class="line">    <span class="n">status_str</span> <span class="o">=</span> <span class="s">&quot;C=</span><span class="si">%s</span><span class="s">, Ein=</span><span class="si">%.6f</span><span class="s">, Eout=</span><span class="si">%.6f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">C</span><span class="p">,</span><span class="n">e_in</span><span class="p">,</span><span class="n">e_out</span><span class="p">)</span>
+</span><span class="line">    <span class="k">print</span> <span class="n">status_str</span>
+</span><span class="line">    <span class="n">plot_data</span><span class="p">(</span> <span class="n">y_model</span><span class="p">,</span> <span class="n">status_str</span> <span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>regularization(C)</code> 是用來做 <em>Regularized Linear Regression</em> 的 <em>function</em> , <em>C</em> 可以用來控制 <em>overfitting</em> 的程度, <em>C</em> 越小 , <em>overfitting</em> 的程度越低</p>
+
+<p>接著到 <em>interactive mode</em> 重新載入  <em>overfitting.py</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">ovf</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;overfitting&#39;</span> <span class="kn">from</span> <span class="s">&#39;overfitting.py&#39;</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>試試看不同 <em>C</em> , 得出的 <em>Hypothesis</em> 有什麼不一樣</p>
+
+<p>例如, 輸入 <code>10</code>,<code>50</code> , <code>1000</code> 和 <code>10000000</code>, 所得出的結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">regularization</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</span><span class="line"><span class="n">C</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.325034</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.250901</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">regularization</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span>
+</span><span class="line"><span class="n">C</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.228926</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.173973</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">regularization</span><span class="p">(</span><span class="mi">200</span><span class="p">)</span>
+</span><span class="line"><span class="n">C</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.167971</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.152158</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">regularization</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+</span><span class="line"><span class="n">C</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.126571</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.164675</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ovf</span><span class="o">.</span><span class="n">regularization</span><span class="p">(</span><span class="mi">10000000</span><span class="p">)</span>
+</span><span class="line"><span class="n">C</span><span class="o">=</span><span class="mi">10000000</span><span class="p">,</span> <span class="n">Ein</span><span class="o">=</span><span class="mf">0.111289</span><span class="p">,</span> <span class="n">Eout</span><span class="o">=</span><span class="mf">0.203883</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>所得出的圖形分別如下</p>
+
+<p><img src="/images/pic/pic_00028.png" alt="c10" /></p>
+
+<p><img src="/images/pic/pic_00029.png" alt="c50" /></p>
+
+<p><img src="/images/pic/pic_00030.png" alt="c200" /></p>
+
+<p><img src="/images/pic/pic_00031.png" alt="c1000" /></p>
+
+<p><img src="/images/pic/pic_00032.png" alt="c10000000" /></p>
+
+<p>從以上結果顯示, <script type="math/tex">C</script> 如果太小, 和多項式的 <em>Order</em> 太小的結果一樣, 都無法貼近 <em>Training Data</em> , 而 <script type="math/tex">C</script> 過大的結果, 也會產生 <em>overfitting</em> , 過度貼近 <em>Training Data</em> 使得 <script type="math/tex">E_{in}</script> 變大</p>
+
+<p>多嘗試幾種不同的 <em>C</em> 看看</p>
+
+<p>然後將不同 <em>C</em> 所得出的 <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> , 列成表格</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c|c}
+
+
+C & 10 & 50 & 100 & 200 & 500 & 1000 & 3000 & 2\times 10^{4} & 5\times 10^{5} & 1\times 10^{7}  \\ \hline 
+
+E_{in} & 0.3250 & 0.2289 & 0.1973 & 0.1680 & 0.1384 & 0.1266 & 0.1196 & 0.1161 & 0.1142 & 0.1113 \\
+
+E_{out} & 0.2509 & 0.1740 & 0.1591 & 0.1522 & 0.1554 & 0.1647 & 0.1795 & 0.1933 & 0.2020 & 0.2039
+
+
+\end{array}
+
+ %]]></script>
+
+<p>並根據這些資料來畫圖表</p>
+
+<p><img src="/images/pic/pic_00033.png" alt="plot1" /></p>
+
+<p>以上結果顯示, 當 <em>C = 200</em> 時, 有最小的 <script type="math/tex">E_{out}</script> , 通常會選擇 <script type="math/tex">E_{out}</script> 最小的 <em>Hypothesis</em> , 為成最佳的 <em>Hypothesis</em> </p>
+
+<p>把 <em>C</em> 由小逐漸增大的過程, 做成動畫, 如下：</p>
+
+<p><img src="/images/pic/pic_00034.gif" alt="canim" /></p>
+
+<p>註：</p>
+
+<ol>
+  <li>
+    <p>理論上, 當 <em>C</em> 趨近於無限大 <script type="math/tex">E_{in}</script> 應該要趨近於 <em>0</em> , 但根據以上結果 <script type="math/tex">E_{in}</script> 仍然無法趨近於 <em>0</em> , 這可能是由於 <code>numpy</code> 這個 <em>package</em> ,在計算 <em>pseudo inverse matrix</em> 的時候產生的, 使得 <script type="math/tex">E_{in}</script> 無法趨近於 <em>0</em></p>
+  </li>
+  <li>
+    <p>為了避免計算 <em>pseudo inverse matrix</em> 的誤差, 或許可以改用 <em>Gradient descent</em> 的方式做最佳化</p>
+  </li>
+</ol>
+
+<h2 id="reference">5.Reference</h2>
+
+<p>本文參考至以下兩門 <em>Coursera</em> 線上課程</p>
+
+<h4 id="andrew-ng-machine-learning">1.Andrew Ng. Machine Learning</h4>
+
+<p>https://www.coursera.org/course/ml</p>
+
+<h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
+
+<p>https://www.coursera.org/course/ntumlone</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-13T06:46:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:46 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/machine-learning/'>machine_learning</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/13/machine-learning-overfitting-and-regularization/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/13/machine-learning-overfitting-and-regularization/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/" title="Previous Post: 自然語言處理 -- Viterbi Algorithm">&laquo; 自然語言處理 -- Viterbi Algorithm</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/" title="Next Post: 自然語言處理 -- Naive Bayes Classifier">自然語言處理 -- Naive Bayes Classifier &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

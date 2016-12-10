@@ -1,0 +1,1750 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Natural_language_processing | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/natural-language-processing/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python Nltk -- Rule-Based Chunking]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/"/>
+    <updated>2014-05-06T14:46:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking</id>
+    <content type="html"><![CDATA[<h2 id="chunking">Chunking</h2>
+
+<p>分析句子的成份, 當句子不符合文法時, 使用 <em>Context-Free Grammar</em> 去做 <em>Parsing</em> , 可能會得不出結果, 而某些應用, 需要的並不是完整的剖析樹, 而是把句子中某些成份給找出來</p>
+
+<p><em>Chunking</em> 的概念就是, 把句子中的單字分組, 每一組是由一到多個相鄰的單字所組成, 例如, 想要得出句子中有哪些名詞片語, 就可以把相鄰的定冠詞, 名詞修飾語, 以及名詞, 分成一組, 分組所得出的即為名詞片語</p>
+
+<p>舉個例子, 在以下的句子中, 想要找出名詞片語有哪些</p>
+
+<script type="math/tex; mode=display">
+
+\text{The little yellow dog barked at the cat}.
+
+</script>
+
+<p>首先, 對這個句子進行 <em>Part of speech Tagging</em></p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c}
+
+&\text{The} &\text{little} &\text{yellow} &\text{dog} &\text{barked} &\text{at} &\text{the} &\text{cat} \\
+
+&\text{DT} &\text{JJ} &\text{JJ} &\text{NN} &\text{VBD} &\text{IN} &\text{DT} &\text{NN} 
+
+\end{array}
+
+ %]]&gt;</script>
+
+<!--more-->
+
+<p><em>Part of speech Tagging</em> 完之後可得出這些單字, 就可以根據這些單字的 <em>Tag</em> 來決定要怎麼分組, 如果要找名詞片語, 可以把相鄰的 <em>DT</em> , <em>JJ</em> 和 <em>NN</em> 分到名詞片語 <em>NP</em> 的組別中 , 如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{bmatrix}
+
+ &\text{The} &\text{little} &\text{yellow} &\text{dog} \\
+
+ &\text{DT} &\text{JJ} &\text{JJ} &\text{NN} \\
+
+ &\mathbf{NP}
+
+\end{bmatrix}\mspace{10mu}
+
+\begin{array}{c}
+
+ &\text{barked} &\text{at} \\
+
+ &\text{VBD} &\text{IN} \\
+
+ &
+
+\end{array}\mspace{20mu}
+
+\begin{bmatrix}
+
+ &\text{the} &\text{cat} \\
+
+ &\text{DT} &\text{NN} \\
+
+ &\mathbf{NP}
+
+\end{bmatrix}
+
+ %]]&gt;</script>
+
+<p>根據以上結果得出, 名詞片語有 <em>The little yellow dog</em> 和 <em>the cat</em></p>
+
+<p><em>Chunking</em> 的演算法, 主要有兩種, 一種是 <em>Rule-Based</em>, 另一種是 <em>Machine-Learning-Based</em> , 本文的重點放在前者</p>
+
+<h2 id="rule-based-chunking">Rule-Based Chunking</h2>
+
+<p><em>Rule-Based Chunking</em> 是根據事先定好的 <em>Rule</em> 來進行 <em>Chunking</em>, 例如以上例子, 定義好名詞片語的成份有哪些, 來尋找句子中哪些單字可以組成名詞片語</p>
+
+<p>在 <em>python nltk</em> 裡, 可以用 <code>RegexpParser</code> 以 <em>regular expression</em> 來定義這些 <em>rule</em></p>
+
+<p>首先, 載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk import RegexpParser</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以及例句</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>sentence = [(“the”, “DT”), (“little”, “JJ”), (“yellow”, “JJ”), (“dog”, “NN”) \ 
+…            ,(“barked”, “VBD”), (“at”, “IN”),  (“the”, “DT”), (“cat”, “NN”)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <em>Regular Expression</em> 定義好 <em>NP</em> 的 <em>Rule</em></p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>grammar = “NP: {&lt;DT&gt;?<jj>*<nn>}"</nn></jj></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以上的 <em>rule</em> 表示, <em>NP</em> 是由 <em>0~1</em> 個 <em>DT</em> , <em>0</em> 個以上的 <em>JJ</em> 和 一個 <em>NN</em> 所組成的 </p>
+
+<p>再來用 <code>RegexpParser</code> 進行 <em>Chunking</em>, 得出以下結果</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result = RegexpParser(grammar).parse(sentence)
+print result
+(S
+  (NP the/DT little/JJ yellow/JJ dog/NN)
+  barked/VBD
+  at/IN
+  (NP the/DT cat/NN))</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以把結果畫出來</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result.draw()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+
+<p>如上圖顯示, <em>Chunking</em> 的結果, 把屬於 <em>NP</em> 的元素都歸到 <em>NP</em> 底下了</p>
+
+<h2 id="chinking">Chinking</h2>
+
+<p>前文所提到的 <em>Chunking</em> 是先定義好, 哪個類別 <em>有</em> 哪些元素</p>
+
+<p>但有時候, 想要的取得的類別, 要一一列舉其中的元素, 列舉不完, 如果要用消去法的概念, 來定義哪些元素不包含在這個類別裡面, 就方便多了</p>
+
+<p>而 <em>Chinking</em> 的概念是用消去法, 定義哪個類別 <strong>沒有</strong> 哪些元素, 把那些沒有的元素排除, 而剩下來的就被分到該類別</p>
+
+<p>例如可以定義, <em>NP</em> 沒有 <em>VBD</em> 或 <em>IN</em> 這兩者, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>grammar2 = r”””
+…   NP:
+…     {&lt;.*&gt;+}          # Chunk everything
+…     }&lt;VBD|IN&gt;+{      # Chink sequences of VBD and IN
+…   “””</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中, <code>{&lt;.*&gt;+}</code> 是先把所有東西都包含進去, 再來的 <code>}&lt;VBD|IN&gt;+{ </code> 是用 <em>Chinking</em> 把 <em>VBD</em> 和 <em>IN</em> 這兩者排除, 執行結果如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result = RegexpParser(grammar2).parse(sentence)
+print result
+(S
+  (NP the/DT little/JJ yellow/JJ dog/NN)
+  barked/VBD
+  at/IN
+  (NP the/DT cat/NN))</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>把結果畫出來</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>result.draw()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+
+<p>得出結果和前文的 <em>Chunking</em> 相同</p>
+
+<h1 id="further-reading">Further Reading</h1>
+
+<p>本文是對 <em>Rule-Based Chunking</em> 很簡單的介紹</p>
+
+<p>想要更深入了解, 請看</p>
+
+<p>Python nltk Documentation Chunking</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch07.html#fig-chunk-segmentation</p>
+
+<p>Python nltk HOWTO chunk</p>
+
+<p>http://www.nltk.org/howto/chunk.html</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Nltk -- Dependency Grammar]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/"/>
+    <updated>2014-05-03T15:00:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+
+<p>在自然語言處理中, <em>Phase-Structured Grammar</em> 這類的文法, 是把一個句子, 剖析成一個 <strong>完整的剖析樹</strong> , 它的重點是句子中各個成份的階層關係, 例如 <em>Context-Free Grammar</em></p>
+
+<p>而所謂的 <em>Dependenct Grammar</em> , 是著重在 <strong>字和字之間關係</strong> , 而非整個句子中各種成份階層關係, 例如 </p>
+
+<script type="math/tex; mode=display">
+
+\text{I shot an elephant in my pajamas.}
+
+</script>
+
+<p>用<em>Depedenct Grammar</em> 可以表示成這樣</p>
+
+<p><img src="/images/pic/pic_00067.png" alt="d0" /></p>
+
+<p>如上圖, 把詞語和詞語之間的關係, 用箭頭表示, 箭頭的起點為 <em>Head</em>, 終點為 <em>dependents</em> , 標示箭頭上的英文字代表 <em>Head</em> 和 <em>Dependent</em> 之間的 <em>relation</em></p>
+
+<!--more-->
+
+<p><em>Head</em> 的意思是中心語, 就是比較重要的概念, 而 <em>Dependent</em> 則是用來修飾這個概念的詞語 , 例如 <em>an elephant</em> 這一小片段中, 重要的概念為 <em>elephant</em> , 而 <em>an</em> 是 <em>elephant</em> 的修飾語</p>
+
+<p>通常會在句子中挑一個最重要的中心語, 通常是動詞, 當作 <em>ROOT</em> , 如上圖例子的 <em>ROOT</em> 為 <em>shot</em>, 而 <em>shot</em> 的 <em>Dependent</em> 有 <em>I</em> 和 <em>elephant</em> , 它們和 <em>shot</em> 之間的 <em>relation</em> 分別為 <em>SBJ</em> 和 <em>OBJ</em> , 以此類推</p>
+
+<p>相較於 <em>Phase-Structured Grammar</em> 需要整個句子都文法正確, 才可以得出剖析樹, 而 <em>Dependency Grammar</em> 不需要整個句子裡面的每個字都文法正確, 也可以得到剖析樹, 因為只需要注意字和字的關係即可</p>
+
+<h2 id="dependencygraph">2. DependencyGraph</h2>
+
+<p>在 <em>python nltk</em> 裡, 可以用 <code>DependencyGraph</code> 來載入 <em>Dependency Grammar</em></p>
+
+<p>首先載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk.parse import DependencyGraph</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用以下的 <em>string</em> 來表示前例的 <em>Dependency Grammar</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dep_str= \
+… “””
+… I         NOUN  2    SBJ
+… shot      VERB  0    ROOT 
+… an        DET   4    DETMOD
+… elephant  NOUN  2    OBJ
+… in        PREP  4    NMOD
+… my        DET   7    DETMOD
+… pajamas   NOUN  5    PMOD
+… “””</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中, 每行可分成四個部份, 第一部份是句子中的單字, 第二部份是這個單字的 <em>Part of Speech(POS) Tagging</em> , 第三和第四部份是它的 <em>Head</em> 的 <em>index</em> 以及 <em>relation</em>, 例如 <em>I</em> 這個字, 它的 <em>POS Tagging</em> 為 <em>Noun</em> , 它的 <em>Head</em> 為 <em>shot</em>, <em>Head</em> 的 <em>index</em> 為 <em>shot</em> 在句子中的位置, 為 <em>2</em>, 而 <em>relation</em> 為 <em>SBJ</em> , 以此類推, 見下圖</p>
+
+<p><img src="/images/pic/pic_00068.png" alt="d1" /></p>
+
+<p>上圖將每個字標上 <em>index</em> , 以方便建構出 <em>Dependency Graph</em></p>
+
+<p>再來用 <code>DependencyGraph</code> 讀入這個 <code>dep_str</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dg = DependencyGraph(dep_str) </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>可以把 <em>Dependency Graph</em> 轉成 <em>Syntax Tree</em> 印出來</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dg.tree().pprint()
+‘(shot I (elephant an (in (pajamas my))))’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>或者畫出來</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dg.tree().draw()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>呈現如下圖</p>
+
+<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
+
+<p>由上圖可知, <em>Dependency Grammar</em> 所形成的 <em>syntax tree</em> , 和 <em>Phase-Structured Grammar</em> 最大的不同點在於, 每個 <em>Node</em> 是一個字, 而不是 <em>Non-Terminal</em> , <em>Node</em> 和 <em>Node</em> 之間的 <em>edge</em> 表示 <em>dependent relation</em> 而非 <em>production</em>. </p>
+
+<h2 id="dependency-parsing">3. Dependency Parsing</h2>
+
+<p>接著來談到如何把一個句子, 利用 <em>Dependency Grammar</em> 轉成 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
+
+<p>先載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk import parse_dependency_grammar</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>還有尚未剖析的 <em>Raw Sentence</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>sent = ‘I shot an elephant in my pajamas’.split()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著是 <em>Grammar</em> 的部份, 箭號左邊為 <em>head</em> , 右邊為 <em>dependent</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dep_grammar = parse_dependency_grammar(
+… “””
+… ‘shot’ -&gt; ‘I’ | ‘elephant’ | ‘in’
+… ‘elephant’ -&gt; ‘an’ | ‘in’
+… ‘in’ -&gt; ‘pajamas’
+… ‘pajamas’ -&gt; ‘my’
+… “””
+… )</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在 <code>nltk</code> 裡面, 提供兩種方式, 分別為 <em>Projective Dependency</em> 和 <em>Non-Projective Dependency</em></p>
+
+<p>分別可以把 <em>Raw Sentence</em> 轉為 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
+
+<h3 id="projective-dependency-parsing">3.1 Projective Dependency Parsing</h3>
+
+<p><code>ProjectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>syntax tree</em></p>
+
+<p>載入以下模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk import ProjectiveDependencyParser</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用 <code>ProjectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>trees = ProjectiveDependencyParser(dep_grammar).parse(sent)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>因為本例的文法為 <em>ambiguous grammar</em> , 也就是說, 可能的 <em>syntax tree</em> 超過一種以上</p>
+
+<p>程式會求出所有可能的 <em>syntax tree</em> , 如本例, 有兩個可能的 <em>syntax tree</em> </p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>trees[0].pprint()
+‘(shot I (elephant an (in (pajamas my))))’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>trees[1].pprint()
+‘(shot I (elephant an) (in (pajamas my)))’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>用以下方法畫出來</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>trees[0].draw()
+trees[1].draw()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
+
+<p><img src="/images/pic/pic_00071.png" alt="d3" /></p>
+
+<h3 id="non-projective-dependency-parsing">3.2 Non-Projective Dependency Parsing</h3>
+
+<p><code>NonprojectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>dependency graph</em></p>
+
+<p>載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk import NonprojectiveDependencyParser</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用 <code>NonprojectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>dep_graphs = NonprojectiveDependencyParser(dep_grammar).parse(sent)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>本例也會得出兩個可能的結果, 可以用 <code>print</code> 印出 <em>dependency graph</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print dep_graphs[0]
+[{‘address’: 0, ‘deps’: 2, ‘rel’: ‘TOP’, ‘tag’: ‘TOP’, ‘word’: None},
+ {‘address’: 1, ‘deps’: [], ‘word’: ‘I’},
+ {‘address’: 2, ‘deps’: [1, 4], ‘word’: ‘shot’},
+ {‘address’: 3, ‘deps’: [], ‘word’: ‘an’},
+ {‘address’: 4, ‘deps’: [3, 5], ‘word’: ‘elephant’},
+ {‘address’: 5, ‘deps’: [7], ‘word’: ‘in’},
+ {‘address’: 6, ‘deps’: [], ‘word’: ‘my’},
+ {‘address’: 7, ‘deps’: [6], ‘word’: ‘pajamas’}]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print dep_graphs[1]
+[{‘address’: 0, ‘deps’: 2, ‘rel’: ‘TOP’, ‘tag’: ‘TOP’, ‘word’: None},
+ {‘address’: 1, ‘deps’: [], ‘word’: ‘I’},
+ {‘address’: 2, ‘deps’: [1, 4, 5], ‘word’: ‘shot’},
+ {‘address’: 3, ‘deps’: [], ‘word’: ‘an’},
+ {‘address’: 4, ‘deps’: [3], ‘word’: ‘elephant’},
+ {‘address’: 5, ‘deps’: [7], ‘word’: ‘in’},
+ {‘address’: 6, ‘deps’: [], ‘word’: ‘my’},
+ {‘address’: 7, ‘deps’: [6], ‘word’: ‘pajamas’}]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中 <code>address</code> 表示 <code>word</code> 的 <em>id</em> , <code>deps</code> 為這個 <code>word</code> 的 <em>dependent</em></p>
+
+<p><em>註：事實上,  Non-Projective 和 Projective 最主要的差異在於, Non-Projective 可以處理字詞順序可任意顛倒的語言, 在處理這種語言時, 產生出的 Syntax Tree 由於字詞顛倒, 會有交叉, 故通常用 Dependency Graph 來表示結果, 本文不探討這種現象, 若你想了解, 請看以下的 Further Reading</em> </p>
+
+<h2 id="furtuer-reading">Furtuer Reading</h2>
+
+<p>想要了解更多關於 <em>Dependency Grammar</em> 可以看以下兩篇 <em>python nltk</em> 的 <em>Documentation</em></p>
+
+<p>Python nltk HOWTO dependency</p>
+
+<p>http://www.nltk.org/howto/dependency.html</p>
+
+<p>Python nltk book ch08</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch08.html</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Log-Linear Model]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model/"/>
+    <updated>2014-04-28T11:00:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+
+<p>在機器學習中有一種用於分類的演算法, 叫作 <em>Logistic Regression</em> , 可以把東西分成兩類</p>
+
+<p>而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 <em>Part of speech Tagging</em> 就是把一個字詞分類到名詞, 動詞, 形容詞, 之類的問題</p>
+
+<p>如果二元分類的 <em>Logistic Regression</em> , 推廣到多種類別分類, 就可以處理這種分類問題</p>
+
+<p>首先, 把二元分類的 <em>Logistic Regression</em> 公式, 稍做調整, 如下  </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=true|X) = \frac{1}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\[12pt]
+
+&p(y=false|X) = \frac{e^{-W \cdot X }}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{-W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>針對多類別的  <em>Logistic Regression</em> , 叫作 <em>Multinomial logistic regression</em> , 如果總共有 <script type="math/tex">k</script> 的類別, 每個類別的 <em>label</em> 為 <script type="math/tex">c_{i} , i \in k </script> , 則公式如下</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=c_{1}|X) = \frac{ e^{W_{c_{1}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&p(y=c_{2}|X) = \frac{ e^{W_{c_{2}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&...\\[12pt]
+
+&p(y=c_{k}|X) = \frac{ e^{W_{c_{k}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>在自然語言處理中, 由於 <em>feature value</em> , 也就是 <script type="math/tex">X</script> , 通常不是數字, 例如 <em>前面幾個字的 Tag</em> 之類的, 這時就要用 <em>feature function</em> 把 <em>feature value</em> 轉成數字</p>
+
+<p>所謂的 <em>feature function</em> , 就像是一個檢查器, 去檢查 <em>input data</em> 是否滿足某個 <em>feature</em> , 滿足的話則輸出 <em>1</em> , 不滿足者輸出 <em>0</em> , 以下為一個<em>feature function</em> 的例子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+f_{j}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = VB \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise}
+
+\end{cases}
+
+ %]]&gt;</script>
+
+<p>其中 , <script type="math/tex">tag_{i-1}</script> 是前一個字的 <em>Tag</em> , 而 <script type="math/tex">c</script> 為這個字的類別, 如果這個字的類別是 <script type="math/tex">NN</script> , 且前一個字的 <em>Tag</em> 為 <script type="math/tex">VB</script> , 則 <script type="math/tex">f_{j}=1</script> , 若不滿足這些條件, 則 <script type="math/tex">f_{j}=0</script></p>
+
+<p>加入 <em>feature function</em> 以後 , 原本的 <script type="math/tex">W_{c_{i}} \cdot X</script> 變為  <script type="math/tex">\sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x)</script> ,  <em>Multinomial logistic regression</em> 的公式變為這樣, 也就是所謂的 <em>Log-Linear Model</em></p>
+
+<script type="math/tex; mode=display">
+
+p(y=c_{i}|X) = \frac{ e^{ \sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x) } }{ \sum_{j=1}^{k} e^{\sum_{j=0}^{N}w_{c_{j}}f_{j}(c,x)} } \\[12pt]
+
+</script>
+
+<p>再來, 要怎麼訓練這個 <em>Model</em> 呢？</p>
+
+<p><em>Training</em> 是一個求最佳解的過程, 要找到一組 <em>Weight</em> 可以使得 <script type="math/tex">\sum_{i}p(Y^{(i)} \mid X^{(i)})</script> 為最大值, 公式為</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  
+
+
+</script>
+
+<p>由於有時 <em>feature function</em> 的數量會太多, 容易導致 <em>Overfitting</em> , 為了避免此現象, 所以會減掉 <script type="math/tex">\alpha R(w)</script> 以進行 <em>Regularization</em></p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  -\alpha R(w)
+
+
+</script>
+
+<p>另外, 由於此最佳化後產生的結果, 會有最大的 <em>Entropy</em> , 故 <em>Log-Linear Model</em> 又稱為 <em>Maxmum Entropy Model</em> , 在此做不推導, 欲知詳情請看 <em>Berger et al. (1996). A maximum entropy approach to natural language processing.</em></p>
+
+<h2 id="example">2. Example</h2>
+
+<p>舉個例子, 如何用 <em>feature function</em> 算出 <em>Tagging</em> 的機率值</p>
+
+<p>假設現在要對以下句子進行 <em>Part of Speech Tagging</em> , 現在已經進行到了 <strong><em>race</em></strong> 這個字</p>
+
+<script type="math/tex; mode=display">
+
+\text{Secretariat/}NNP \text{ is/}BEZ \text{ expected/}VBN \text{ to/}TO \text{ race/}\textbf{??} \text{ tomorrow/} 
+
+</script>
+
+<p>總共用了以下六種 <em>feature function</em> </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&f_{1}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{2}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{3}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} suffix(word_{i}) = \text{'ing'} \mspace{15mu}\text{and} \mspace{15mu} c=VBG \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{4}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} isLowerCase(word_{i}) \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{5}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{6}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>現在要求 <strong><em>race</em></strong> 這個字的 <em>Tag</em> 是 <em>NN</em> 還是 <em>VB</em> , 代入以上六個 <em>feature function</em> , 得出結</p>
+
+<p>果於下表</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{|c|c|} 
+
+    \hline
+
+		   &   & f1 & f2 & f3 & f4 & f5 & f6 \\ \hline
+
+    VB & f & 0  & 1  & 0  & 1  & 1  & 0  \\ \hline
+
+    VB & w & 0  & 0.8& 0  &0.01& 0.1& 0  \\ \hline
+
+    NN & f & 1  & 0  & 0  & 0  & 0  & 1  \\ \hline
+
+    NN & w &0.8 & 0  & 0  & 0  & 0  &-1.3  \\ \hline
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>其中 <script type="math/tex">f</script> 是 <em>feature function</em> 算出來的值, <script type="math/tex">w</script> 是 <em>weight</em> , 這個值通常是針對 <em>Training Data</em> 做最佳化得出來的值, <em>weight</em> 越大則表示 <em>feature</em> 所占的比重越重</p>
+
+<p>接著把 <script type="math/tex">w_{i}f_{i}(c,x)</script> 的值帶入公式</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(NN \mid x) = \frac{e^{0.8+(-1.3)}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.2 \\[12pt]
+
+&P(VB \mid x) = \frac{e^{0.8+0.01+0.1}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.8 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>算出結果 <script type="math/tex">0.8>0.2</script> , 所以 <strong><em>race</em></strong> 的 <em>Tag</em> 為 <em>VB</em></p>
+
+<h2 id="implementation">3. Implementation</h2>
+
+<p>接著來實作用 <em>Log-Linear Mode</em> 進行 <em>Part of Speech Tagging</em></p>
+
+<p>這次要用 <em>python nltk</em>  的 <code>MaxentClassifier</code> 來實作</p>
+
+<p>首先, 開一個新的檔案 <em>loglinear.py</em> 貼上以下程式碼</p>
+
+<p>```python loglinear.py
+import nltk
+import operator</p>
+
+<p>class LogLinearTagger(nltk.TaggerI):</p>
+
+<pre><code>def __init__(self,training_corpus):
+    self.classifier = None
+    self.training_corpus = training_corpus
+
+def train(self):
+    self.classifier = nltk.MaxentClassifier.train(
+                reduce(operator.add, 
+                    map(lambda tagged_sent :
+                        self.sent_to_feature(tagged_sent)
+                        ,self.training_corpus)),algorithm='megam' )
+
+def sent_to_feature(self,tagged_sent):
+    return  map(lambda (i, elem) : 
+                    apply( lambda token , tag : 
+                         (self.extract_features(token, i, tag), elem[1])
+                        ,zip(*tagged_sent))
+                    ,enumerate(tagged_sent))
+
+def tag_sentence(self, sentence_tag):
+    if self.classifier == None:
+        self.train()
+    return apply (lambda sentence : 
+                zip(sentence,
+                reduce(lambda x,y:  
+                    apply(operator.add,
+                        [x,[self.classifier.classify(self.extract_features(sentence, y[0], x))]])
+                    , enumerate(sentence), []))
+                ,[map(operator.itemgetter(0),sentence_tag)])
+
+def evaluate(self,test_sents):
+    return apply(lambda result_list : 
+                sum(result_list)/float(len(result_list))
+                , [reduce(operator.add,
+                    map(lambda line:
+                        map(lambda tag : int(tag[0] == tag[1])
+                            , zip(map(operator.itemgetter(1),line),
+                                  map(operator.itemgetter(1),self.tag_sentence(line))))
+                       ,test_sents))])
+
+def extract_features(self, sentence, i, history):
+    features = {}
+    features["this-word"] =  sentence[i]
+    if i == 0:
+        features["prev-tag"] = "&lt;START&gt;"
+    else:
+        features["prev-tag"] = history[i-1]
+    return features     
+</code></pre>
+
+<p>```</p>
+
+<p>其中, <code>extract_features</code> 是用於把 <em>input sentence</em> 的 <em>feature</em> 取出來,  例如這次用到的 <em>feature</em> 有目前這個字是什麼 <code>"this-word"</code> ,和前一個字的 <em>Tag</em> 是什麼 <code>"prev-tag"</code> </p>
+
+<p>取出 <em>feature</em> 後 , <code>MaxentClassifier</code> 會自動根據這些 <em>feature</em> 產生 <em>feature function</em> </p>
+
+<p>接下來到 <em>python</em> 的 <em>interactive mode</em> 載入檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from loglinear import LogLinearTagger</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這次要用 <em>brown corpus</em> 的 <em>category</em> , <code>news</code> 的前 <em>100</em> 句來當作 <em>Tranining Data</em> ,第 <em>100~200</em> 句當作 <em>Test Data</em> , 先輸入以下程式碼</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk.corpus import brown
+brown_tagged_sents = brown.tagged_sents(categories=’news’)
+train_sents = brown_tagged_sents[:100]
+test_sents = brown_tagged_sents[100:200]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用 <em>Training Data</em> 建立一個 <em>LogLinearTagger</em> 的 <em>class</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier = LogLinearTagger(train_sents)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在開始訓練之前, 我們先挑其中的一句, 看一下格式, 是已經 <em>Tag</em> 好的句子 , 我們以 <code>train_sents[31]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>train_sents[31]
+[(‘His’, ‘PP$’), (‘petition’, ‘NN’), (‘charged’, ‘VBD’), (‘mental’, ‘JJ’), \
+(‘cruelty’, ‘NN’), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>看一下這句可以產生出哪些 <em>Feature</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for x in classifier.sent_to_feature(train_sents[31]):
+…     print x
+… 
+({‘prev-tag’: ‘<start>', 'this-word': 'His'}, 'PP$')
+({'prev-tag': 'PP$', 'this-word': 'petition'}, 'NN')
+({'prev-tag': 'NN', 'this-word': 'charged'}, 'VBD')
+({'prev-tag': 'VBD', 'this-word': 'mental'}, 'JJ')
+({'prev-tag': 'JJ', 'this-word': 'cruelty'}, 'NN')
+({'prev-tag': 'NN', 'this-word': '.'}, '.')</start></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>例如第一個字, <code>'His'</code> , 它的 <em>feature</em> 有 <code>'prev-tag': '&lt;START&gt;'</code> 和 <code>'this-word': 'His'</code> , <em>Tag</em> 的結果為 </p>
+
+<p><code>'PP$'</code> , 由於第一個字前面已經沒有字了, 也沒有 <em>Tag</em> 了, 所以我們用 <code>&lt;START&gt;</code> 來表示</p>
+
+<p>再來就是要訓練 <em>classifier</em>, 執行 <code>classifier.train()</code> 就可以開始訓練, 但要花一點時間</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.train()
+Scanning file…2268 train, 0 dev, 0 test, reading…done
+optimizing with lambda = 0
+it 1   dw 5.348e-01 pp 4.19728e+00 er 0.79850
+it 2   dw 3.179e+00 pp 3.32097e+00 er 0.82760
+it 3   dw 1.037e+00 pp 2.92326e+00 er 0.67549
+it 4   dw 9.602e-01 pp 2.72106e+00 er 0.63933
+it 5   dw 1.345e+00 pp 2.41257e+00 er 0.54012
+it 6   dw 1.378e+00 pp 2.16177e+00 er 0.46429
+……</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果出現以下錯誤訊息, 表示你沒安裝 <em>megan</em></p>
+
+<p>```python
+    raise LookupError(‘\n\n%s\n%s\n%s’ % (div, msg, div))
+LookupError: </p>
+
+<p>===========================================================================
+NLTK was unable to find the megam file!
+Use software specific configuration paramaters or set the MEGAM environment variable.</p>
+
+<p>For more information, on megam, see:
+    <a href="http://www.cs.utah.edu/~hal/megam/">http://www.cs.utah.edu/~hal/megam/</a>
+===========================================================================</p>
+
+<p>```</p>
+
+<p>請到 http://www.umiacs.umd.edu/~hal/megam/version0_91/ 下載 <em>megan</em></p>
+
+<p>如果你是 <em>linux</em> 的使用者, 可直接下載執行檔, 放到 <code>/home/xxxxxx/bin/</code> 資料夾 ( 若你是使用 <em>Mac</em> 或 <em>Window$</em> , 則需要下載 <em>source code</em> 自行編譯</p>
+
+<p>或者你可以把 <em>loglinear.py</em> 中的 <code>MaxentClassifier</code> 的 ` algorithm=’megam’ ` 去掉 , 變成這樣</p>
+
+<p>```python loglinear.py
+        self.classifier = nltk.MaxentClassifier.train(
+                    reduce(operator.add, 
+                        map(lambda tagged_sent :
+                            self.sent_to_feature(tagged_sent)
+                            ,self.training_corpus)) )</p>
+
+<p>```</p>
+
+<p>但這會導致訓練速度變得很慢</p>
+
+<p>訓練好之後, 可以用 <em>Test Data</em> 看看結果如何 , 先挑一句, 以 <code>test_sents[10]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>test_sents[10]
+[(‘<code>', '</code>’), (‘You’, ‘PPSS’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘NN’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘NNS’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>把這個句子放到訓練好的 <code>classifier</code> , 用它來 <em>Tag</em> , 比較一下跟原本的 <em>tag</em> 有何不同 </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.tag_sentence(test_sents[10])
+[(‘<code>', '</code>’), (‘You’, ‘VB’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘JJ’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘JJ’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先用肉眼觀察, 我們發現 <code>classifier</code> 所得出的 <em>Tag</em> 有些和原本的一樣, 有些不一樣, 表示 <code>classifier</code> 有些字 <em>Tag</em> 錯了</p>
+
+<p>可以用程式來算準確率, 用 <code>classifier.evaluate</code> ,  但注意的是, <em>input argument</em> 不是 <em>sentence</em> , 而是 <em>list of sentence</em> , 所以 <em>input argument</em> 要用 <code>[test_sents[10]]</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate([test_sents[10]])
+0.75</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>算出來後準確度是 <em>0.75</em> , 也就是說有 <em>75%</em> 的 <em>Tag</em> 是正確的</p>
+
+<p>再來把所有的 <em>Test Data</em> 都做 <em>Evaluation</em> 看看</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate(test_sents)
+0.6910327241818954</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>得的準確率約為 <em>69.1%</em></p>
+
+<p>這樣的準確率不是很理想, 原因是因為 <em>100</em> 句的 <em>Training Data</em> 實在是太少了</p>
+
+<p>有興趣者可以試試看, 取 <em>2000</em> 句的 <em>Training Data</em> , 準確度應該會大幅提昇, 但是要花很久的時間訓練</p>
+
+<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+
+<p>本文參考至這本教科書</p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Chart Parsing]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing/"/>
+    <updated>2014-04-26T03:41:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理中, 剖析 ( <em>Parsing</em>  ) 是根據定義好的文法, 把句子轉換成 <em>Syntax Tree</em> 的過程</p>
+
+<p><em>Chart Parsing</em> 是利用一種叫做 <em>Chart</em> 的資料結構, 來進行剖析的演算法</p>
+
+<p><em>Chart</em> 的結構如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c}
+
+& <START> & \text{ some integer } \\
+
+& <FINISH> & \text{ some integer } \\
+
+& <LABEL> & \text{ some category } \\
+
+& <FOUND> & \text{ some category sequence } \\
+
+& <TOFIND> & \text{ some category sequence } \\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>以下為一個 <em>Chart</em> 的例子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,2,S \rightarrow NP * VP>
+
+ %]]&gt;</script>
+
+<!--more-->
+
+<p>其中, 前兩個數字分別是 <script type="math/tex">% &lt;![CDATA[
+<START> %]]&gt;</script> , <script type="math/tex">% &lt;![CDATA[
+<FINISH> %]]&gt;</script> , 數字後面的英文字是 <script type="math/tex">% &lt;![CDATA[
+<LABEL> %]]&gt;</script> , 而 <script type="math/tex">*</script> 符號左方的代表 <script type="math/tex">% &lt;![CDATA[
+<FOUND> %]]&gt;</script> , <script type="math/tex">*</script> 右方的代表 <script type="math/tex">% &lt;![CDATA[
+<TOFIND> %]]&gt;</script> .</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c}
+
+& <START> & \text{ 0 } \\
+
+& <FINISH> & \text{ 2 } \\
+
+& <LABEL> & \text{ S } \\
+
+& <FOUND> & \text{ <NP> } \\
+
+& <TOFIND> & \text{ <VP> } \\
+
+\end{array}
+
+
+ %]]&gt;</script>
+
+<p>這樣講還不是很清楚, 這些數字文字代表什麼, 為什麼要這樣定義呢？</p>
+
+<p>舉個例子, 如果要用以下的 <em>Grammar</em> 來剖析 <em>I run .</em>  這個句子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& S \rightarrow NP\mspace{10mu} VP \\
+
+& NP \rightarrow \text{I} \\
+
+& VP \rightarrow \text{run} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果我們現在要開始剖析 <script type="math/tex">S \rightarrow NP\mspace{10mu} VP</script> 這條 <em>Rule</em>,  剛開始時, <em>Chart</em> 的結構如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,0,S \rightarrow * \mspace{10mu} NP \mspace{10mu} VP>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>0</em> 結束, 還沒有 <em>FOUND</em> 任何一個 <em>category</em> , 而有兩個 <em>TOFIND</em> 的 <em>category</em> , 分別是 <em>NP</em> 和 <em>VP</em> , 如下圖</p>
+
+<p><img src="/images/pic/pic_00048.png" alt="status1" /></p>
+
+<p>接著,往右方尋找可以符合這條 <em>Rule</em> 的 <em>category</em> , 發現, 在位置 <em>0</em> 到 <em>1</em> 中間的 <em>category</em> 為 <em>NP</em> , 剛好符合這條 <em>Grammar</em> 的 <em>category</em>, 此時的 <em>Chart</em> 變為 </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,1,S \rightarrow NP \mspace{10mu} * \mspace{10mu} VP>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>1</em> 結束, 有一個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , 還剩一個 <em>TOFIND</em> 的 <em>category</em> , 為 <em>VP</em> , 如下圖</p>
+
+<p><img src="/images/pic/pic_00049.png" alt="status2" /></p>
+
+<p>以上兩種情形, 由於 <em>TOFIND</em> 不為空集合, 表示還有東西要找, 這個時候的 <em>Chart</em> 稱為 <em>active edge</em></p>
+
+<p>再來, 從 <em>1</em> 繼續往下一個位置找, 到 <em>2</em> 結束, 這一段是 <em>VP</em> , 也和 <em>Rule</em> 符合 , 此時的 <em>Chart</em> 變成這樣</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,1,S \rightarrow NP \mspace{10mu}   VP \mspace{10mu} *>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>2</em> 結束, 有兩個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , <em>VP</em> ,已經沒有個 <em>TOFIND</em> 的 <em>category</em> 了, 此時可把這個  <em>Chart</em> 稱為 <em>inactive edge</em> , 表示它已經完成了, 如下圖</p>
+
+<p><img src="/images/pic/pic_00050.png" alt="status3" /></p>
+
+<h2 id="implementation">2. Implementation</h2>
+
+<p>由於要寫完一個 <em>Chart Parser</em> 需要寫較多行程式碼, 故這次不打算重頭寫起, 而採用 <em>python nltk</em> 的套件 <code>nltk.parse.chart</code> 來操作 <em>Chart Parser</em> </p>
+
+<p>用以上的例句和 <em>Grammar</em> 來實作</p>
+
+<p>將以下程式碼貼到 <em>chart.py</em> 這個檔案</p>
+
+<p>```python chart.py
+from nltk.parse.chart import *
+from nltk.grammar import parse_cfg</p>
+
+<p>_Grammar = parse_cfg(“””
+S  -&gt; NP VP
+NP -&gt; “I”
+VP -&gt; “run”
+“””)</p>
+
+<p>_Sent = “I run”.split()</p>
+
+<p>def chart_parser(strategy):
+    Strategy={‘top-down’:TD_STRATEGY,’bottom-up’:BU_STRATEGY}
+    cp = ChartParser(_Grammar, Strategy[strategy], trace=1)
+    chart = cp.chart_parse(_Sent)
+    parses = chart.parses(_Grammar.start())</p>
+
+<p>```</p>
+
+<p>其中, <code>_Grammar</code> 是 <em>parsing</em> 所使用的 <em>Grammar</em> , <code>_Sent</code> 是例句 <em>I run.</em> </p>
+
+<p>而 <code>chart_parser(strategy)</code> 是 <em>Chart parsing</em> 的 <em>function</em> , 有兩種策略 , 分別是　<em>Top-Down</em> 和 <em>Bottom-Up</em> , 這兩者的差別在哪, 之後會介紹</p>
+
+<p>先到 <em>python interactve mode</em> 載入 <code>chart_parser</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from chart import chart_parser</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="top-down-strategy">2.1 Top-Down Strategy</h3>
+
+<p>於 <code>chart_parser</code> 輸入 <em>argument</em> <code>'top-down'</code>　, 會印出 <em>Top-Down Strategy</em> 的整個過程, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>chart_parser(‘top-down’)
+|.       I       .      run      .|
+|[—————]               .| [0:1] ‘I’
+|.               [—————]| [1:2] ‘run’
+|&gt;               .               .| [0:0] S  -&gt; * NP VP
+|&gt;               .               .| [0:0] NP -&gt; * ‘I’
+|[—————]               .| [0:1] NP -&gt; ‘I’ *
+|[—————&gt;               .| [0:1] S  -&gt; NP * VP
+|.               &gt;               .| [1:1] VP -&gt; * ‘run’
+|.               [—————]| [1:2] VP -&gt; ‘run’ *
+|[===============================]| [0:2] S  -&gt; NP VP *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先來看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  其實就是 <em>Initalize</em> 的過程, 如下</p>
+
+<p><img src="/images/pic/pic_00059.png" alt="td1" /></p>
+
+<p>再來會開始所謂的  <em>Top-Down Strategy</em> , 就是會先從最上層的 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code>  開始</p>
+
+<p><img src="/images/pic/pic_00052.png" alt="td2" /></p>
+
+<p>由於這條 <em>Rule</em> 右邊的第一個 <em>category</em> 為 <em>NP</em> , 所以會先找 <em>NP</em> 開頭的 <em>Rule</em> , ` [0:0] NP -&gt; * ‘I’` 看看是否符合</p>
+
+<p><img src="/images/pic/pic_00053.png" alt="td3" /></p>
+
+<p>如果符合的話, 可以往下走一步, <code>[0:1] NP -&gt; 'I' *</code> </p>
+
+<p>當這條 <em>Rule</em> 變成 <em>inactive edge</em> 後, 再回到上一層 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code></p>
+
+<p><img src="/images/pic/pic_00054.png" alt="td4" /></p>
+
+<p>如果也符合, 則上一層 <em>Rule</em> 往下走一步 <code>[0:1] S  -&gt; NP * VP</code> , 此時還是 <em>active edge</em> , 因為 <em>VP</em> 還沒走完</p>
+
+<p><img src="/images/pic/pic_00055.png" alt="td5" /></p>
+
+<p>這時就要往下一層找, 找到 <em>VP</em> 的 <em>Rule</em> <code>[1:1] VP -&gt; * 'run'</code></p>
+
+<p><img src="/images/pic/pic_00064.png" alt="td6" /></p>
+
+<p>這樣繼續下去…</p>
+
+<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 為  <em>inactive edge</em>,  如下</p>
+
+<p><img src="/images/pic/pic_00065.png" alt="td7" /></p>
+
+<p>這樣就大功告成了, 以下為動畫版</p>
+
+<p><img src="/images/pic/pic_00058.gif" alt="td_animation" /></p>
+
+<h3 id="bottom-up-strategy">2.2 Bottom-Up Strategy</h3>
+
+<p>在 <code>chart_parser</code> 輸入 <code>'bottom-up'</code>　, 會印出 <em>Bottom-Up Strategy</em> 的整個過程, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>chart_parser(‘bottom-up’)
+|.       I       .      run      .|
+|[—————]               .| [0:1] ‘I’
+|.               [—————]| [1:2] ‘run’
+|&gt;               .               .| [0:0] NP -&gt; * ‘I’
+|[—————]               .| [0:1] NP -&gt; ‘I’ *
+|&gt;               .               .| [0:0] S  -&gt; * NP VP
+|[—————&gt;               .| [0:1] S  -&gt; NP * VP
+|.               &gt;               .| [1:1] VP -&gt; * ‘run’
+|.               [—————]| [1:2] VP -&gt; ‘run’ *
+|[===============================]| [0:2] S  -&gt; NP VP *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來仔細看看 <em>Bottom-Up Strategy</em>  和  <em>Top-Down Strategy</em> 的差異在哪</p>
+
+<p>看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  都是 <em>Initalize</em> 的過程, 都一樣</p>
+
+<p><img src="/images/pic/pic_00059.png" alt="bt1" /></p>
+
+<p>再來就是 <em>Bottom-Up Strategy</em>  了, 和 <em>Top-Down Strategy</em>  不一樣的地方在於, <em>Bottom-Up Strategy</em> 是先從最底層的 <em>Rule</em> <code>[0:0] NP -&gt; * 'I'</code>  開始找, 看看符不符合</p>
+
+<p><img src="/images/pic/pic_00060.png" alt="bt2" /></p>
+
+<p>如果符合的話, 往前走一步, 變為 <code>[0:1] NP -&gt; 'I' *</code> , 為 <em>inactive edge</em></p>
+
+<p><img src="/images/pic/pic_00061.png" alt="bt3" /></p>
+
+<p>然後再來找上一層的 <em>Rule</em> , <code>[0:0] S  -&gt; * NP VP</code>  看看是否符合</p>
+
+<p><img src="/images/pic/pic_00062.png" alt="bt4" /></p>
+
+<p>如果符合, 則往前走一步, 變為 <code>[0:1] S  -&gt; NP * VP</code> </p>
+
+<p><img src="/images/pic/pic_00063.png" alt="bt5" /></p>
+
+<p>再回到下層的 <em>VP</em> <em>Rule</em> , <code>[1:1] VP -&gt; * 'run'</code></p>
+
+<p><img src="/images/pic/pic_00064.png" alt="bt6" /></p>
+
+<p>這樣繼續下去…</p>
+
+<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 如下</p>
+
+<p><img src="/images/pic/pic_00065.png" alt="bt7" /></p>
+
+<p>這樣就大功告成了, 以下為動畫版</p>
+
+<p><img src="/images/pic/pic_00066.gif" alt="bt_animation" /></p>
+
+<p>以上為 <em>Top-Down Strategy</em>  以及 <em>Bottom-Up Strategy</em>  很簡短的介紹 , 尚未考慮到 <em>Rule</em> 不符合的情形, 想了解這部份, 請看 <em>Furtuer Reading</em> </p>
+
+<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+
+<p>本文參考至這本教科書</p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Pointwise Mutual Information]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/"/>
+    <updated>2014-04-25T17:58:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息</p>
+
+<p>例如, 在新聞報導中, 有 <em>New</em> , <em>York</em>  , 這兩個字一起出現, 可以代表一個地名 <em>New York</em>  , 所以當出現了 <em>New</em> 這個字, 則有可能出現 <em>York</em> </p>
+
+<p>這可以用 <em>Pointwise Mutual Information(PMI)</em> 計算</p>
+
+<p><em>Pointwise Mutual Information</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
+
+</script>
+
+<!--more-->
+
+<p>其中, <script type="math/tex">P(x,y)</script> 代表文字 <em>x</em> 和文字 <em>y</em> 一起出現的機率, 而 <script type="math/tex">P(x)</script> 為文字 <em>x</em> 出現的機率 , <script type="math/tex">P(y)</script> 為文字 <em>y</em> 出現的機率</p>
+
+<p>如果某兩個字的出現是獨立事件, 則 <em>PMI</em> 為 <em>0</em></p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(x,y) = P(x) \times P(y)\\
+
+& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} = log \frac{P(x) \times P(y)}{P(x) \times P(y)} =log1=0
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>若有兩個字出現的機率不是獨立事件, 某個字出現時提昇另一個字的出現的機率, 則 <em>PMI</em> 大於 <em>0</em></p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(x,y) > P(x) \times P(y)\\
+
+& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} > 0
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>也就是說, 如果這兩個字的出現越不是偶然, 則 <em>Pointwise Mutual Information</em> 算出來的值越高, 越有可能帶有某種訊息</p>
+
+<p>舉個例子, 以下為一個表格, 統計一篇文章中, 某些字是否一起出現</p>
+
+<p>表格中的數字, 代表左方的字和上方的字, 一起出現的次數</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{|c|c|}
+
+    \hline            &  \text{computer}  &  \text{data}  & \text{pinch}  & \text{result}  & \text{sugar} \\
+
+\hline \text{aprocot}    &  0        &    0    &   1    &     0   &     1 \\
+
+\hline \text{pineapple}  &  0        &    0    &   1    &     0   &     1 \\
+
+\hline \text{digital}    &  2        &    1    &   0    &     1   &     0 \\
+
+\hline \text{information} &  1       &    6    &   0    &     4   &     0 \\
+
+\hline
+
+	\end{array}
+
+ %]]&gt;</script>
+
+<p>如果這篇文章總共只有 <em>19</em> 個字, 來計算 <em>information</em> 和 <em>data</em> 這兩字的 <em>PMI</em> , 得出</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(x = information,y=data) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6}{19} 
+
+\mspace{5mu}=\mspace{5mu} 0.32 \\
+
+& P(x = information ) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6+4+1}{19} 
+
+\mspace{5mu}=\mspace{5mu} \frac{11}{19} 
+
+\mspace{5mu}=\mspace{5mu} 0.58 \\
+
+& P(y = data ) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6+1}{19} 
+
+\mspace{5mu}=\mspace{5mu} \frac{7}{19}  
+
+\mspace{5mu}=\mspace{5mu} 0.37 \\[10pt]
+
+& pmi(x = information,y = data)  \\
+
+& \mspace{5mu}=\mspace{5mu} log\frac{P(x =information,y=data)}{P(x=information)\times P(y=data)} \\
+
+&\mspace{5mu}=\mspace{5mu} log1.49 \\
+
+&\mspace{5mu}=\mspace{5mu} 0.57  \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>算出來的數字大於 0 , 表示 <em>information</em> 和 <em>data</em> 這兩個字的出現, 不是獨立事件</p>
+
+<h2 id="implementation">2.Implementation</h2>
+
+<p>我們用 <code>python nltk</code> 的 <em>brown corpus</em> 新聞類別文章, 來計算 <em>New</em> , <em>York</em> 的 <em>PMI</em> 和 <em>New</em> , <em>The</em> 的 <em>PMI</em> , 並比較兩者差異</p>
+
+<p>將以下程式碼複製到 <em>pmi.py</em> 這個檔案</p>
+
+<p>```python pmi.py</p>
+
+<p>import nltk
+from nltk.corpus import brown
+from nltk import WordNetLemmatizer
+from math import log 
+wnl=WordNetLemmatizer()</p>
+
+<p>_Fdist = nltk.FreqDist([wnl.lemmatize(w.lower()) for w in brown.words(categories=’news’)])</p>
+
+<p>_Sents = [[wnl.lemmatize(j.lower()) for j in i] for i in brown.sents(categories=’news’)]</p>
+
+<p>def p(x):
+       return _Fdist[x]/float(len(_Fdist))</p>
+
+<p>def pxy(x,y):
+       return (len(filter(lambda s :  x in s and y in s ,_Sents))+1)/ float(len(_Sents) )</p>
+
+<p>def pmi(x,y):
+       return  log(pxy(x,y)/(p(x)*p(y)),2) </p>
+
+<p>```</p>
+
+<p>其中 <code>_Fdist </code> 是單字出現的頻率 , <code>_Sents</code> 是文章中所有的句子 , <code>p(x)</code> 計算單字 <em>x</em> 出現的機率,  ` pxy(x,y)<code> 計算單字 *x* 和單字 *y* 出現在同一個句子的機率, </code>pmi(x,y)` 計算單字 <em>x</em> 和單字 <em>y</em> 的 <em>Pointwise Mutual Information</em> </p>
+
+<p>到 <em>python</em> 的 <em>interactive mode</em> 載入這個檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from pmi import *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先來計算 <em>new</em> 和 <em>york</em> 各別出現的機率</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>p(‘new’)
+0.020265724857046755</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>p(‘york’)
+0.004372687521022536</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>計算 <em>new</em> , <em>york</em> 出現在同一句子的機率</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pxy(‘new’,’york’)
+0.011031797534068787</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>計算 <em>new</em> , <em>york</em> 的 <em>PMI</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pmi(‘new’,’york’)
+6.959890136179789</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來看看, <em>new</em> , <em>the</em> 出現在同一句子的機率</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pxy(‘new’,’the’)
+0.04023361453601557</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>比 <em>new</em> , <em>york</em> 出現在同一句子的機率還高, 但是因為 <em>the</em> 出現次數較多</p>
+
+<p>算一下 <em>the</em> 出現的機率</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>p(‘the’)
+0.5369996636394214</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>計算<em>new</em> , <em>the</em> 的 <em>PMI</em> , 還是沒有比 <em>new</em> , <em>york</em> 高</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pmi(‘new’,’the’)
+1.8863664858873235</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以上結果顯示, <em>PMI</em> 可以得出, <em>new</em> 和 <em>york</em> 一起出現的情形, 比較不是偶然的事件, 表示這兩個詞一起出現可能帶有較多訊息</p>
+
+<p>雖然 <em>new</em> 和 <em>the</em> 出現的頻率比較多, 但同時 <em>the</em> 出現的頻率也比較多, 計算結果 <em>PMI</em> 可以把 <em>the</em> 的出現頻率除掉, 得出 <em>new</em> 和 <em>the</em> 的出現, 比較像是獨立事件</p>
+
+<h2 id="reference">3.Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="d-jurafsky-and-c-manning--natural-language-processing">D. Jurafsky, and C. Manning.  Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlp</p>
+]]></content>
+  </entry>
+  
+</feed>

@@ -1,0 +1,316 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax) - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 將類神經網路應用在自然語言處理領域的模型有Neural Probabilistic Language Model(NPLM)，但在實際應用時，運算瓶頸在於 output layer 的神經元個數，等同於總字彙量 。 每訓練一個字時，要讓 output layer &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-23T15:33:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>3:33 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>將類神經網路應用在自然語言處理領域的模型有<a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model">Neural Probabilistic Language Model(NPLM)</a>，但在實際應用時，運算瓶頸在於 <em>output layer</em> 的神經元個數，等同於總字彙量 <script type="math/tex">\mid V\mid </script> 。</p>
+
+<p>每訓練一個字時，要讓 <em>output layer</em> 在那個字所對應的神經元輸出值為 <script type="math/tex">1</script> ，而其他 <script type="math/tex">\mid V\mid -1</script> 個神經元的輸出為 <script type="math/tex">0</script> ， 這樣總共要計算 <script type="math/tex">\mid V\mid </script> 次，會使得訓練變得沒效率。</p>
+
+<p>若要減少於 <em>output layer</em> 的訓練時間，可以把 <em>output layer</em> 的字作分類階層，先判別輸出的字是屬於哪類，再判斷其子類別，最後再判斷是哪個字。 </p>
+
+<h2 id="hierarchical-softmax">Hierarchical Softmax</h2>
+
+<p>給定訓練資料為<script type="math/tex">X</script> ，輸出字的集合為 <script type="math/tex">Y</script> 。當輸入的字串為 <script type="math/tex">x</script> ，輸出的字為 <script type="math/tex">y</script> 時，訓練的演算法要將機率 <script type="math/tex">P (Y=y \mid  X=x) </script> 最佳化。</p>
+
+<p>如果 <script type="math/tex">Y</script> 有 <em>10000</em> 種字，若沒有分類階層，訓練時就要直接對 <script type="math/tex">P (Y = y \mid  X = x) </script> 做計算，即是對這 <em>10000</em>種字做計算，使 <script type="math/tex">y</script> 所對應的神經元輸出為 <em>1</em> ，其它 <em>9999</em> 個神經元輸出 <em>0</em> ，這樣要計算 <em>10000</em> 次，如下圖：</p>
+
+<p><img src="/images/pic/pic_00079.png" alt="" /></p>
+
+<p>若在訓練前，就事先把 <script type="math/tex">Y</script> 中的字彙分類好，以 <script type="math/tex">C(y)</script> 代表字 <script type="math/tex">y</script> 的類別，則可以改成用以下機率做最佳化：</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">
+
+P (Y = y | X = x) =
+
+P (Y = y | C = c(y), X) \times P (C = c(y) | X = x)
+
+
+</script>
+
+<p>根據以上公式，先判斷 <script type="math/tex">y</script> 是在哪類，要算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> 的值，再判斷 <script type="math/tex">y</script> 是 <script type="math/tex">c(y)</script> 中的哪個字，要算 <script type="math/tex">P (Y = y \mid  C = c(y), X) </script> 的值。</p>
+
+<p>若把它們分成 <em>100</em> 類，則每個類別有 <em>100</em> 種字。訓練時需要分成兩步來計算，第一步先計算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> ，此時只要對 <em>100</em> 種分類做計算，使 <script type="math/tex">C(y)</script> 所對應的神經元輸出 <em>1</em> ，其它 <em>99</em> 個神經元輸出 <em>0</em> 。第二步是算 <script type="math/tex">P (Y = y \mid  C = c(y), X)</script>，即是讓 <script type="math/tex">C(y)</script> 底下對應到 <script type="math/tex">y</script> 的神經元輸出 <em>1</em> ，其它<em>99</em> 個神經元輸出 <em>0</em> ，這樣只需要計算 <em>200</em> 次即可，所做的計算只有原本的 <script type="math/tex">\frac{1}{50}</script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00080.png" alt="" /></p>
+
+<p>更進一步地，可以將 <em>output layer</em> 分成更多層，也就是說，將它用成樹狀結構，每一個節點代表一次分類，這樣一層層分下去，直到葉子節點，可分出是哪個字彙。分越多層，訓練時要計算的次數就會越小，分到最細的情況下，就變成二元分類樹，這樣所需的計算總量只有原本的 <script type="math/tex">\frac{log_{2}\mid V\mid }{\mid V\mid }</script> 倍。</p>
+
+<p>根據這個二元分類樹，可以把 <script type="math/tex">Y</script> 中的每一個字，對應到一個由 <em>0</em> 和 <em>1</em> 所組成的二元字串 <script type="math/tex">(b_{1}(y), . . . b_{m}(y))</script> ，若字串中第一個數字為 <em>0</em> ，則表示這個字在第一層神經元所計算出的值為 <em>0</em>，以此類推。若要用這個二元分類樹計算 <script type="math/tex">P (Y = y \mid  X = x) </script> 可用以下公式來計算：</p>
+
+<script type="math/tex; mode=display">
+
+P( Y = y | X = x) =
+
+\prod_{j=1}^{m}P(b_{j}(y) | b_{j-1}(y),b_{j-2}(y),...,b_{1}(y), X=x)
+
+</script>
+
+<p>其中， <script type="math/tex">（b_{j−1}(y),b_{j−2}(y),...,b_{1}(y))</script> 為長度小於 <script type="math/tex">m</script> 的二元字串，即是在二元分類樹中不是葉子也不是根的節點。</p>
+
+<p>例如字串 <script type="math/tex">( b_{1}=0, b_{2}=1 )</script>即表示先從根節點往 <em>0</em> 的分支走到子節點，再從這個子節點走到 <em>1</em> 的分支的子節點，此子節點可用字串 <em>01</em> 來表示。若要計算以上公式的條件機率，方法為，先給這些子節點有它們自己的語意向量，再用 <em>NPLM</em> 把子節點的語意向量和 <script type="math/tex">x</script> 當成輸入值一起輸入 <em>NPLM</em> 來計算。</p>
+
+<p>例如，假設詞庫裡總共有 <em>8</em> 個字， 則 <script type="math/tex">m=3</script> ，若字彙 <script type="math/tex">y</script> 的二元字串值 <script type="math/tex">b_{1} = 1, b_{2} =0, b_{3}=0 </script> ，則它在二元分類樹的位置如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00081.png" alt="" /></p>
+
+<p>則 <script type="math/tex">P( Y = y \mid  X = x) </script> 為：</p>
+
+<script type="math/tex; mode=display">
+
+P(b_{1} = 1 | X=x) \times
+
+P(b_{2} = 0 | b_{1} = 1, X=x) \times 
+
+P(b_{3} = 0| b_{2} = 0, b_{1} = 1, X=x)
+
+</script>
+
+<p>訓練時，將訓練資料 <script type="math/tex">x</script> 輸入到 <em>NPLM</em> 的類神經網路中，並以二元分類樹的節點來代替它的 <em>output layer</em> 。</p>
+
+<p>首先，先從根節點的神經元開始訓練，這一步是要算 <script type="math/tex">P(b_{1} = 1 \mid  , X=x) </script> 。由於 <script type="math/tex">b_{1} = 1 </script>，所以要以根節點的神經元輸出為 <em>1</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
+
+<p><img src="/images/pic/pic_00082.png" alt="" /></p>
+
+<p>再來，從根節點往左走，選 <em>1</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{2} = 0 \mid  b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1</script> 的條件機率，所以要用字串 <em>1</em> 所對應它的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{2} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
+
+<p><img src="/images/pic/pic_00083.png" alt="" /></p>
+
+<p>然後，從剛剛那個神經元的節點開始，選 <em>0</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{3} = 0\mid  b_{2} = 0, b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1 , b_{2} = 0 </script> 的條件機率，所以要先將字串 <em>10</em> 所對應的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{3} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
+
+<p><img src="/images/pic/pic_00084.png" alt="" /></p>
+
+<p>最後，選擇 <em>0</em> 的分支往下走，即可走到 <script type="math/tex">y</script> ，結束了針對 <script type="math/tex">x</script> 這筆資料的訓練過程。</p>
+
+<p><img src="/images/pic/pic_00085.png" alt="" /></p>
+
+<h2 id="hierarchical-clustering">Hierarchical Clustering</h2>
+
+<p>在訓練之前，要先把字彙的階層分類給建立好。要建立這個分類階層，有很多種方式，例如，使用 <em>WordNet</em> 所建立的上下位關係，來建立階層，或者可以用 <em>Hierarchical Clustering</em> ，像是<a href="/blog/2014/10/25/natural-language-processing-brown-clustering">Brown Clustering</a>之類的，自動從訓練資料中建立分類階層。</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>用 <em>Hierarchical Softmax</em> 來置換掉原本 <em>NPLM</em> 的 <em>output layer</em> ，可以使得原本要計算 <script type="math/tex">\mid V\mid </script> 次的訓練，縮減為 <script type="math/tex">log_{2}\mid V\mid </script> 次，大幅提升了訓練速度。因此， <em>Hierarchical Softmax</em> 被日後眾多種類神經網路相關的模型所採用，包括近年來很熱門的 <em>word2vec</em> 也是。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>Frederic Morin , Yoshua Bengio. Hierarchical probabilistic neural network language model. 2005</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-05-23T15:33:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>3:33 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hierarchical-softmax/'>hierarchical_softmax</a>, <a class='category' href='/blog/categories/neural-network/'>neural_network</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/" title="Previous Post: 類神經網路 -- Neural Probabilistic Language Model ">&laquo; 類神經網路 -- Neural Probabilistic Language Model </a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/05/28/neural-network-backward-propagation/" title="Next Post: 類神經網路 -- Backward Propagation 詳細推導過程">類神經網路 -- Backward Propagation 詳細推導過程 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

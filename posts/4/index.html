@@ -1,0 +1,732 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 如果要把 string 的內容, 當成程式碼來執行, 可以用到 eval 或 exec 例如有個 string , 為 s1="3+5" 我們想要算它執行的結果, 可用 1
+2
+3
+&gt;&gt;&gt; s1=&quot;3+5&quot;
+&gt;&gt;&gt &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/posts/4/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/23/python-built-in-functions-exec/">Python Built-in Functions -- Eval and Execute</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-23T01:59:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>1:59 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>如果要把 <em>string</em> 的內容, 當成程式碼來執行, 可以用到 <em>eval</em> 或 <em>exec</em></p>
+
+<p>例如有個 <em>string</em> , 為 <code>s1="3+5"</code> 我們想要算它執行的結果, 可用</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">s1</span><span class="o">=</span><span class="s">&quot;3+5&quot;</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+</span><span class="line"><span class="mi">8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>來看一下怎麼用 <em>eval</em> 或 <em>exec</em> </p>
+
+<h2 id="eval">2. eval</h2>
+
+<p><code>eval</code> 是當我們要計算某一個字串中的運算, 並且 <strong>會回傳計算結果</strong> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;3+1&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/23/python-built-in-functions-exec/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/17/machine-learning-model-selection/">機器學習 -- Model Selection</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-17T07:15:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>17</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:15 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="motivation">1.Motivation</h2>
+
+<p>本文接續先前提到的 <em>Overfitting and Regularization</em></p>
+
+<p><a href="/blog/2014/04/13/machine-learning-overfitting-and-regularization">Machine Learning – Overfitting and Regularization</a></p>
+
+<p>探討如何避免 <em>Overfitting</em> 並選出正確的 <em>Model</em></p>
+
+<p>因為 <em>Overfitting</em> 的緣故, 所以無法用 <script type="math/tex">E_{in}</script> 來選擇要用哪個 <em>Model</em> </p>
+
+<p>在上一篇文章中, 可以把 <script type="math/tex">E_{out}</script> 最小的 <em>Model</em> 當成是最佳的 <em>Model</em> , 但是在現實生活的應用中, 無法這樣選擇, 因為, <strong>在訓練 <em>Model</em> 時,無法事先知道 <em>Testing Data</em> 的預測結果是什麼</strong> ,所以就不可能用 <script type="math/tex">E_{out}</script> 來選擇 <em>Model</em> </p>
+
+<p>既然這樣, 要怎麼辦呢？ 既然不可以用 <script type="math/tex">E_{in}</script> 來選擇 <em>Model</em> , 又無法事先算出 <script type="math/tex">E_{out}</script></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/17/machine-learning-model-selection/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/14/natural-language-processing-tf-idf/">自然語言處理 -- TF-IDF</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-14T10:12:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:12 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的 <em>TF-IDF</em> , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法</p>
+
+<p>例如, 有一篇新聞, 是 <em>nltk</em> 的 <em>Reuters Corpus</em> 中的文章, 這篇文章被歸類在 <em>grain</em> , <em>ship</em> 這兩種類別下, 文章的內容如下：</p>
+
+<blockquote>
+  <p>GRAIN SHIPS LOADING AT PORTLAND 
+There were three grain ships loading and two ships were waiting to load at Portland , according to the Portland Merchants Exchange .</p>
+</blockquote>
+
+<p>假設不知道什麼是 <em>TF-IDF</em>, 先用人工判別法試看看, 這篇新聞的關鍵字, 應該是 <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的字, 而不會是 <em>to</em> , <em>at</em> 這種常常出現的字</p>
+
+<p>為什麼呢？因為 <em>to</em> 或 <em>at</em> 雖然在這篇文章中出現較多次, 但其他文章中也常有這些字, 所謂的關鍵的字, 應該是在這篇文章中出現較多次, 且在其他文章中比較少出現的字</p>
+
+<p>所以,如果要在一篇文章中, 尋找這樣的關鍵字, 要考慮以下兩個要素:</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/14/natural-language-processing-tf-idf/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/">自然語言處理 -- Naive Bayes Classifier</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-13T07:04:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:04 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理的應用, 常常有分類的問題, 例如把某篇新聞分到哪一類</p>
+
+<p>處理分類問題, 有種簡單的方法, 就是看這篇文章有哪些關鍵字, 根據這些關鍵字的出現與否, 用 <em>Naive Bayes Classifier</em> 做分類</p>
+
+<p>要講 <em>Naive Bayes Classifier</em> 之前, 首先, 要知道 <em>Bayes rule</em> 是什麼, <em>Bayes rule</em> 很簡單, 如下</p>
+
+<script type="math/tex; mode=display">
+
+P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
+
+</script>
+
+<p>這個公式, 高中數學應該都有教過 , 如果 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 為 <em>Independence</em> , 則</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P(A\mid B) = P(A) \\
+
+&P(A,B)=P(A\mid B) \times P(B) = P(A) \times P(B)
+
+\end{align}
+
+ %]]></script>
+
+<p>所謂的 <em>Naive Bayes Classifier</em>  ,  其實就是應用 <em>Bayes rule</em>  來處理分類問題</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/13/machine-learning-overfitting-and-regularization/">機器學習 -- Overfitting and Regularization</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-13T06:46:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:46 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="overfitting">1.Overfitting</h2>
+
+<p>所謂 <em>Overfitting</em> 指的就是過度訓練, 意思就是說機器學習所學到的 <em>Hypothesis</em> 過度貼近 <em>Training Data</em> , 而導致和 </p>
+
+<p><em>Testing Data</em> 的時候, <em>Error</em>  變得更大</p>
+
+<p>假設有一筆資料如下圖, 藍色的為 <em>Training Data</em> , 紅色的為 <em>Testing Data</em> ,</p>
+
+<p><img src="/images/pic/pic_00020.png" alt="input" /></p>
+
+<p>想要用高次多項式的 <em>Hypothesis</em> ,<script type="math/tex">h(w)</script>,  做 <em>Linear Regression</em> </p>
+
+<script type="math/tex; mode=display">
+
+	h(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n}
+
+</script>
+
+<p>其中, <script type="math/tex">w</script> 是 <em>weight</em>, <script type="math/tex">n</script> 表示這個多項式的次數 ( <em>Order</em> )</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/13/machine-learning-overfitting-and-regularization/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/">自然語言處理 -- Viterbi Algorithm</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-06T18:21:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:21 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>本文接續先前提到的 <em>Hidden Markov Model</em></p>
+
+<p><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models">Natural Language Processing – Hidden Markov Model</a></p>
+
+<p>繼續探討 <em>part of speech tagging</em> 的演算法</p>
+
+<p>先前提到, 如果要在 <em>Hidden Markov Model</em> 找出一個機率最大的 <em>tagging sequence</em></p>
+
+<p>則必須把每一個序列都列出來, 看哪一個是機率最大的</p>
+
+<p>但如果 <em>Tag</em> 有 <script type="math/tex">N</script> 種, 那麼長度為 <script type="math/tex">T</script> 的序列, 就有 <script type="math/tex">N^{T}</script> 種可能的 <em>tagging sequence</em></p>
+
+<p>由此可知, 暴力列舉的演算法非常沒有效率</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/">形式語意學 -- Davidsonian Event Semantics</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-04T17:13:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的形式語義學( <em>Formal Semantics</em> ), 是在研究, 如何把自然語言用邏輯形式來表達</p>
+
+<p>例如以下句子</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\text{John buttered the toast.} &(1.a)
+
+\end{align}
+
+ %]]></script>
+
+<p>傳統上, 用一皆邏輯 <em>First Order Logic</em> 可以把這個句子表示成這樣</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&butter(John,toast) &(1.b)
+
+\end{align}
+
+ %]]></script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/">自然語言處理 -- Hidden Markov Model</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-03T03:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:38 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="markov-model">1.Markov Model</h2>
+
+<p><em>Hidden Markov Model</em> 在 <em>natural language processing</em> 中,</p>
+
+<p>常用於 <em>part-of speech tagging</em></p>
+
+<p>想要了解 <em>Hidden Markov Model</em> ,就要先了解什麼是 <em>Markov Model</em></p>
+
+<p>例如, 可以把語料庫中,各種字串的機率分佈,</p>
+
+<p>看成是一個Random varaible 的 sequence , <script type="math/tex">X=(X_{1},X_{2},...,X_{T}) </script></p>
+
+<p>其中, <script type="math/tex">X</script> 的值是 alphabet (字)的集合 : <script type="math/tex">S=\{s_{1},s_{2},...,s_{n}\}</script></p>
+
+<p>如果想要知道一個字串出現的機率, 則可以把字串拆解成Bigram, 逐一用前一個字,來推估下一個字的機率是多少</p>
+
+<p>但是要先假設以下的 <em>Markov Assumption</em> </p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/01/python-standard-library-copy/">Python Standard Library -- Copy</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-01T16:23:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>4:23 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在python裡面, <code>=</code> 這個符號,</p>
+
+<p>有可能是 <em>pass by value</em> 或是 <em>pass by reference</em></p>
+
+<p>如果 <code>=</code> 右方的 <em>variable</em> 是 <em>value</em> , 例如 <em>int</em></p>
+
+<p>則 <code>=</code> 是 <em>pass by value</em> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x2</span><span class="o">=</span><span class="n">x1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">+=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x1</span>
+</span><span class="line"><span class="mi">2</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x2</span>
+</span><span class="line"><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00001.tiff" alt="p1" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/01/python-standard-library-copy/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/31/python-standard-library-argparse/">Python Standard Library -- Argparse</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-31T05:31:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>5:31 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">0.Introduction</h2>
+
+<p>argparse是用來處理command line的argument所使用的</p>
+
+<p>例如執行一個程式, 比如說 <code>mv</code>  </p>
+
+<p>在Terminal輸入 <code>mv --help</code> 之後</p>
+
+<p>顯示如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>mv --help
+</span><span class="line">Usage: mv <span class="o">[</span>OPTION<span class="o">]</span>... <span class="o">[</span>-T<span class="o">]</span> SOURCE DEST
+</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... SOURCE... DIRECTORY
+</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... -t DIRECTORY SOURCE...
+</span><span class="line">Rename SOURCE to DEST, or move SOURCE<span class="o">(</span>s<span class="o">)</span> to DIRECTORY.
+</span><span class="line">
+</span><span class="line">Mandatory arguments to long options are mandatory <span class="k">for</span> short options too.
+</span><span class="line">      --backup<span class="o">[=</span>CONTROL<span class="o">]</span>       make a backup of each existing destination file
+</span><span class="line">  -b                           like --backup but does not accept an argument
+</span><span class="line">  -f, --force                  <span class="k">do</span> not prompt before overwriting
+</span><span class="line">  -i, --interactive            prompt before overwrite
+</span><span class="line">......
+</span></code></pre></td></tr></table></div></figure>
+
+<p>由此可知, <code>mv</code> 後面可以有很多種argument</p>
+
+<p>那要寫程式去parse這些command line的argument很麻煩</p>
+
+<p>如果用了 <code>argparse</code> 這個module</p>
+
+<p>就不用自己寫程式去parse這些argument了</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/31/python-standard-library-argparse/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/posts/5">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/posts/3">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

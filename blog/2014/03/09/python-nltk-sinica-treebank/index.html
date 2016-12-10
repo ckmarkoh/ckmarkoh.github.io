@@ -1,0 +1,370 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Sinica Treebank - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="今天我們來談談如何用python nltk做中文的的自然語言處理 nltk有內建的中文treebank,是中研院的sinica treebank 是免費的中文treebank 至於要如何使用呢？ 首先 先載入模組 1
+2
+&gt;&gt;&gt; from nltk.corpus import &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/09/python-nltk-sinica-treebank/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Sinica Treebank</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T07:41:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:41 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>今天我們來談談如何用python nltk做中文的的自然語言處理</p>
+
+<p>nltk有內建的中文treebank,是中研院的sinica treebank</p>
+
+<p><strong>是免費的中文treebank</strong></p>
+
+<p>至於要如何使用呢？</p>
+
+<p>首先 先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="kn">import</span> <span class="n">sinica_treebank</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接下來我們來看看treebank裡面的東西：</p>
+
+<!--more-->
+
+<h2 id="words-tags-sentence-tree">1.words, tags, sentence, tree:</h2>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_treebank</span><span class="o">.</span><span class="n">words</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;</span><span class="se">\xe4\xb8\x80</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\xe5\x8f\x8b\xe6\x83\x85</span><span class="s">&#39;</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中<code>'\xe4\xb8\x80'</code>是以utf-8編碼的中文字</p>
+
+<p>如果想知道它是什麼字,可以輸入<code>print '\xe4\xb8\x80'</code>, 輸出結果為”一”</p>
+
+<p>再來是Tag和sentence</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_treebank</span><span class="o">.</span><span class="n">tagged_words</span><span class="p">()</span>
+</span><span class="line"><span class="p">[(</span><span class="s">&#39;</span><span class="se">\xe4\xb8\x80</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;Neu&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;</span><span class="se">\xe5\x8f\x8b\xe6\x83\x85</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;Nad&#39;</span><span class="p">),</span> <span class="o">...</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_treebank</span><span class="o">.</span><span class="n">sents</span><span class="p">()[</span><span class="mi">15</span><span class="p">]</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;</span><span class="se">\xe5\xa4\xa7\xe8\x81\xb2</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\xe7\x9a\x84</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\xe5\x8f\xab</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\xe8\x91\x97</span><span class="s">&#39;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接下來,我們來看看如何印出tree的結構</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_treebank</span><span class="o">.</span><span class="n">parsed_sents</span><span class="p">()[</span><span class="mi">15</span><span class="p">]</span>
+</span><span class="line"><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;V</span><span class="se">\xe2\x80\xa7\xe5\x9c\xb0</span><span class="s">&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VH11&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\xe5\xa4\xa7\xe8\x81\xb2</span><span class="s">&#39;</span><span class="p">]),</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;DE&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\xe7\x9a\x84</span><span class="s">&#39;</span><span class="p">])]),</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VE2&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\xe5\x8f\xab</span><span class="s">&#39;</span><span class="p">]),</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;Di&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\xe8\x91\x97</span><span class="s">&#39;</span><span class="p">])])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果印出來了,但看起來結構不清楚的樣子</p>
+
+<p>沒關係,可以試試看用圖形介面呈現</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_treebank</span><span class="o">.</span><span class="n">parsed_sents</span><span class="p">()[</span><span class="mi">15</span><span class="p">]</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行這行時會跳出一個視窗,如下：</p>
+
+<p><img src="http://lh6.googleusercontent.com/-Q67OFohObtk/UyGbLZ9ayeI/AAAAAAAAAX4/R5vklj5bZkI/w434-h344-no/nltk0.png" /></p>
+
+<p>這樣就可以很清楚地把樹狀結構呈現出來了</p>
+
+<p>但如果你執行這行會有error出現</p>
+
+<p>請先安裝python-tk</p>
+
+<p>https://wiki.python.org/moin/TkInter</p>
+
+<h2 id="concordance">2.concordance:</h2>
+
+<p>concordance的作用就是找某個字的前後文,例如要找”我”這個字的前後文,用法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_text</span><span class="o">=</span><span class="n">nltk</span><span class="o">.</span><span class="n">Text</span><span class="p">(</span><span class="n">sinica_treebank</span><span class="o">.</span><span class="n">words</span><span class="p">())</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_text</span><span class="o">.</span><span class="n">concordance</span><span class="p">(</span><span class="s">&#39;我&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">Displaying</span> <span class="mi">25</span> <span class="n">of</span> <span class="mi">724</span> <span class="n">matches</span><span class="p">:</span>
+</span><span class="line">                                      <span class="err">我</span> <span class="err">住在</span> <span class="err">同一條</span> <span class="err">巷子</span> <span class="err">我們</span> <span class="err">是</span>
+</span><span class="line"><span class="err">��</span> <span class="err">一起</span> <span class="err">回家</span> <span class="err">有一天</span> <span class="err">上學</span> <span class="err">時</span> <span class="err">我</span> <span class="err">到</span> <span class="err">她</span> <span class="err">家</span> <span class="err">等候</span> <span class="err">按</span> <span class="err">了</span> <span class="err">門鈴</span> <span class="err">卻</span>
+</span><span class="line"><span class="err">��鈴</span> <span class="err">卻</span> <span class="err">沒有</span> <span class="err">任何</span> <span class="err">動靜</span> <span class="err">正當</span> <span class="err">我</span> <span class="err">想</span> <span class="err">離開</span> <span class="err">時</span> <span class="err">門</span> <span class="err">內</span> <span class="err">突然</span> <span class="err">傳來</span>
+</span><span class="line"><span class="err">��</span> <span class="err">了</span> <span class="err">門</span> <span class="err">大聲</span> <span class="err">的</span> <span class="err">叫</span> <span class="err">著</span> <span class="err">快</span> <span class="err">點</span> <span class="err">我</span> <span class="err">媽媽</span> <span class="err">暈倒</span> <span class="err">了</span> <span class="err">嘉珍</span> <span class="err">抓起</span> <span class="err">我</span>
+</span><span class="line"><span class="err">�</span> <span class="err">我</span> <span class="err">媽媽</span> <span class="err">暈倒</span> <span class="err">了</span> <span class="err">嘉珍</span> <span class="err">抓起</span> <span class="err">我</span> <span class="err">的</span> <span class="err">手</span> <span class="err">急忙</span> <span class="err">往</span> <span class="err">屋</span> <span class="err">裡</span> <span class="err">跑</span> <span class="err">進入</span>
+</span><span class="line"><span class="o">......</span><span class="err">以下省略</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>若以上程式因為編碼的error而跑不出結果,可以試試</p>
+
+<p><code>sinica_text.concordance(u'我'.encode('utf-8'))</code></p>
+
+<h2 id="frequency-distribution">3.frequency distribution:</h2>
+
+<p>frequency distribution就是計算字詞在語料庫中出現的頻率</p>
+
+<p>如果要計算前一百個常出現的字詞,可以這樣寫</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sinica_fd</span><span class="o">=</span><span class="n">nltk</span><span class="o">.</span><span class="n">FreqDist</span><span class="p">(</span><span class="n">sinica_treebank</span><span class="o">.</span><span class="n">words</span><span class="p">())</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">top100</span><span class="o">=</span><span class="n">sinica_fd</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">100</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span> <span class="ow">in</span> <span class="n">top100</span><span class="p">:</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> 	<span class="k">print</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span>
+</span><span class="line"><span class="err">的</span> <span class="mi">6776</span>
+</span><span class="line"><span class="err">、</span> <span class="mi">1482</span>
+</span><span class="line"><span class="err">在</span> <span class="mi">1331</span>
+</span><span class="line"><span class="err">是</span> <span class="mi">1317</span>
+</span><span class="line"><span class="err">了</span> <span class="mi">1190</span>
+</span><span class="line"><span class="err">有</span> <span class="mi">759</span>
+</span><span class="line"><span class="err">我</span> <span class="mi">724</span>
+</span><span class="line"><span class="err">他</span> <span class="mi">688</span>
+</span><span class="line"><span class="err">就</span> <span class="mi">627</span>
+</span><span class="line"><span class="o">......</span><span class="err">以下省略</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="section">結語：</h2>
+
+<p>以上是很粗淺的python nltk sinica treebank介紹</p>
+
+<p>至於treebank還有什麼用呢？</p>
+
+<p>用途實在太多了,在此說不完</p>
+
+<p>請參考自然語言處理(Natural language processing）相關領域的教科書</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-09T07:41:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:41 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/09/python-nltk-sinica-treebank/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/09/python-nltk-sinica-treebank/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/28/python-nltk-tree/" title="Previous Post: Python nltk -- Tree">&laquo; Python nltk -- Tree</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/11/python-standard-library-urlparse/" title="Next Post: Python Standard Library -- urlparse">Python Standard Library -- urlparse &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

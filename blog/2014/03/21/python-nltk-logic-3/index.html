@@ -1,0 +1,501 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Logic 3 : Discourse Representation Theory - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1. Introduction Discourse 的意思是對話 在對話中,常常會用到 代名詞 ,像是 he, she 或 it. 我們把這種代名詞叫做 anaphoric pronouns 因為要從前面的句子去判斷,這些代名詞代表什麼 比如有個句子 A woman walks. She &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Logic 3 : Discourse Representation Theory</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-21T03:58:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>3:58 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p><em>Discourse</em> 的意思是對話</p>
+
+<p>在對話中,常常會用到 <strong>代名詞</strong> ,像是 <em>he</em>, <em>she</em> 或 <em>it</em>.</p>
+
+<p>我們把這種代名詞叫做 <em>anaphoric pronouns</em></p>
+
+<p>因為要從前面的句子去判斷,這些代名詞代表什麼</p>
+
+<p>比如有個句子 <em>A woman walks. She smokes.</em></p>
+
+<p>在下一句的 <em>She</em> 是指前一句提到的 <em>A woman</em></p>
+
+<p>那要怎麼讓電腦去判斷, <strong>代名詞</strong> 到底代表前面提到的什麼？</p>
+
+<p>這就要用到 <em>Discourse Representation Theory (DRT)</em> 來處理了</p>
+
+<p>例如 <em>A woman walks</em> 這句話,用 <em>DRT</em> 可以表示成這樣：</p>
+
+<script type="math/tex; mode=display">
+
+    \begin{array}{|c|}
+
+    \hline x  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+    \hline
+
+		\end{array}
+
+</script>
+
+<!--more-->
+
+<p>這樣一個框框的結構叫作 <em>Discourse Representation Structure</em> ,簡稱 <em>DRS</em></p>
+
+<p>其中位於方框上面的 <script type="math/tex">x</script> 叫做 <em>Discourse Referent</em> </p>
+
+<p>它代表這個句子中,可以被其他代名詞參考的東西</p>
+
+<p>方框下方的式子叫做 <em>DRS conditions</em> </p>
+
+<p>它代表這些文句所產生的情境</p>
+
+<p>第二個句子 <em>She smokes.</em></p>
+
+<p>用 <em>DRT</em> 表示成這樣：</p>
+
+<script type="math/tex; mode=display">
+
+    \begin{array}{|c|}
+
+    \hline y  \\ \hline
+
+      PRO(y) \\
+
+      smoke(y) \\
+
+    \hline
+
+		\end{array}
+
+</script>
+
+<p>其中, <script type="math/tex">PRO(y)</script> 表示 <script type="math/tex">y</script> 是一個代名詞,但不知道它代表誰</p>
+
+<p>這個時候就要用 <em>DRT</em> ,把對話中前後語句的情境結合起來</p>
+
+<p>就可以進行 <em>Resolve Anaphora</em> 找出代名詞代表什麼</p>
+
+<p>例如：</p>
+
+<p><em>A woman walks. She smokes.</em></p>
+
+<p>用 <em>DRT</em> 表示成：</p>
+
+<script type="math/tex; mode=display">
+
+    \begin{array}{|c|}
+
+    \hline x  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+    \hline
+
+		\end{array}
+
+    +
+
+    \begin{array}{|c|}
+
+    \hline y  \\ \hline
+
+      PRO(y) \\
+
+      smoke(y) \\
+
+    \hline
+
+		\end{array}
+
+    \xrightarrow{Simplify}
+
+    \begin{array}{|c|}
+
+    \hline x,y  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+      PRO(y) \\
+
+      smoke(y) \\
+
+    \hline
+
+		\end{array}
+
+    \xrightarrow{Resolve\mspace{5mu} Anaphora}
+
+    \begin{array}{|c|}
+
+    \hline x,y  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+      x = y \\
+
+      smoke(y) \\
+
+    \hline
+
+		\end{array}
+
+</script>
+
+<p>藉由 <em>DRT</em> ,我們可以知道 <em>She</em> 是指 <em>A woman</em></p>
+
+<p>然後,還可以把 <em>DRS</em> 轉成一階邏輯的式子：</p>
+
+<p>像這樣：</p>
+
+<script type="math/tex; mode=display">
+
+    \begin{array}{|c|}
+
+    \hline x,y  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+      x = y \\
+
+      smoke(y) \\
+
+    \hline
+
+		\end{array}
+
+    \Rightarrow
+
+    \exists x \exists y.( woman(x) \wedge walk(x) \wedge (x = y) \wedge smoke(y))
+
+</script>
+
+<h2 id="drt-in-nltk">2. DRT in nltk</h2>
+
+<p>現在我們來用nltk實作看看</p>
+
+<p>先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著我們輸入 <em>A woman walks</em> 的 <em>DRT</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dp</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">DrtParser</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs1</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;([x], [woman(x), walk(x)])&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">drs1</span>
+</span><span class="line"><span class="p">([</span><span class="n">x</span><span class="p">],[</span><span class="n">woman</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">walk</span><span class="p">(</span><span class="n">x</span><span class="p">)])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>我們也可以把 <em>DRT</em> 的結構畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs1</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>像這樣</p>
+
+<p><img src="http://lh6.googleusercontent.com/-89PLq9VYopQ/UyvQx-TxTfI/AAAAAAAAAqY/cU232E7UWKQ/s165-no/DRT.png" /></p>
+
+<p>接著我們把第二句話 <em>She smokes.</em> 也一起輸入</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs2</span> <span class="o">=</span> <span class="n">dp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;([y], [PRO(y),smokes(y)])&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs2</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh3.googleusercontent.com/-ugJ-AhsCo28/Uyva__Uz4QI/AAAAAAAAAqw/wgYKB9yYOcI/w163-h165-no/DRT2.png" /></p>
+
+<p>其中 <code>PRO(y)</code> 是未知的代名詞,</p>
+
+<p>因為只看這句話不知道這個代名詞代表什麼, </p>
+
+<p>需要和第一句話結合起來才知道</p>
+
+<p>我們可以用 <code>+</code> 把這 <em>兩個DRS</em> 合起來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs3</span><span class="o">=</span><span class="n">drs1</span><span class="o">+</span><span class="n">drs2</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs3</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh6.googleusercontent.com/-ZVVEazh0bxU/Uyva_xl9HZI/AAAAAAAAArE/FOh2NjrkihE/w335-h158-no/DRT3.png" /></p>
+
+<p>再用 <code>simplify()</code> 把這兩個 <em>DRS</em> 簡化成一個</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs4</span><span class="o">=</span><span class="n">drs3</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs4</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh6.googleusercontent.com/-XS97Rkd11iM/Uyva_tAb7oI/AAAAAAAAArU/ga7l4KP5QV4/w165-h240-no/DRT4.png" /></p>
+
+<p>然後再用 <code>resolve_anaphora()</code> 找出代名詞 <code>PRO(y)</code> 代表什麼</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs5</span><span class="o">=</span><span class="n">drs4</span><span class="o">.</span><span class="n">resolve_anaphora</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">drs5</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh6.googleusercontent.com/-xqOOLlm0h7w/UyvbAKBA7RI/AAAAAAAAAq8/KOkSJP2nJG4/w168-h240-no/DRT5.png" /></p>
+
+<p>這時,原本的 <code>PRO(y)</code>  會變成 <code>(y = x)</code> 表示已經找出了 <code>y</code> 代表什麼</p>
+
+<p>然後, 還可以把 <em>DRS</em> 轉成 <em>First-order Logic</em> 的式子</p>
+
+<p>像這樣：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">f1</span><span class="o">=</span><span class="n">drs5</span><span class="o">.</span><span class="n">fol</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">f1</span>
+</span><span class="line"><span class="n">exists</span> <span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="p">(</span><span class="n">woman</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">walks</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">smokes</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣就大功告成了</p>
+
+<h2 id="further-reading">3.Further Reading</h2>
+
+<p>其實 <em>DRT</em> 還可以解決許多關於對話中的語意問題</p>
+
+<p>有興趣的話可以看這個網站：Discourse Representation Theory </p>
+
+<p>http://www.coli.uni-saarland.de/projects/milca/courses/comsem/html/node205.html</p>
+
+<p>以及這本書：</p>
+
+<p><em>Hans Kamp, Josef van Genabith, Uwe Reyle. Discourse Representation Theory</em></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-21T03:58:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>3:58 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/logic/'>logic</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/python/'>python</a>, <a class='category' href='/blog/categories/semantics/'>semantics</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/20/python-functional-programming-style-2/" title="Previous Post: Python -- Functional Programming Style 2  ">&laquo; Python -- Functional Programming Style 2  </a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing/" title="Next Post: 自然語言處理 -- Ngram Smoothing / Interpolation">自然語言處理 -- Ngram Smoothing / Interpolation &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

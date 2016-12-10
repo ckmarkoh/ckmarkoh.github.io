@@ -1,0 +1,648 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Exec | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/exec/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python Built-in Functions -- Eval and Execute]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec/"/>
+    <updated>2014-04-23T01:59:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>如果要把 <em>string</em> 的內容, 當成程式碼來執行, 可以用到 <em>eval</em> 或 <em>exec</em></p>
+
+<p>例如有個 <em>string</em> , 為 <code>s1="3+5"</code> 我們想要算它執行的結果, 可用</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>s1=”3+5”
+eval(s1)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>來看一下怎麼用 <em>eval</em> 或 <em>exec</em> </p>
+
+<h2 id="eval">2. eval</h2>
+
+<p><code>eval</code> 是當我們要計算某一個字串中的運算, 並且 <strong>會回傳計算結果</strong> ,如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘3+1’)
+4</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<!--more-->
+
+<p>除了用於數字, 也可用於其他 <em>type</em> , 例如 <em>list</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘[3,4,5]+[2]’)
+[3, 4, 5, 2]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>或是我們要呼叫 <em>object</em> 的 <em>method</em> 也可以</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘“234232”.replace(“2”,”@”)’)
+‘@34@3@’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-variable-and-function">2.1. eval with variable and function</h3>
+
+<p><em>eval</em> 可以用於自訂變數</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>x = 3
+eval(‘x+2’)
+5</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>````</p>
+
+<p>或是自訂的 <em>function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>def myfun(y):
+…     return y+4
+… </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘myfun(x)’)
+7</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可用於自訂變數的 <em>method</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a=[1,2]
+eval(‘a.reverse()’)
+print a
+[2, 1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-builtins">2.2. eval with builtins</h3>
+
+<p>當然, <em>eval</em> 也可用於 <em>built-in function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘abs(-3)’)
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以限制 <em>built-in function</em> 的使用</p>
+
+<p>例如在 <em>eval</em> 的第二個 <em>argument</em> 輸入 <code>{"__builtins__" : None }</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘abs(-3)’,{“<strong>builtins</strong>” : None })
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'abs' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-restricted-variable">2.3. eval with restricted variable</h3>
+
+<p>為了避免 <em>eval</em> 不小心變更到程式裡面的某些 <em>variable</em> 的值, 我們可以用以下方法, 限制 <em>eval</em> 可以使用的 <em>variable</em> </p>
+
+<p>例如, 有三個 <em>variable</em> , 分別為 <code>pb1</code> , <code>pb2</code> 與 <code>pr1</code> , 其中, 我們只希望 <em>eval</em> 可以使用 <code>pb1</code> 和 <code>pb2</code> 兩個 <em>variable</em> , 則可以建立一個 <code>dict</code> 來限制, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pb1 = 123
+pb2 = [12,13,14]
+pr1 = 456
+pblist = [‘pb1’,’pb2’]
+pbdict = dict([ (k, locals().get(k, None)) for k in pblist ])
+print pbdict
+{‘pb1’: 123, ‘pb2’: [12, 13, 14]}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中, <code>pbdict</code> 限制了 <em>eval</em> 可以使用哪些 <em>variable</em> , 把 <code>pbdict</code> 放在 <em>eval</em> 的第三個 <em>argument</em> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pb1+2”, None, pbdict)
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pb2[2]+3”, None, pbdict)
+17</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>結果顯示, 有在 <code>pbdict</code> 裡面的 <em>variable</em> 可以使用, 但沒在 <code>pbdict</code> 裡面的 <em>variable</em> 就不可以使用了, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pr1+3”, None, pbdict)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'pr1' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="restriction-on-eval">2.4. restriction on eval</h3>
+
+<p>並不是所有的<em>expression</em> 都可以用 <em>eval</em> , 例如, <em>assignment</em> 就不能用於 <em>eval</em> , 如下</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘a=3’)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1
+    a=3
+     ^
+SyntaxError: invalid syntax</string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>或是其他跟 <em>assignment</em> 有關的 <em>operator</em> 也不行</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a=[1,2]
+eval(‘a+=[3]’)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1
+    a+=[3]
+      ^
+SyntaxError: invalid syntax</string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這時就需要用到 <em>exec</em> 了</p>
+
+<h2 id="exec">3. exec</h2>
+
+<p><em>exec</em> 是把字串當成程式碼來執行, 但是 <strong>不會回傳結果</strong> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘3+5’)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果要印出結果, 則要加個 <em>print</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘print 3+5’)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-variable">3.1. exec with variable</h3>
+
+<p><em>exec</em> 也可以用於 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>x = 3
+exec(‘x+3’)
+print x
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可用於自訂的 <em>function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>def myfun(y):
+…     return y+4
+… </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘myfun(x)’)
+print x
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>和 <em>eval</em> 不同的是, <em>exec</em> 可以用於 <em>assignment</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘z = 5’)
+print z
+5</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以及其他和 <em>assignment</em> 相關的 <em>operator</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘x += 1’)
+print x
+4</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-builtins">3.2. exec with builtins</h3>
+
+<p><em>exec</em> 可以用於 <em>built-in function</em> </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print abs(-3)”)
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以用 <code>{"__builtins__" : None }</code> 限制 <em>built-in function</em> 的使用</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print abs(-3)”,{“<strong>builtins</strong>” : None })
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'abs' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-restricted-variable">3.3. exec with restricted variable</h3>
+
+<p>和 <em>eval</em> 一樣, <em>exec</em> 也可以用 <em>dict</em> 來限制可以使用的 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pb1 = 123
+pb2 = [12,13,14]
+pr1 = 456
+pblist = [‘pb1’,’pb2’]
+pbdict = dict([ (k, locals().get(k, None)) for k in pblist ])
+print pbdict
+{‘pb1’: 123, ‘pb2’: [12, 13, 14]}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>同時, <em>exec</em> 又可以使用 <em>assignment</em>, 但是要注意了, 此 <em>assignment</em> 只會修改到 <em>dict</em> 中的值, 例如我們 <em>assign</em> 一個新的值給 <code>pb1</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“pb1=pb1+2”, None, pbdict)
+exec(“print pb1”, None, pbdict)
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>但是, <em>exec</em> 不會更改到原本的 <em>variable</em> 的值, 原本的 <code>pb1</code> 還是不便</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pb1
+123</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>改變的只有在 <code>pdict</code> 中的 <code>pb1</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict[‘pb1’]
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>但如果是針對 <em>object</em> 就不一樣了, 因為在 <em>dict</em> 中的是 <em>reference</em> 而不是 <em>value</em> , 所以會修改到原本 <em>variable</em> 的 <em>value</em>, 例如 <em>assign</em> 新的值給 <code>pb2</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“pb2[2]=pb2[2]+3”, None, pbdict)
+print pb2
+[12, 13, 17]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict[‘pb2’]
+[12, 13, 17]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>不論是原本的 <code>pb2</code> 還是 <code>pbdict</code> 中的 <code>pb2</code> 都改變了</p>
+
+<p>當然, 跟 <em>eval</em> 一樣的是, 如果 <em>variable</em> 沒在 <em>dict</em> 中, 就不可以使用了</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print pr1+3”, None, pbdict)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'pr1' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-exec-defined-variable">3.4. exec with exec-defined variable</h3>
+
+<p>承上, <em>exec</em> 由於有 <em>assignment</em> 的功能, 所以可以自己加 <em>variable</em> 到 <em>dict</em> 裏面, 如下, 我們限制 <em>exec</em> 從一個空的 <em>dict</em>  <code>pbdict2={}</code> 開始 </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pbdict2={}
+exec(“x=5”, None, pbdict2)
+exec(“y=3”, None, pbdict2)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>做完以上 <em>assignment</em> 之後 , 我們再把 <code>pbdict</code> 印出來看看, 發現多了兩個新的 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict2
+{‘y’: 3, ‘x’: 5}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>當然, <em>exec</em> 可以用這兩個 <em>variable</em> 做運算</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print x+y”, None, pbdict2)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-lines-of-codes">3.5. exec lines of codes</h3>
+
+<p><em>exec</em> 可以執行多行字串中的程式碼, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>codes=”””
+… x=5
+… for i in range(3):
+…     x+=i
+…     print i,x
+… “””</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(codes)
+0 5
+1 6
+2 8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="reference">4. Reference</h2>
+
+<h3 id="eval-1">eval</h3>
+
+<p>https://docs.python.org/2/library/functions.html#eval</p>
+
+<h3 id="exec-1">exec</h3>
+
+<p>https://docs.python.org/2/reference/simple_stmts.html#exec</p>
+]]></content>
+  </entry>
+  
+</feed>

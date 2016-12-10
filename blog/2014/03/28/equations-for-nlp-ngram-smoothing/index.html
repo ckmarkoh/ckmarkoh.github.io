@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>自然語言處理 -- Ngram Smoothing / Interpolation - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="以下為我對於 Ngram Smoothing 這個章節的公式所做的筆記 Introduction Ngram Smoothing 是用於出現在 Training Corpus 中沒有的 Ngram, 它的機率會是0 本文以 Bigram 為例, Bigram 的機率如下: 如果 , 則 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/28/equations-for-nlp-ngram-smoothing/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">自然語言處理 -- Ngram Smoothing / Interpolation</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-28T11:57:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:57 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>以下為我對於 <em>Ngram Smoothing</em> 這個章節的公式所做的筆記</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p><em>Ngram Smoothing</em> 是用於出現在 <em>Training Corpus</em> 中沒有的 <em>Ngram</em>,</p>
+
+<p>它的機率會是0</p>
+
+<p>本文以 <em>Bigram</em> 為例, <em>Bigram</em> 的機率如下:</p>
+
+<script type="math/tex; mode=display">
+
+P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
+
+</script>
+
+<p>如果 <script type="math/tex">C(w_{n-1},w_{n})=0</script> , 則 <script type="math/tex">P(w_{n}\mid w_{n-1} )= 0</script></p>
+
+<p>為了避免probability為0, 我們要做 Ngram Smoothing</p>
+
+<!--more-->
+
+<h2 id="laplace-smoothing">Laplace Smoothing</h2>
+
+<p>最簡單的想法, 就是把每一個 <em>Ngram</em> 的 <em>count</em> 都加1, 然後再做 <em>Normalization</em></p>
+
+<script type="math/tex; mode=display">
+
+c^{*}_{i}=(c_{i}+1) \frac{N}{N+V} \\
+
+P^{*}_{lablace}=\frac{(c_{i}+1) }{N+V}
+
+
+</script>
+
+<p>其中, <script type="math/tex">V</script> 是所有 <em>Ngram</em> 的種類</p>
+
+<p>若是用於 <em>bigram</em> , 則機率為：</p>
+
+<script type="math/tex; mode=display">
+
+P^{*}_{lablace}(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})+1}{C(w_{n-1})+V}
+
+</script>
+
+<h2 id="good-turing-discounting">Good-Turing Discounting</h2>
+
+<p>這種方法是由 <em>Good (1953)</em> 提出</p>
+
+<p>是根據 <em>Ngram</em> 的 <em>count</em> 來估計, 例如 <em>count</em> 為 <em>n</em> 的 <em>Ngram</em>, 用 <em>Nount</em> 為 <em>n+1</em> 的 <em>Ngram</em> 來估計：</p>
+
+<script type="math/tex; mode=display">
+
+c^{*}=(c+1) \frac{N_{c+1}}{N_{c}}
+
+</script>
+
+<p>其中 <script type="math/tex">N_{c}</script> 為 <em>count</em> 是 <em>c</em> 的 <em>Ngram</em> 個數</p>
+
+<p>例如, <em>count</em> 為 <em>0</em> 的 <em>Ngram</em> ,個數為</p>
+
+<script type="math/tex; mode=display">
+
+c^{*}=(0+1) \frac{N_{0+1}}{N_{0}}=\frac{N_{1}}{N_{0}}
+
+</script>
+
+<p>若當我們要計算出現 <script type="math/tex">N_{0}</script> , <em>(things with frequency zero in training)</em> , 的機率,</p>
+
+<p>可設 <script type="math/tex">N_{0}=1</script> ,則：</p>
+
+<script type="math/tex; mode=display">
+
+P^{*}_{GT}=\frac{\frac{N_{1}}{N_{0}}}{N}=\frac{N_{1}}{N}
+
+</script>
+
+<p>舉個例子,河裡面有八種魚,釣到的次數如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>carp</th>
+      <th>perch</th>
+      <th>whitefish</th>
+      <th>trout</th>
+      <th>salmon</th>
+      <th>eel</th>
+      <th>catfish</th>
+      <th>bass</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>10</td>
+      <td>3</td>
+      <td>2</td>
+      <td>1</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>則下一次釣到出現 <em>未出現過的魚 （catfish or bass)</em> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+P^{*}_{GT}(unseen)=\frac{3}{18}=0.17
+
+</script>
+
+<p>若已知道未出現過的魚有兩種, 則釣到 <em>catfish</em> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+P^{*}_{GT}(catfish)=\frac{0.17}{2}=0.085
+
+</script>
+
+<p>再來看看釣到 <em>trout</em> 的機率：</p>
+
+<script type="math/tex; mode=display">
+
+c^{*}(trout)=2\times\frac{N_{2}}{N_{1}}=2\times\frac{1}{3}=0.67 \\
+
+P^{*}_{GT}(unseen)=\frac{0.67}{18}=0.037
+
+</script>
+
+<h2 id="advanced-good-turing">Advanced Good-Turing</h2>
+
+<p>因為可能當 <script type="math/tex">c>0</script> 時, <script type="math/tex">N_{c}=0</script></p>
+
+<p>這種情況, 用 <em>linear regression</em> 在log space去smooth <script type="math/tex">N_{c}</script>,如下：</p>
+
+<script type="math/tex; mode=display">
+
+\log(N_{c})=a+b\log(c)
+
+</script>
+
+<p>再來, 於 <em>Katz, S. M. (1987)</em> 提到</p>
+
+<p><em>discounted estimation</em> 並不適用於所有的 <script type="math/tex">c^{*}</script>, </p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+c^{*}=
+
+
+\begin{cases} 
+
+c &\text{  for  } \mspace{10mu} c>k \\[14pt]
+
+
+\frac{
+
+(c+1)\frac{N_{c+1}}{N_{c}}-c\frac{(k+1)N_{k+1}}{N_{1}}
+
+}{
+
+1-\frac{(k+1)N_{k+1}}{N_{1}}
+
+}
+
+ &\text{  for  } \mspace{10mu} 1\leq c\leq k
+
+ \end{cases}
+
+ 
+
+ %]]></script>
+
+<h2 id="interpolation">Interpolation:</h2>
+
+<p>因為 <em>Trigram</em> 的 <em>count</em> 可能為0,</p>
+
+<p>我們可以用內插法把 <em>Trigram</em> 的 <em>Count</em> 表示成 <em>Trigram</em>, <em>Bigram</em> 和 <em>Unigram</em> 的內插</p>
+
+<p>如下：</p>
+
+<script type="math/tex; mode=display">
+
+\overset{\wedge}{P} = \lambda _{1} P(w_{n}\mid w_{n-1}w_{n-2})+\lambda_{2} P(w_{n} \mid w_{n-1}) + \lambda_{3}P({w_{n}}) \\[14pt]
+
+\sum\limits_{i} \lambda_{i} = 1
+
+</script>
+
+<p>我們也可以讓 <script type="math/tex">\lambda</script> 可跟著前後文調整數值,像這樣：</p>
+
+<script type="math/tex; mode=display">
+
+\overset{\wedge}{P} = \lambda _{1}(w^{n-1}_{n-2}) P(w_{n}\mid w_{n-1}w_{n-2})+\lambda_{2}(w^{n-1}_{n-2}) P(w_{n} \mid w_{n-1}) + \lambda_{3}(w^{n-1}_{n-2})P({w_{n}}) 
+
+
+</script>
+
+<p>至於 <script type="math/tex">\lambda</script> 的值要怎麼算呢？可以用 <em>Maximum Likelihood Estimation</em> 求得</p>
+
+<h2 id="reference">Reference:</h2>
+
+<p>本篇擷取自教科書：</p>
+
+<p>Daniel Jurafsky &amp; James H. Martin.Speech and Language Processing: An introduction to natural language processing,computational linguistics, and speech recognition. </p>
+
+<p>其他參考文獻：</p>
+
+<p>Good, I. J. (1953). The population frequencies of species and the estimation of population parameters. Biometrika, 40,16–264.</p>
+
+<p>Katz, S. M. (1987). Estimation of probabilities from sparse data for the language model component of a speech recogniser</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-28T11:57:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:57 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/28/equations-for-nlp-ngram-smoothing/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/28/equations-for-nlp-ngram-smoothing/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/21/python-nltk-logic-3/" title="Previous Post: Python nltk -- Logic 3 : Discourse Representation Theory">&laquo; Python nltk -- Logic 3 : Discourse Representation Theory</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/29/python-nltk-logic-4/" title="Next Post: Python nltk -- Logic 4 : Model and Satisfiability">Python nltk -- Logic 4 : Model and Satisfiability &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

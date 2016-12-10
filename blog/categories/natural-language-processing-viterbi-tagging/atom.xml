@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Natural_language_processing Viterbi Tagging | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/natural-language-processing-viterbi-tagging/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Viterbi Algorithm]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/06/natural-language-processing-viterbi-algorithm/"/>
+    <updated>2014-04-06T18:21:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/06/natural-language-processing-viterbi-algorithm</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>本文接續先前提到的 <em>Hidden Markov Model</em></p>
+
+<p><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models">Natural Language Processing – Hidden Markov Model</a></p>
+
+<p>繼續探討 <em>part of speech tagging</em> 的演算法</p>
+
+<p>先前提到, 如果要在 <em>Hidden Markov Model</em> 找出一個機率最大的 <em>tagging sequence</em></p>
+
+<p>則必須把每一個序列都列出來, 看哪一個是機率最大的</p>
+
+<p>但如果 <em>Tag</em> 有 <script type="math/tex">N</script> 種, 那麼長度為 <script type="math/tex">T</script> 的序列, 就有 <script type="math/tex">N^{T}</script> 種可能的 <em>tagging sequence</em></p>
+
+<p>由此可知, 暴力列舉的演算法非常沒有效率</p>
+
+<!--more-->
+
+<h2 id="viterbi-algorithm">2.Viterbi Algorithm</h2>
+
+<p>那麼, 來看看暴力列舉法, 到底出了什麼問題</p>
+
+<p>在計算這些序列的機率時, 假設目前已經計算到了第 <script type="math/tex">t</script> 個字 <script type="math/tex">o_{t}</script> , 這個字的 <em>tag</em> 為 <script type="math/tex">r</script> 時, 上一個字的 <em>tag</em>  為 <script type="math/tex">s</script> , 則此種情況發生的機率為</p>
+
+<script type="math/tex; mode=display">
+
+P(q_{t}=r \mid q_{t-1} = s)\times P(X_{t}=o_{t} \mid q_{t} = r)=a_{s,r}\times b_{r}(o_{t}),\mspace{10mu} s \in {i,j,k}
+
+</script>
+
+<p>其中, <script type="math/tex">s</script> 有三種可能, 分別是 <script type="math/tex">i</script> , <script type="math/tex">j</script> ,<script type="math/tex">k</script> </p>
+
+<p>假設在 <script type="math/tex">t-1</script> 之前的序列為 <script type="math/tex">C_{i} , C_{j} , C_{k}</script> ,且在 <script type="math/tex">i,j,k</script> 這三個 <em>state</em> 的機率分別為 <script type="math/tex">c_{i} , c_{j} , c_{k}</script></p>
+
+<p>若是使用暴力列舉法, 要分別計算 <script type="math/tex">C_{i}ir</script> , <script type="math/tex">C_{j}jr</script> , <script type="math/tex">C_{k}kr</script> 這三個序列的機率, 如下圖</p>
+
+<p><img src="/images/pic/pic_00012.png" alt="viterbi1" /></p>
+
+<p>由上圖可知 , 在 <script type="math/tex">r</script> 這個 <em>state</em> ,就多增加了 3 個序列傳遞下去, 之後每個 <em>state</em>  都會因為前面有 <em>N</em> 種不同的 <em>state</em> , 而增加 <em>N</em> 種不同的序列, 這樣一直增加, 序列的數量呈指數函數成長, 最後再一起比誰的機率比較大</p>
+
+<p>這就是造成暴力列舉法沒效率的原因</p>
+
+<p>其實, 可以用 <em>Dynamic Programming</em> 的概念, 在計算每個 <em>state</em>  的機率時, 就直接比較序列的機率大小, </p>
+
+<p>只保留機率最大的一條序列, 傳遞下去, 如下圖</p>
+
+<p><img src="/images/pic/pic_00013.png" alt="viterbi2" /></p>
+
+<p>這樣每一個 <em>state</em> 就只會傳遞一個序列下去, 不會使序列數量呈指數成長</p>
+
+<p>這就是所謂的 <em>Viterbi Algorithm</em></p>
+
+<h2 id="example">3.Example</h2>
+
+<p>舉個例子, </p>
+
+<p>有個研究者, 想根據某地人們生活日記中, 記載每天吃冰淇淋的數量, 來推斷當時的天氣變化如何</p>
+
+<p>在某個地點有兩種天氣, 分別是 <em>Hot</em> 和 <em>Cold</em> , 而當地的人們會記錄他們每天吃冰淇淋的數量, 數量分別為 <em>1</em> , <em>2</em> 或 <em>3</em> , </p>
+
+<p>則可以把天氣變化的機率, 以及天氣吃冰淇淋數量的關係, 用 <em>Hidden Markov Model</em> 表示,</p>
+
+<p>由於天氣是未知的, 為 <em>hidden state</em> , 天氣的集合為 <script type="math/tex">Weather=\{HOT,COLD\}</script></p>
+
+<p>而冰淇淋數量是已知的, 為 <em>observable</em> , 冰淇淋數量的集合為 <script type="math/tex">Icecream=\{1,2,3\}</script></p>
+
+<p>天氣的 <em>Transition Matrix</em> , <script type="math/tex">A</script> , 以及天氣變化對於冰淇淋數量的 <em>Output Matrix</em> , <script type="math/tex">B</script> 如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    A:\begin{array}{c|c}
+
+     _{Day_{t}}\setminus _{Day_{t+1}} & HOT  & COLD \\\hline
+
+    \hline HOT & 0.7 & 0.3 \\
+
+    \hline COLD & 0.4 & 0.6 \\
+
+		\end{array}\mspace{50mu}
+
+    B:\begin{array}{c|c}
+
+     _{Weather}\setminus _{Icecream} & 1  & 2 & 3 \\\hline
+
+    \hline HOT & 0.2 & 0.4 & 0.4 \\
+
+    \hline COLD & 0.5 & 0.4 & 0.1\\
+
+		\end{array}
+
+
+ %]]&gt;</script>
+
+<p>如果冰淇淋的記錄 <script type="math/tex">(3,1,1)</script> , 用 <em>Viterbi Algorithm</em> 計算看看可能的天氣序列是什麼</p>
+
+<p>首先, 從 <em>initial state</em> 開始, 計算第一個 <em>state</em> 是 <script type="math/tex">H</script> 以及 <script type="math/tex">C</script> 的機率</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(X_{1}=3 , q_{1} = H) =  P(q_{1}=H)\times P(X_{1}=3 \mid q_{1} = H) = 0.8 \times 0.4 = 0.32 \\
+
+&P(X_{1}=3 , q_{1} = C) = P(q_{1}=C)\times P(X_{1}=3 \mid q_{1} = C) = 0.2 \times 0.1 = 0.02
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>計算結果如下圖</p>
+
+<p><img src="/images/pic/pic_00014.png" alt="p1" /></p>
+
+<p>再來, 我們來計算第二個 <em>state</em> 是 <script type="math/tex">H</script> 的機率, 我們分別要算序列 <script type="math/tex">CH</script> 和 <script type="math/tex">HH</script> 的序列</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(X_{1}=3 , q_{1} = H) \times P(q_{2}=H \mid q_{1}=H)\times P(X_{2}=1 \ mid q_{2} = H) 
+
+=0.32 \times 0.7 \times 0.2 = 0.0448 \\
+
+& P(X_{1}=3 , q_{1} = C) \times P(q_{2}=H \mid q_{1}=C)\times P(X_{2}=1 \ mid q_{2} = H) 
+
+=0.02 \times 0.4 \times 0.2 = 0.0016
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>結果如下圖：</p>
+
+<p><img src="/images/pic/pic_00015.png" alt="p2" /></p>
+
+<p>用 <em>Viterbi Algorithm</em> , 在同一個 <em>state</em> 只需要保留機率最大的序列即可</p>
+
+<script type="math/tex; mode=display">
+
+	max( 0.0448, 0.0016 ) = 0.0448
+
+</script>
+
+<p>因此我們在 <em>state</em> <script type="math/tex">H</script> 上, 只需要保留機率為 <script type="math/tex">0.048</script> 的序列 <script type="math/tex">HH</script> , 傳遞下去, 如下圖</p>
+
+<p><img src="/images/pic/pic_00016.png" alt="p3" /></p>
+
+<p>就用這樣的概念, 之後的每一個 <em>state</em> 都這樣計算, 就會得到每個 <em>state</em> 的機率值, 如下圖</p>
+
+<p><img src="/images/pic/pic_00017.png" alt="p4" /></p>
+
+<p>全部算完後, 再比較序列的最後一個 <em>state</em>, 哪一個機率比較大, 較大者可以傳遞到 <em>end state</em> (也就是最後的答案)</p>
+
+<p>然後, 從 <em>end state</em> 回溯之前保留下來的序列, 如下圖</p>
+
+<p><img src="/images/pic/pic_00018.png" alt="p6" /></p>
+
+<p>得出最有可能的序列是 <em>HCC</em></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00019.gif" alt="p7" /></p>
+
+<h2 id="implementation">4.Implementation</h2>
+
+<p>接著我們來實作一下, 先前提到的暴力列舉法, 以及 <em>Viterbi</em> 演算法</p>
+
+<p>並比較這兩者的performance差異</p>
+
+<p>新增一個python script檔案, 檔名為 <code>viterbi.py</code> ,並加入以下程式碼</p>
+
+<p>1.前例中的Model, 和必要模組</p>
+
+<p>```python viterbi.py
+import timeit
+_STATE=[‘H’,’C’]
+_PI={‘H’:.8, ‘C’:.2}
+_A={ ‘H’:{‘H’:.7, ‘C’:.3 }, ‘C’:{‘H’:.4,’C’:.6} }
+_B={‘H’:{1:.2,2:.4,3:.4}, ‘C’:{1:.5,2:.4,3:.1} }</p>
+
+<p>def p_aij(i, j):
+    return _A[i][j]</p>
+
+<p>def p_bik(i, k):
+    return _B[i][k]</p>
+
+<p>def p_pi(i):
+    return _PI[i]</p>
+
+<p>```</p>
+
+<p>其中, <code>timeit</code> 是用來計時的模組, 用於比較演算法所花的時間, </p>
+
+<p>而 <code>_STATE</code> , <code>_PI</code> 是 <em>state</em> 的種類和 <em>initial state</em> 的機率, </p>
+
+<p><code>_A</code> 和 <code>_B</code> 是 <em>Transition Matrix</em> 和 *Output Matrix’, </p>
+
+<p><code>p_aij(i, j)</code> , <code>p_bik(i, k)</code> , <code>p_pi(i)</code> 分別是 <script type="math/tex">P(q_{t+1} = j \mid q_{t} = i)</script>  ,  <script type="math/tex">P(X_{t} = k , q_{t} = i)</script> 和  <script type="math/tex">\pi_{i}</script></p>
+
+<p>2.暴力列舉法的function: <code>brute_force_algo(obs_init, print_seq=False)</code> </p>
+
+<p>```python viterbi.py
+def brute_force_algo(obs_init, print_seq=False):
+    start = timeit.default_timer()
+    seq_val=[]; 
+    def rec(obs, val_pre, qseq_pre):
+        if len(obs) &gt;0:
+            for q in _STATE:
+                if len(qseq_pre) == 0 :
+                    val = val_pre * p_pi(q) * p_bik(q, obs[0])
+                else:
+                    q_pre = qseq_pre[-1]
+                    val = val_pre * p_aij(q_pre,q) * p_bik(q, obs[0])
+                qseq = qseq_pre + [q]
+                rec(obs[1:], val, qseq)
+        else:
+            seq_val.append((qseq_pre, val_pre))
+    rec(obs_init, 1, [])
+    if print_seq:
+        for (seq,val) in seq_val:
+            print ‘seq : %s , value : %s’%(seq, val)
+    print ‘result of brute_force_algo:’
+    stop = timeit.default_timer()
+    print ‘max_seq : %s  max_val : %s’%( 
+          reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, seq_val))
+    print ‘runtime : %s’%(stop - start )</p>
+
+<p>```</p>
+
+<p>其中, input argument <code>obs_init</code> 是 <em>observable</em> , </p>
+
+<p><code>print_seq</code> 是用來控制是否要印出計算過程中產生的序列, 或者只印出最後結果</p>
+
+<p>演算法用 recursive function 的方式實現, 詳細內容在此不詳述, </p>
+
+<p>3.viterbi演算法的function: <code>viterbi_algo(obs_init, print_seq=False)</code></p>
+
+<p>```python viterbi.py
+def viterbi_algo(obs_init, print_seq=False):
+    start = timeit.default_timer()
+    state_snapshot=[]
+    def rec(obs, val_pre, qseq_pre):
+        if len(obs) &gt; 0:
+            val = {}
+            qseq = {}
+            for q in _STATE:
+                if len(val_pre) == 0:
+                    val.update({ q:p_pi(q) * p_bik(q, obs[0]) })
+                    qseq.update({q:[]})
+                    state_snapshot.append(([q],val[q]))
+                else:
+                    val_temp = [( qseq_pre[q_pre]+[q_pre], 
+                                val_pre[q_pre] * p_aij(q_pre,q) * p_bik(q, obs[0] )) 
+                                for q_pre in _STATE ] 
+                    max_q_seq = reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, val_temp)
+                    state_snapshot.append((max_q_seq[0]+[q],max_q_seq[1]))
+                    val.update({ q:max_q_seq[1]  })
+                    qseq.update({ q:max_q_seq[0] })
+            return rec(obs[1:],val,qseq)
+        else:
+            val_temp =[( qseq_pre[q]+[q] , val_pre[q] ) for q in _STATE ] 
+            max_q_seq = reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, val_temp)
+            return max_q_seq  <br />
+    seq,val = rec(obs_init, {},[])
+    if print_seq:
+        for (seq,val) in state_snapshot:
+            print ‘seq : %s , value : %s’%(seq, val)
+    print ‘result of viterbi_algo:’
+    print ‘max_seq : %s , max_value : %s’%(seq, val)
+    stop = timeit.default_timer()
+    print ‘runtime : %s’%(stop - start )     </p>
+
+<p>```</p>
+
+<p>其中, 所使用的參數, 和暴力列舉法一樣</p>
+
+<p>唯演算法部份改用 <em>Viterbi algorithm</em> , 但也是以 recursive function 的形式寫成, 在此不詳述</p>
+
+<p>接著到interactive mode 載入 viterbi.py</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import viterbi</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先來看一下暴力列舉法</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.brute_force_algo([3,1,1],True)
+seq : [‘H’, ‘H’, ‘H’] , value : 0.006272
+seq : [‘H’, ‘H’, ‘C’] , value : 0.00672
+seq : [‘H’, ‘C’, ‘H’] , value : 0.00384
+seq : [‘H’, ‘C’, ‘C’] , value : 0.0144
+seq : [‘C’, ‘H’, ‘H’] , value : 0.000224
+seq : [‘C’, ‘H’, ‘C’] , value : 0.00024
+seq : [‘C’, ‘C’, ‘H’] , value : 0.00048
+seq : [‘C’, ‘C’, ‘C’] , value : 0.0018
+result of brute_force_algo:
+max_seq : [‘H’, ‘C’, ‘C’]  max_val : 0.0144
+runtime : 0.000172138214111</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>暴力列舉法會列出所有的序列, 並找出機率最大的序列</p>
+
+<p>再來是 <em>viterbi algorithm</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.viterbi_algo([3,1,1],True)
+seq : [‘H’] , value : 0.32
+seq : [‘C’] , value : 0.02
+seq : [‘H’, ‘H’] , value : 0.0448
+seq : [‘H’, ‘C’] , value : 0.048
+seq : [‘H’, ‘H’, ‘H’] , value : 0.006272
+seq : [‘H’, ‘C’, ‘C’] , value : 0.0144
+result of viterbi_algo:
+max_seq : [‘H’, ‘C’, ‘C’] , max_value : 0.0144
+runtime : 0.000169038772583</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><em>Viterbi algorithm</em> 不會把每個序列都列出來, 而是用 <em>Dynamic Programming</em> 的方式, 保留下比較有可能的 <em>subsequence</em> , 最後也可以得出正確結果 , 且runtime比暴力列舉法快</p>
+
+<p>再來, 增加一下input sequence的長度, 讓這兩種演算法的差異突顯出來, </p>
+
+<p>為了避免印出過多序列, 第二個參數輸入 <code>False</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.brute_force_algo([3,1,1,2]*4,False)
+result of brute_force_algo:
+max_seq : [‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘C’]  max_val : 2.83168745718e-11
+runtime : 0.245212078094</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.viterbi_algo([3,1,1,2]*4,False)
+result of viterbi_algo:
+max_seq : [‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘C’] , max_value : 2.83168745718e-11
+runtime : 0.000442981719971</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>比較一下, 暴力列舉法的 <em>runtime</em> 呈指數函數成長, 而 <em>viterbi algorithm</em> 的是呈多項式函數成長</p>
+
+<h2 id="reference">5. Reference</h2>
+
+<p>本文參考至兩本教科書</p>
+
+<p><a href="http://www.amazon.com/Foundations-Statistical-Natural-Language-Processing/dp/0262133601">Foundations of Statistical Natural Language Processing</a></p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+
+]]></content>
+  </entry>
+  
+</feed>

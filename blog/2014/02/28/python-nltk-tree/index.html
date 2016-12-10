@@ -1,0 +1,400 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Tree - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="今天我們來看看nltk.Tree要怎麼用 先載入模組 1
+&gt;&gt;&gt; from nltk import Tree 1.build syntax tree 舉個例子 Gary plays baseball 此句子的剖析樹(syntax tree)是這樣： 用nltk. &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/02/28/python-nltk-tree/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Tree</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-02-28T16:36:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:36 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>今天我們來看看nltk.Tree要怎麼用</p>
+
+<p>先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">Tree</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="build-syntax-tree">1.build syntax tree</h2>
+
+<p>舉個例子</p>
+
+<p>Gary plays baseball</p>
+
+<p>此句子的剖析樹(syntax tree)是這樣：</p>
+
+<p><img src="http://lh3.googleusercontent.com/-BoNaoH3Va-g/UyF3tY8MRiI/AAAAAAAAAXM/1-YLB7zww3k/w299-h238-no/nltk1.png" alt="nltk1.png" /></p>
+
+<p>用nltk.Tree來建構tree：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">=</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;Gary&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>           <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VP&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VT&#39;</span><span class="p">,[</span><span class="s">&#39;plays&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>                     <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;baseball&#39;</span><span class="p">])])])</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>即可將剖析樹畫出來</p>
+
+<p>若沒安裝 python-tk,你也可以這樣把tree印出</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(S (NP Gary) (VP (VT plays) (NP baseball)))&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<!--more-->
+
+<h2 id="subtrees-nodes-and-leaves">2. Subtrees ,Nodes and Leaves</h2>
+
+<p>再來可以對tree進行操作</p>
+
+<p>例如：取得tree的subtree, node 和leaf</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VT&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;plays&#39;</span><span class="p">]),</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;baseball&#39;</span><span class="p">])])</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">node</span>
+</span><span class="line"><span class="s">&#39;VP&#39;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;baseball&#39;</span><span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">node</span>
+</span><span class="line"><span class="s">&#39;NP&#39;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+</span><span class="line"><span class="s">&#39;baseball&#39;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;Gary&#39;</span><span class="p">,</span> <span class="s">&#39;plays&#39;</span><span class="p">,</span> <span class="s">&#39;baseball&#39;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="grammar--chomsky-normal-form">3. Grammar , Chomsky normal form</h2>
+
+<p>我們也可以看看這個tree是由哪些grammar產生的</p>
+
+<p>可以用<code>productions()</code>得出grammar</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">productions</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="n">S</span> <span class="o">-&gt;</span> <span class="n">NP</span> <span class="n">VP</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;Gary&#39;</span><span class="p">,</span> <span class="n">VP</span> <span class="o">-&gt;</span> <span class="n">VT</span> <span class="n">NP</span><span class="p">,</span> <span class="n">VT</span> <span class="o">-&gt;</span> <span class="s">&#39;plays&#39;</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;baseball&#39;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來,我們可以把grammar轉成chomsky normal form(CNF)</p>
+
+<p>（若不清楚CNF是什麼,請查閱”計算理論”的教科書)</p>
+
+<p>首先,看看一個不符合CNF的例子:</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">=</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">,</span> <span class="p">[</span> <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;Gary&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>                     <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VT&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;play&#39;</span><span class="p">]),</span>
+</span><span class="line"><span class="o">...</span>                     <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;baeball&#39;</span><span class="p">])])</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">.</span><span class="n">productions</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="n">S</span> <span class="o">-&gt;</span> <span class="n">NP</span> <span class="n">VT</span> <span class="n">NP</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;Gary&#39;</span><span class="p">,</span> <span class="n">VT</span> <span class="o">-&gt;</span> <span class="s">&#39;play&#39;</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;baeball&#39;</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh3.googleusercontent.com/-RO644KujeOY/UyF3tRi2mfI/AAAAAAAAAXA/i1iPNbISnaA/w285-h189-no/nltk2.png" alt="nltk2.png" /></p>
+
+<p><code>S -&gt; NP VT NP</code>不符合chomsky normal form</p>
+
+<p>可以用<code>chomsky_normal_form()</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">.</span><span class="n">chomsky_normal_form</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">.</span><span class="n">productions</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="n">S</span> <span class="o">-&gt;</span> <span class="n">NP</span> <span class="n">S</span><span class="o">|&lt;</span><span class="n">VT</span><span class="o">-</span><span class="n">NP</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;Gary&#39;</span><span class="p">,</span> <span class="n">S</span><span class="o">|&lt;</span><span class="n">VT</span><span class="o">-</span><span class="n">NP</span><span class="o">&gt;</span> <span class="o">-&gt;</span> <span class="n">VT</span> <span class="n">NP</span><span class="p">,</span> <span class="n">VT</span> <span class="o">-&gt;</span> <span class="s">&#39;play&#39;</span><span class="p">,</span> <span class="n">NP</span> <span class="o">-&gt;</span> <span class="s">&#39;baeball&#39;</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree2</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh5.googleusercontent.com/-aW-KwndtZOg/UyF3tQfi-jI/AAAAAAAAAXE/j4fpXq2-9Ro/w273-h234-no/nltk3.png" alt="nltk3.png" /></p>
+
+<p>轉換後產生了一個新的node,<code>S|&lt;VT-NP&gt;</code>,這樣子就符合CNF了</p>
+
+<h2 id="parse-tree-from-string">4.Parse tree from string</h2>
+
+<p>如果我們現在有一個string如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">=</span><span class="s">r&quot;(S (NP Gary) (VP (VT plays) (NP baseball)))&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>要從這個string建立出tree,可用以下方法：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree3</span><span class="o">=</span><span class="n">Tree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree3</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(S (NP Gary) (VP (VT plays) (NP baseball)))&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="section">結語：</h2>
+
+<p>想要看更多參考資料,請到：</p>
+
+<p>tutorial:</p>
+
+<p>https://nltk.googlecode.com/svn/trunk/doc/howto/tree.html</p>
+
+<p>http://www.mit.edu/~6.863/spring2011/labs/nltk-tree-pages.pdf</p>
+
+<p>api documentation:</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/api/nltk.tree.Tree-class.html#productions</p>
+
+<p>source code:</p>
+
+<p>http://www.nltk.org/_modules/nltk/tree.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-02-28T16:36:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:36 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/grammar/'>grammar</a>, <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/02/28/python-nltk-tree/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/02/28/python-nltk-tree/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/16/python-list-comprehension/" title="Previous Post: Python -- List Comprehension">&laquo; Python -- List Comprehension</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/09/python-nltk-sinica-treebank/" title="Next Post: Python nltk -- Sinica Treebank ">Python nltk -- Sinica Treebank  &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

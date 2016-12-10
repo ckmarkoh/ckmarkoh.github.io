@@ -1,0 +1,491 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>類神經網路 -- Word2vec (Part 2 : Backward Propagation) - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 本文接續 word2vec (part1) ，介紹 word2vec 訓練過程的 backward propagation 公式推導。 word2vec 的訓練過程中，輸出的結果，跟上下文有關的字，在 output layer 輸出為 1 ，跟上下文無關的字，在 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:21:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:21 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>本文接續 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> ，介紹 <em>word2vec</em> 訓練過程的 <em>backward propagation</em> 公式推導。</p>
+
+<p><em>word2vec</em> 的訓練過程中，輸出的結果，跟上下文有關的字，在 <em>output layer</em> 輸出為 1 ，跟上下文無關的字，在 <em>output layer</em> 輸出為 0。 在此，把跟上下文有關的，稱為 <em>positive example</em> ，而跟上下文無關的，稱為 <em>negative example</em> 。</p>
+
+<p>根據 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> 中提到的例子， <em>cat</em> 的向量為 <script type="math/tex">\textbf{v}_2</script> ， <em>run</em> 的向量為 <script type="math/tex">\textbf{w}_3</script> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{w}_4</script> ，由於 <em>cat</em> 的上下文有 <em>run</em> ，所以 <em>run</em> 為 <em>positive example</em> ，而 <em>cat</em> 的上下文沒有 <em>fly</em> ，所以 <em>fly</em> 為 <em>negative example</em> ，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00187.png" alt="" /></p>
+
+<!--more-->
+
+<h2 id="objective-function">Objective Function</h2>
+
+<p>訓練類神經網路需要有個目標函數，如果希望 <em>positive example</em> 輸出為 1 ， <em>negative example</em> 輸出為 0，則可以將以下函數 <script type="math/tex">J</script> 做最小化。</p>
+
+<script type="math/tex; mode=display">
+
+J = - \text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}) - \sum_{neg} \text{log} ( 1- \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }} )
+
+</script>
+
+<p>其中 <script type="math/tex">\textbf{v}_I</script> 為輸入端的字向量，而 <script type="math/tex">\textbf{w}_{pos}</script> 和 <script type="math/tex">\textbf{w}_{neg}</script> 為輸出端的字向量。 <script type="math/tex">\textbf{w}_{pos}</script> 為 <em>positive example</em> ，而  <script type="math/tex">\textbf{w}_{neg}</script> 為 <em>negative example</em> 。通常，對於每筆 <script type="math/tex">\textbf{v}_I</script> 而言，會找一個 <em>positive example</em> 和多個 <em>negative example</em> ，因此用 <script type="math/tex">\sum</script> 將這些 <em>negative example</em> 算出的結果給加起來。</p>
+
+<p>先看這公式前半部的部分：</p>
+
+<script type="math/tex; mode=display">
+
+-\text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }})
+
+</script>
+
+<p>從以上公式得知，當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }} = 0</script> 時，  <script type="math/tex">J</script> 會趨近無限大，而當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }} = 1</script> 時 ，  <script type="math/tex">J</script> 會趨近 0 ，所以，降低 <script type="math/tex">J</script> 的值，會迫使  <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}</script> 接近 1 。</p>
+
+<p>再來看另一部分：</p>
+
+<script type="math/tex; mode=display">
+
+-\text{log}(1 - \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }})
+
+</script>
+
+<p>當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }} = 1</script> 時 <script type="math/tex">J</script> 會趨近無限大，反之亦然，同理，降低 <script type="math/tex">J</script> 的值，會迫使  <script type="math/tex">1- \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }}</script> 接近 0 。</p>
+
+<h2 id="backward-propagation">Backward Propagation</h2>
+
+<p>至於要怎麼調整 <script type="math/tex">\textbf{v}</script> 和  <script type="math/tex">\textbf{w}</script> 的值，才能讓 <script type="math/tex">J</script> 變小？ 就是要用到 <em>backward propagation</em> 。</p>
+
+<h3 id="positive-example">Positive Example</h3>
+
+<p>這邊先看 <em>positive example</em> 的部分， 輸入端為 <em>dog</em> ，輸出端為 <em>run</em> ，在進行偏微分公式推導之前，先定義一些符號，以便之後推導：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& x_{13} = \textbf{v}_1 \cdot \textbf{w}_3 \\
+
+& y_{13} = \dfrac{1}{1+e^{-x_{13}}}  \\
+
+& J = - \text{log} (y_{13} )
+
+\end{align}
+
+ %]]></script>
+
+<p>這些符號，如下圖所示， <script type="math/tex">x_{13}</script> 是 <em>output layer</em> 在 <em>sigmoid</em> 之前的值， <script type="math/tex">y_{13} </script> 是通過 <em>sigmoid</em> 後的值， <script type="math/tex">J</script> 是針對這筆 <em>positive example</em> 所算出來的 <em>cost function</em> 。</p>
+
+<p><img src="/images/pic/pic_00188.png" alt="" /></p>
+
+<p>如果要更新 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> 的值，讓 <script type="math/tex">J</script> 變小，就要用 <em>gradient descent</em> 的方式，過程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta \nabla_{\textbf{v}_1}  J  \\
+
+& \textbf{w}_3 \leftarrow \textbf{w}_3 - \eta \nabla_{\textbf{w}_1}  J   
+
+\end{align}
+
+ %]]></script>
+
+<p>想瞭解更多關於 <em>gradient descent</em> ，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Gradient Descent &amp; AdaGrad </a></p>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>learning rate</em> ，為一常數，就是決定每一步要走多大，至於 <script type="math/tex">\nabla_{\textbf{v}_1} J </script> 這項要怎麼算？</p>
+
+<p>先看看它每個維度上的值：</p>
+
+<script type="math/tex; mode=display">
+
+\nabla_{\textbf{v}_1} J = 
+
+\begin{bmatrix}
+
+\frac{\partial J}{\partial v_{11}} \\
+
+\frac{\partial J}{\partial v_{12}} \\
+
+\frac{\partial J}{\partial v_{13}} \\
+
+\end{bmatrix}
+
+</script>
+
+<p>先看 <script type="math/tex">\frac{\partial J}{\partial v_{11}}</script> 這項，可以用 <em>chain rule</em> 把它拆開：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial v_{11} } = \frac{\partial J}{\partial y_{13}} \times \frac{\partial y_{13}}{\partial x_{13}}  \times \frac{\partial x_{13}}{\partial v_{11}}
+
+</script>
+
+<p>將 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> 拆成 <script type="math/tex">\frac{\partial J}{\partial y_{13}}</script> 、 <script type="math/tex">\frac{\partial y_{13}}{\partial x_{13}}</script> 和 <script type="math/tex">\frac{\partial x_{13}}{\partial v_{11}}</script> 這三項。而這三項的值可分別求出來：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \frac{\partial J}{\partial y_{13}} = \frac{\partial   - \text{log} (y_{13} )}{\partial y_{13}} = \frac{-1}{y_{13}} \\ 
+
+& \frac{\partial y_{13}}{\partial x_{13}} = \frac{\partial (\frac{1}{1+e^{-x_{13}}})}{\partial x_{13}} = \frac{1}{1+e^{-x_{13}}}( 1- \frac{1}{1+e^{-x_{13}}}) = y_{13} ( 1- y_{13}) \\
+
+& \frac{\partial x_{13}}{\partial v_{11}} = \frac{\partial \textbf{v}_{1} \cdot \textbf{w}_3} {\partial v_{11}} = w_{31}
+
+
+\end{align}
+
+ %]]></script>
+
+<p>代回這三項的結果到 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> ，得出：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial v_{11} } = \frac{-1}{y_{13}} \times y_{13} ( 1- y_{13}) \times  w_{31} = ( y_{13} - 1)  \times w_{31}
+
+</script>
+
+<p>而 <script type="math/tex">\frac{\partial J}{\partial v_{12}}</script> 和 <script type="math/tex">\frac{\partial J}{\partial v_{13}}</script> 也可用同樣方式得出其值， 如下：</p>
+
+<script type="math/tex; mode=display">
+
+\nabla_{\textbf{v}_1} J = 
+
+\begin{bmatrix}
+
+\frac{\partial J}{\partial v_{11}} \\
+
+\frac{\partial J}{\partial v_{12}} \\
+
+\frac{\partial J}{\partial v_{13}} \\
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+
+ ( y_{13} - 1)  \times w_{31} \\
+
+ ( y_{13} - 1)  \times w_{32} \\
+
+ ( y_{13} - 1)  \times w_{33} \\
+
+ \end{bmatrix}
+
+ = 
+
+  ( y_{13} - 1)  \textbf{w}_3
+
+</script>
+
+<p>因此，可得出 <script type="math/tex">\textbf{v}_1</script> 要調整的量：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{v}_1 \leftarrow \textbf{v}_1 - \eta  ( y_{13} - 1)  \textbf{w}_3
+
+</script>
+
+<p>同理， <script type="math/tex">\textbf{w}_3</script> 要調整的量：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{w}_3 \leftarrow \textbf{w}_3 - \eta  ( y_{13} - 1)   \textbf{v}_1
+
+</script>
+
+<p>其中，可以把 <script type="math/tex">( y_{13} - 1)</script> 看成是，模型預測出來的，和我們所想要的值，差距多少。因為在 <em>positive example</em> 的情況下，我們希望模型輸出結果 <script type="math/tex">y_{13}</script> 為 1 。如果  <script type="math/tex">y_{13} = 1</script> 表示模型預測對了，則不需要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> ，如果  <script type="math/tex">y_{13} \neq 1</script> 時，才要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> 。</p>
+
+<p>還有，之所以把這過程，稱為 <em>backward propagation</em> ，是因為可以把 <em>chain rule</em> 拆解 <script type="math/tex">\nabla_{\textbf{v}_1} J </script> 的過程，看成是將 <script type="math/tex">\frac{\partial J}{\partial y_{13} }</script> 的值， 由 <em>output layer</em> 往前傳遞，如下圖：</p>
+
+<p><img src="/images/pic/pic_00189.png" alt="" /></p>
+
+<p>想瞭解更多關於 <em>backward propagation</em> 的推導，請參考： <a href="/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程 </a></p>
+
+<h3 id="negative-example">Negative Example</h3>
+
+<p>再來看看 <em>negative example</em> 的部分， 輸入端為 <em>dog</em> ，輸出端為 <em>fly</em> ，在進行偏微分公式推導之前，先定義一些符號，以便之後推導：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& x_{14} = \textbf{v}_1 \cdot \textbf{w}_4 \\
+
+& y_{14} = \dfrac{1}{1+e^{-x_{14}}}  \\
+
+& J = - \text{log} (1 - y_{14} )
+
+\end{align}
+
+ %]]></script>
+
+<p>這些符號，如下圖所示， <script type="math/tex">x_{14}</script> 是 <em>output layer</em> 在 <em>sigmoid</em> 之前的值， <script type="math/tex">y_{14} </script> 是通過 <em>sigmoid</em> 後的值， <script type="math/tex">J</script> 是針對這筆 <em>positive example</em> 所算出來的 <em>cost function</em> 。</p>
+
+<p><img src="/images/pic/pic_00190.png" alt="" /></p>
+
+<p>同之前 <em>positive example</em> ，如果要更新 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> 的值，讓 <script type="math/tex">J</script> 變小，就要用 <em>gradient descent</em> 的方式：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta \nabla_{\textbf{v}_1}  J  \\
+
+& \textbf{w}_4 \leftarrow \textbf{w}_4 - \eta \nabla_{\textbf{w}_1}  J   
+
+\end{align}
+
+ %]]></script>
+
+<p>剩下的推導和 <em>positive example</em> 時，幾乎一樣，只有 <script type="math/tex">J</script> 不一樣。此處只需推導 <script type="math/tex">\frac{\partial J}{\partial y_{14}}</script> 的結果。</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial y_{14}} = \frac{\partial   - \text{log} (1 - y_{14} )}{\partial y_{14}} = \frac{1}{1 - y_{14}} 
+
+</script>
+
+<p>代回此結果到 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> ，得出：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial v_{11} } = \frac{1}{ 1- y_{14}} \times y_{14} ( 1- y_{14}) \times  w_{41} = ( y_{14} - 0)  \times w_{41}
+
+</script>
+
+<p>於是可以得出要修正的量：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta  ( y_{14} - 0)  \textbf{w}_4 \\ 
+
+& \textbf{w}_4 \leftarrow \textbf{w}_4 - \eta  ( y_{14} - 0)   \textbf{v}_1
+
+\end{align}
+
+ %]]></script>
+
+<p>其中，可以把 <script type="math/tex">( y_{14} - 0)</script> 看成是，模型預測出來的，和我們所想要的值，差距多少。因為在 <em>negative example</em> 的情況下，我們希望模型輸出結果 <script type="math/tex">y_{14}</script> 為 0 。如果  <script type="math/tex">y_{13} = 0</script> 表示模型預測對了，則不需要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> ，如果  <script type="math/tex">y_{14} \neq 0</script> 時，才要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> 。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>關於如何從無到有，不使用任何自動微分的套件，實作一個 <em>word2vec</em> ，請看：<a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation">word2vec (part3)</a></p>
+
+<p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:21:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:21 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/" title="Previous Post: 類神經網路 -- word2vec (part 1 : Overview)">&laquo; 類神經網路 -- word2vec (part 1 : Overview)</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/" title="Next Post: 類神經網路 -- word2vec (part 3 : Implementation)">類神經網路 -- word2vec (part 3 : Implementation) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

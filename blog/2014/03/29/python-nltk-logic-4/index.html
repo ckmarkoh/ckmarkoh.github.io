@@ -1,0 +1,488 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Logic 4 : Model and Satisfiability - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Model and Satisfiability 可滿足性(Satisfiability)是在探討, 邏輯式子所建立出的模型(Model), 可不可以找到一組解, 使得這個 Model 算出來的值可以是 例如： 則當 時, 則 Model 是 Satisfiable 另一例子： 這種情形,不論 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Logic 4 : Model and Satisfiability</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-29T15:39:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>3:39 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="model-and-satisfiability">1.Model and Satisfiability</h2>
+
+<p>可滿足性(Satisfiability)是在探討, 邏輯式子所建立出的模型(Model),</p>
+
+<p>可不可以找到一組解, 使得這個 <em>Model</em> 算出來的值可以是 <script type="math/tex">True</script></p>
+
+<p>例如：</p>
+
+<script type="math/tex; mode=display">
+
+p1=(x \vee y), \mspace{5mu}
+
+p2=(\neg x \vee y),  \mspace{5mu}
+
+p3=(x \vee \neg y) \\
+
+M1=p1 \wedge p2 \wedge p3
+
+</script>
+
+<p>則當 <script type="math/tex">x\equiv True, \mspace{5mu} y \equiv  True</script> 時, <script type="math/tex">M1 \equiv True </script></p>
+
+<p>則 <em>Model</em> <script type="math/tex">M1</script> 是 <em>Satisfiable</em></p>
+
+<p>另一例子：</p>
+
+<script type="math/tex; mode=display">
+
+p1=(x \vee y), \mspace{5mu}
+
+p2=(\neg x \vee y),  \mspace{5mu}
+
+p3=(x \vee \neg y) \mspace{5mu}
+
+p4=(\neg x \vee \neg y)\\
+
+M2=p1 \wedge p2 \wedge p3 \wedge p4
+
+</script>
+
+<p>這種情形,不論 <script type="math/tex">x</script> 或 <script type="math/tex">y</script> 的值,  <script type="math/tex">M2</script> 永遠都是 <script type="math/tex">False</script></p>
+
+<p>則 <em>Model</em> <script type="math/tex">M2</script> 是 <em>Unsatisfiable</em></p>
+
+<!--more-->
+
+<h2 id="implementation-1">2.Implementation 1</h2>
+
+<p>接著我們用nltk來做簡單的 <em>Satisfiability</em> 問題</p>
+
+<p>先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">lgp</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">LogicParser</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著,輸入邏輯式子<script type="math/tex">p1=(x \vee y), \mspace{5mu} p2=(\neg x \vee y),  \mspace{5mu}p3=(x \vee \neg y) \mspace{5mu}</script></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p1</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;x | y&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p2</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;-x | y&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p3</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;x | -y&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後把assignment加進去, 看看 <script type="math/tex">M1=p1 \wedge p2 \wedge p3</script> 是否 <em>satisfiable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">val</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">Valuation</span><span class="p">([(</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="bp">True</span><span class="p">)])</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dom</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">domain</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">g</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">dom</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">dom</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">p1</span> <span class="o">&amp;</span> <span class="n">p2</span> <span class="o">&amp;</span> <span class="n">p3</span><span class="p">,</span> <span class="n">g</span> <span class="p">)</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再把 <script type="math/tex">p4=(\neg x \vee \neg y)</script> 加進去, 看看<script type="math/tex">M2=p1 \wedge p2 \wedge p3 \wedge p4</script> 是否 <em>satisfiable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p4</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;-x | -y&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">p1</span> <span class="o">&amp;</span> <span class="n">p2</span> <span class="o">&amp;</span> <span class="n">p3</span> <span class="o">&amp;</span> <span class="n">p4</span><span class="p">,</span> <span class="n">g</span> <span class="p">)</span>
+</span><span class="line"><span class="bp">False</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="first-order-logic">3. First Order Logic</h2>
+
+<p>接著我們來看看如何將 <em>Model</em> 和 <em>Satisfiability</em> 的概念, 推廣到一階邏輯(First Order Logic)中</p>
+
+<p>例如,在某個世界裡,</p>
+
+<p><em>Gary</em> 是個男生, <em>Judy</em> 是個女生, 而 <em>Henry</em> 是一隻狗,</p>
+
+<p><em>Gary</em> 和 <em>Henry</em> 在跑步, </p>
+
+<p><em>Judy</em> 看見 <em>Henry</em> 而 <em>Gary</em> 看見 <em>Judy</em></p>
+
+<p>我們可以用一階邏輯(First Order Logic)把這個世界表示成一個 <em>Model</em>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&M=\\
+
+& Gary(g)  &\wedge \mspace{15mu} & Judy(j)  &\wedge \mspace{15mu} &Henry(h) &\wedge\\
+
+& Boy(g)   &\wedge \mspace{15mu} & Girl(j)  &\wedge \mspace{15mu} &Dog(h)   &\wedge\\
+
+& Run(g)   &\wedge \mspace{15mu} & Run(h)   &\wedge \mspace{15mu} & & \\
+
+& See(j,h) &\wedge \mspace{15mu} & See(g,j) &\wedge \mspace{15mu} &See(g,h)
+
+\end{align}
+
+ %]]></script>
+
+<p>根據這個Model, 用<em>Satisfiability</em>的概念, 可以求解以下問題</p>
+
+<p>1 . 找找看這個世界中女生有哪些</p>
+
+<p>這個問題可以看成是, 從找 <em>M</em> 中找出滿足 <script type="math/tex">girl(x)</script> 的 <script type="math/tex">x</script> 值有哪些, </p>
+
+<p>可求解 <script type="math/tex">girl(x) \wedge M </script> 的 <em>Satisfiability</em> , 得出：</p>
+
+<p>女生有 <em>Judy</em> , 因為當 <script type="math/tex">x=j</script> 時, <script type="math/tex">girl(x) \wedge M </script> 為 <em>Satisfiable</em></p>
+
+<p>2 . 回答這個世界中是否有男生在跑步, 或者, 是否有女生在跑步</p>
+
+<p>這可以看成是, 判斷某個 formula 和這個 <em>M</em> 是否有交集, 得出：</p>
+
+<p>有男生在跑步, 因為 <script type="math/tex">\exists x(Run(x) \wedge boy(x) ) </script> 在 <script type="math/tex"> M </script> 中為 <em>Satisfiable</em></p>
+
+<p>沒有女生在跑步, 因為 <script type="math/tex">\exists x(Run(x) \wedge girl(x) ) </script> 在 <script type="math/tex"> M </script> 中為 <em>Unsatisfiable</em></p>
+
+<p>3 . 回答是否 <em>Judy</em> 看見 <em>Henry</em> , 或者,是否 <em>Judy</em> 看見 <em>Gary</em></p>
+
+<p>可以判斷某個assignment 是否可讓 <em>M</em> 為 <em>Satisfiable</em> , 得出：</p>
+
+<p><em>Judy</em> 看見 <em>Henry</em> , 因為當 <script type="math/tex">x=j,y=h</script> 時, <script type="math/tex">See(x,y) </script> 在 <script type="math/tex">M </script> 中為 <em>Satisfiable</em></p>
+
+<p><em>Judy</em> 沒有看見 <em>Gary</em> , 因為當<script type="math/tex">x=j,y=g</script> 時, <script type="math/tex">See(x,y) </script> 在 <script type="math/tex">M </script> 中為 <em>Unsatisfiable</em></p>
+
+<p>註：</p>
+
+<p>1.在 python nltk 用的是 <em>Closed World Assumption</em> </p>
+
+<p>也就是說, 在 <em>Model</em> 裡面沒有定義的, 一律為 <em>False</em></p>
+
+<p>例如沒有定義 <em>Run(j)</em> , 所以 <em>Run(j)</em> 為 <em>False</em> </p>
+
+<p>因此 <script type="math/tex">\exists x(Run(x) \wedge girl(x) ) </script> 在 <script type="math/tex"> M </script> 中為 <em>Unsatisfiable</em> </p>
+
+<p>同理, <em>See(j,g)</em> 在 <script type="math/tex">M </script> 中為 <em>Unsatisfiable</em></p>
+
+<p>2.相對於 <em>Closed World Assumption</em> </p>
+
+<p>有另一種叫作 <em>Open World Assumption</em> </p>
+
+<p>是將沒有定義的formula 它視為 <em>Unknown</em></p>
+
+<p>所以結果除了 <em>True</em> 和 <em>False</em> 之外, 還有 <em>Unknown</em></p>
+
+<h2 id="implementation-2">4.Implementation 2</h2>
+
+<p>用 python nltk 來實作看看：</p>
+
+<p>首先, 建立 model</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot; </span>
+</span><span class="line"><span class="s">... Gary =&gt; g</span>
+</span><span class="line"><span class="s">... Judy =&gt; j</span>
+</span><span class="line"><span class="s">... Henry =&gt; h</span>
+</span><span class="line"><span class="s">... boy =&gt; {g}</span>
+</span><span class="line"><span class="s">... girl =&gt; {j}</span>
+</span><span class="line"><span class="s">... dog =&gt; {h}</span>
+</span><span class="line"><span class="s">... run =&gt; {g, h}</span>
+</span><span class="line"><span class="s">... see =&gt; {(j, h), (g, j), (g, h)}</span>
+</span><span class="line"><span class="s">... &quot;&quot;&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">val</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">parse_valuation</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">Model</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>1.求 <script type="math/tex">girl(x)</script> 的 <script type="math/tex">x</script> 值:</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfiers</span><span class="p">(</span><span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;girl(x)&#39;</span><span class="p">),</span> <span class="s">&#39;x&#39;</span>  <span class="p">,</span> <span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="p">[]))</span>
+</span><span class="line"><span class="nb">set</span><span class="p">([</span><span class="s">&#39;j&#39;</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出結果 <script type="math/tex">x=j</script></p>
+
+<p>2.求 <script type="math/tex">\exists x (Run(x) \wedge boy(x)) </script> 或 <script type="math/tex">\exists x (Run(x) \wedge girl(x))</script> 這兩個formula在 <script type="math/tex">M</script> 中是否為 <em>Satisfiable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;exists x.(run(x) &amp; boy(x))&#39;</span><span class="p">),</span><span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="p">[]))</span>
+</span><span class="line"><span class="bp">True</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;exists x.(run(x) &amp; girl(x))&#39;</span><span class="p">),</span><span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="p">[]))</span>
+</span><span class="line"><span class="bp">False</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出結果：</p>
+
+<p><script type="math/tex">\exists x(Run(x) \wedge boy(x) )</script> 在 <script type="math/tex">M </script> 中為 <em>Satisfiable</em></p>
+
+<p><script type="math/tex">\exists x(Run(x) \wedge girl(x) ) </script> 在 <script type="math/tex">M </script> 中為 <em>Unsatisfiable</em></p>
+
+<p>3.求 <script type="math/tex">x=j,y=h</script> 或 <script type="math/tex">x=j,y=g</script> 對於 <script type="math/tex">See(x,y)</script> 在 <script type="math/tex">M</script> 中是否為 <em>Satisfiable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;see(x,y)&#39;</span><span class="p">),</span><span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,[(</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;j&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="s">&#39;h&#39;</span><span class="p">)]))</span>
+</span><span class="line"><span class="bp">True</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">m</span><span class="o">.</span><span class="n">satisfy</span><span class="p">(</span><span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;see(x,y)&#39;</span><span class="p">),</span><span class="n">nltk</span><span class="o">.</span><span class="n">Assignment</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">domain</span><span class="p">,[(</span><span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;j&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="s">&#39;g&#39;</span><span class="p">)]))</span>
+</span><span class="line"><span class="bp">False</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出結果：</p>
+
+<p>當 <script type="math/tex">x=j,y=h</script> 時, <script type="math/tex">See(x,y) </script> 在 <script type="math/tex">M </script> 中為 <em>Satisfiable</em></p>
+
+<p>當<script type="math/tex">x=j,y=g</script> 時, <script type="math/tex">See(x,y)</script> 在 <script type="math/tex">M </script> 中為 <em>Unsatisfiable</em></p>
+
+<h2 id="reference">5.Reference</h2>
+
+<p>關於python nltk的 <em>model</em> 和 <em>satistiability</em> 可參考：</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch10.html</p>
+
+<p>關於 <em>Closed World Assumption</em> 與 <em>Open World Assumption</em> 可參考：</p>
+
+<p>http://en.wikipedia.org/wiki/Closed_world_assumption</p>
+
+<p>http://en.wikipedia.org/wiki/Open_world_assumption</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-29T15:39:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>3:39 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/logic/'>logic</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/python/'>python</a>, <a class='category' href='/blog/categories/semantics/'>semantics</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing/" title="Previous Post: 自然語言處理 -- Ngram Smoothing / Interpolation">&laquo; 自然語言處理 -- Ngram Smoothing / Interpolation</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/30/python-standard-library-difflib/" title="Next Post: Python Standard Library -- difflib">Python Standard Library -- difflib &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

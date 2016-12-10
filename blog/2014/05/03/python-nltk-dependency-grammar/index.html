@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Dependency Grammar - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1. Introduction 在自然語言處理中, Phase-Structured Grammar 這類的文法, 是把一個句子, 剖析成一個 完整的剖析樹 , 它的重點是句子中各個成份的階層關係, 例如 Context-Free Grammar 而所謂的 Dependenct Grammar &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Dependency Grammar</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-05-03T15:00:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:00 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p>在自然語言處理中, <em>Phase-Structured Grammar</em> 這類的文法, 是把一個句子, 剖析成一個 <strong>完整的剖析樹</strong> , 它的重點是句子中各個成份的階層關係, 例如 <em>Context-Free Grammar</em></p>
+
+<p>而所謂的 <em>Dependenct Grammar</em> , 是著重在 <strong>字和字之間關係</strong> , 而非整個句子中各種成份階層關係, 例如 </p>
+
+<script type="math/tex; mode=display">
+
+\text{I shot an elephant in my pajamas.}
+
+</script>
+
+<p>用<em>Depedenct Grammar</em> 可以表示成這樣</p>
+
+<p><img src="/images/pic/pic_00067.png" alt="d0" /></p>
+
+<p>如上圖, 把詞語和詞語之間的關係, 用箭頭表示, 箭頭的起點為 <em>Head</em>, 終點為 <em>dependents</em> , 標示箭頭上的英文字代表 <em>Head</em> 和 <em>Dependent</em> 之間的 <em>relation</em></p>
+
+<!--more-->
+
+<p><em>Head</em> 的意思是中心語, 就是比較重要的概念, 而 <em>Dependent</em> 則是用來修飾這個概念的詞語 , 例如 <em>an elephant</em> 這一小片段中, 重要的概念為 <em>elephant</em> , 而 <em>an</em> 是 <em>elephant</em> 的修飾語</p>
+
+<p>通常會在句子中挑一個最重要的中心語, 通常是動詞, 當作 <em>ROOT</em> , 如上圖例子的 <em>ROOT</em> 為 <em>shot</em>, 而 <em>shot</em> 的 <em>Dependent</em> 有 <em>I</em> 和 <em>elephant</em> , 它們和 <em>shot</em> 之間的 <em>relation</em> 分別為 <em>SBJ</em> 和 <em>OBJ</em> , 以此類推</p>
+
+<p>相較於 <em>Phase-Structured Grammar</em> 需要整個句子都文法正確, 才可以得出剖析樹, 而 <em>Dependency Grammar</em> 不需要整個句子裡面的每個字都文法正確, 也可以得到剖析樹, 因為只需要注意字和字的關係即可</p>
+
+<h2 id="dependencygraph">2. DependencyGraph</h2>
+
+<p>在 <em>python nltk</em> 裡, 可以用 <code>DependencyGraph</code> 來載入 <em>Dependency Grammar</em></p>
+
+<p>首先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk.parse</span> <span class="kn">import</span> <span class="n">DependencyGraph</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著用以下的 <em>string</em> 來表示前例的 <em>Dependency Grammar</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dep_str</span><span class="o">=</span> \
+</span><span class="line"><span class="o">...</span> <span class="s">&quot;&quot;&quot;</span>
+</span><span class="line"><span class="s">... I         NOUN  2    SBJ</span>
+</span><span class="line"><span class="s">... shot      VERB  0    ROOT </span>
+</span><span class="line"><span class="s">... an        DET   4    DETMOD</span>
+</span><span class="line"><span class="s">... elephant  NOUN  2    OBJ</span>
+</span><span class="line"><span class="s">... in        PREP  4    NMOD</span>
+</span><span class="line"><span class="s">... my        DET   7    DETMOD</span>
+</span><span class="line"><span class="s">... pajamas   NOUN  5    PMOD</span>
+</span><span class="line"><span class="s">... &quot;&quot;&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, 每行可分成四個部份, 第一部份是句子中的單字, 第二部份是這個單字的 <em>Part of Speech(POS) Tagging</em> , 第三和第四部份是它的 <em>Head</em> 的 <em>index</em> 以及 <em>relation</em>, 例如 <em>I</em> 這個字, 它的 <em>POS Tagging</em> 為 <em>Noun</em> , 它的 <em>Head</em> 為 <em>shot</em>, <em>Head</em> 的 <em>index</em> 為 <em>shot</em> 在句子中的位置, 為 <em>2</em>, 而 <em>relation</em> 為 <em>SBJ</em> , 以此類推, 見下圖</p>
+
+<p><img src="/images/pic/pic_00068.png" alt="d1" /></p>
+
+<p>上圖將每個字標上 <em>index</em> , 以方便建構出 <em>Dependency Graph</em></p>
+
+<p>再來用 <code>DependencyGraph</code> 讀入這個 <code>dep_str</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dg</span> <span class="o">=</span> <span class="n">DependencyGraph</span><span class="p">(</span><span class="n">dep_str</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>可以把 <em>Dependency Graph</em> 轉成 <em>Syntax Tree</em> 印出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dg</span><span class="o">.</span><span class="n">tree</span><span class="p">()</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(shot I (elephant an (in (pajamas my))))&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>或者畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dg</span><span class="o">.</span><span class="n">tree</span><span class="p">()</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>呈現如下圖</p>
+
+<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
+
+<p>由上圖可知, <em>Dependency Grammar</em> 所形成的 <em>syntax tree</em> , 和 <em>Phase-Structured Grammar</em> 最大的不同點在於, 每個 <em>Node</em> 是一個字, 而不是 <em>Non-Terminal</em> , <em>Node</em> 和 <em>Node</em> 之間的 <em>edge</em> 表示 <em>dependent relation</em> 而非 <em>production</em>. </p>
+
+<h2 id="dependency-parsing">3. Dependency Parsing</h2>
+
+<p>接著來談到如何把一個句子, 利用 <em>Dependency Grammar</em> 轉成 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
+
+<p>先載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">parse_dependency_grammar</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>還有尚未剖析的 <em>Raw Sentence</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sent</span> <span class="o">=</span> <span class="s">&#39;I shot an elephant in my pajamas&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著是 <em>Grammar</em> 的部份, 箭號左邊為 <em>head</em> , 右邊為 <em>dependent</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dep_grammar</span> <span class="o">=</span> <span class="n">parse_dependency_grammar</span><span class="p">(</span>
+</span><span class="line"><span class="o">...</span> <span class="s">&quot;&quot;&quot;</span>
+</span><span class="line"><span class="s">... &#39;shot&#39; -&gt; &#39;I&#39; | &#39;elephant&#39; | &#39;in&#39;</span>
+</span><span class="line"><span class="s">... &#39;elephant&#39; -&gt; &#39;an&#39; | &#39;in&#39;</span>
+</span><span class="line"><span class="s">... &#39;in&#39; -&gt; &#39;pajamas&#39;</span>
+</span><span class="line"><span class="s">... &#39;pajamas&#39; -&gt; &#39;my&#39;</span>
+</span><span class="line"><span class="s">... &quot;&quot;&quot;</span>
+</span><span class="line"><span class="o">...</span> <span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在 <code>nltk</code> 裡面, 提供兩種方式, 分別為 <em>Projective Dependency</em> 和 <em>Non-Projective Dependency</em></p>
+
+<p>分別可以把 <em>Raw Sentence</em> 轉為 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
+
+<h3 id="projective-dependency-parsing">3.1 Projective Dependency Parsing</h3>
+
+<p><code>ProjectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>syntax tree</em></p>
+
+<p>載入以下模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">ProjectiveDependencyParser</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著用 <code>ProjectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">trees</span> <span class="o">=</span> <span class="n">ProjectiveDependencyParser</span><span class="p">(</span><span class="n">dep_grammar</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>因為本例的文法為 <em>ambiguous grammar</em> , 也就是說, 可能的 <em>syntax tree</em> 超過一種以上</p>
+
+<p>程式會求出所有可能的 <em>syntax tree</em> , 如本例, 有兩個可能的 <em>syntax tree</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(shot I (elephant an (in (pajamas my))))&#39;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">trees</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+</span><span class="line"><span class="s">&#39;(shot I (elephant an) (in (pajamas my)))&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用以下方法畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">trees</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
+
+<p><img src="/images/pic/pic_00071.png" alt="d3" /></p>
+
+<h3 id="non-projective-dependency-parsing">3.2 Non-Projective Dependency Parsing</h3>
+
+<p><code>NonprojectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>dependency graph</em></p>
+
+<p>載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">NonprojectiveDependencyParser</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著用 <code>NonprojectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">dep_graphs</span> <span class="o">=</span> <span class="n">NonprojectiveDependencyParser</span><span class="p">(</span><span class="n">dep_grammar</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>本例也會得出兩個可能的結果, 可以用 <code>print</code> 印出 <em>dependency graph</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dep_graphs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span class="line"><span class="p">[{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;rel&#39;</span><span class="p">:</span> <span class="s">&#39;TOP&#39;</span><span class="p">,</span> <span class="s">&#39;tag&#39;</span><span class="p">:</span> <span class="s">&#39;TOP&#39;</span><span class="p">,</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;I&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;shot&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;an&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;elephant&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;my&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;pajamas&#39;</span><span class="p">}]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">dep_graphs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="p">[{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;rel&#39;</span><span class="p">:</span> <span class="s">&#39;TOP&#39;</span><span class="p">,</span> <span class="s">&#39;tag&#39;</span><span class="p">:</span> <span class="s">&#39;TOP&#39;</span><span class="p">,</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;I&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;shot&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;an&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;elephant&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;in&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;my&#39;</span><span class="p">},</span>
+</span><span class="line"> <span class="p">{</span><span class="s">&#39;address&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s">&#39;deps&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="s">&#39;word&#39;</span><span class="p">:</span> <span class="s">&#39;pajamas&#39;</span><span class="p">}]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>address</code> 表示 <code>word</code> 的 <em>id</em> , <code>deps</code> 為這個 <code>word</code> 的 <em>dependent</em></p>
+
+<p><em>註：事實上,  Non-Projective 和 Projective 最主要的差異在於, Non-Projective 可以處理字詞順序可任意顛倒的語言, 在處理這種語言時, 產生出的 Syntax Tree 由於字詞顛倒, 會有交叉, 故通常用 Dependency Graph 來表示結果, 本文不探討這種現象, 若你想了解, 請看以下的 Further Reading</em> </p>
+
+<h2 id="furtuer-reading">Furtuer Reading</h2>
+
+<p>想要了解更多關於 <em>Dependency Grammar</em> 可以看以下兩篇 <em>python nltk</em> 的 <em>Documentation</em></p>
+
+<p>Python nltk HOWTO dependency</p>
+
+<p>http://www.nltk.org/howto/dependency.html</p>
+
+<p>Python nltk book ch08</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch08.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-05-03T15:00:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:00 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/dependency-grammar/'>dependency_grammar</a>, <a class='category' href='/blog/categories/grammar/'>grammar</a>, <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/parsing/'>parsing</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/30/ruby-enumerable-1/" title="Previous Post: Ruby -- Enumerable 1 : Collect , Inject ">&laquo; Ruby -- Enumerable 1 : Collect , Inject </a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/05/06/python-nltk-rule-based-chunking/" title="Next Post: Python nltk -- Rule-Based Chunking">Python nltk -- Rule-Based Chunking &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

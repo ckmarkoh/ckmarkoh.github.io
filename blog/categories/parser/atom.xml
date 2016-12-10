@@ -1,0 +1,542 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Parser | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/parser/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python Standard Library -- Argparse]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse/"/>
+    <updated>2014-03-31T05:31:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse</id>
+    <content type="html"><![CDATA[<h2 id="introduction">0.Introduction</h2>
+
+<p>argparse是用來處理command line的argument所使用的</p>
+
+<p>例如執行一個程式, 比如說 <code>mv</code>  </p>
+
+<p>在Terminal輸入 <code>mv --help</code> 之後</p>
+
+<p>顯示如下：</p>
+
+<p>```sh
+$ mv –help
+Usage: mv [OPTION]… [-T] SOURCE DEST
+  or:  mv [OPTION]… SOURCE… DIRECTORY
+  or:  mv [OPTION]… -t DIRECTORY SOURCE…
+Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.</p>
+
+<p>Mandatory arguments to long options are mandatory for short options too.
+      –backup[=CONTROL]       make a backup of each existing destination file
+  -b                           like –backup but does not accept an argument
+  -f, –force                  do not prompt before overwriting
+  -i, –interactive            prompt before overwrite
+……</p>
+
+<p>```</p>
+
+<p>由此可知, <code>mv</code> 後面可以有很多種argument</p>
+
+<p>那要寫程式去parse這些command line的argument很麻煩</p>
+
+<p>如果用了 <code>argparse</code> 這個module</p>
+
+<p>就不用自己寫程式去parse這些argument了</p>
+
+<!--more-->
+
+<p>接下來實作看看</p>
+
+<p>首先, 寫個很簡單的程式, 試試看 <code>argparse</code></p>
+
+<p>```python argprog0.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog0’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中, <code>prog='argprog0'</code> 為 <em>help</em> 的內容中,顯示的程式名稱</p>
+
+<p>而 <code>args</code> 為 <code>argparse</code> parse完後的argument</p>
+
+<p>這個程式可以判斷後面接的argument是不是 <code>-h</code> 或 <code>--help</code></p>
+
+<p>如果是的話, 則顯示出 <em>help</em> 的內容</p>
+
+<p>```sh
+$ python argprog0.py -h
+usage: argprog0 [-h]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog0.py –help
+usage: argprog0 [-h]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit</p>
+
+<p>```</p>
+
+<p>如果輸入的argument不是<code>-h</code> 或 <code>--help</code></p>
+
+<p>則會顯示出error message</p>
+
+<p>```sh
+$ python argprog0.py 1
+usage: argprog0 [-h]
+argprog0: error: unrecognized arguments: 1</p>
+
+<p>```</p>
+
+<p>如果沒有輸入argument, 則顯示如下：</p>
+
+<p>```sh
+$ python argprog0.py 
+Namespace()</p>
+
+<p>```</p>
+
+<p>其中, <code>Namespace()</code> 是 <code>args</code> 中的argument</p>
+
+<p>因為沒有輸入任何argument, 所以 <code>Namespace()</code> 是空的</p>
+
+<p>接下來,看看要怎麼把argument存到 <code>args</code> 裡面</p>
+
+<h2 id="optional-argument">1.Optional Argument</h2>
+
+<p>先來試試看加個 <em>optional argument</em> 到程式當中</p>
+
+<p>所謂 <em>optional argument</em> 就是可有可無的argument</p>
+
+<p>通常會以 <code>-</code> 或 <code>--</code> 開頭, 例如 <code>--help</code></p>
+
+<p>試試看加一個 <code>--foo</code> 到程式裡面 </p>
+
+<p>```python argprog1.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog1’)
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中 <code>help='foo of the %(prog)s program'</code> 為 <em>help</em> 中, 對於 <code>--foo</code> 的解說</p>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<p>```sh
+$ python argprog1.py -h
+usage: argprog1 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog1 program</p>
+
+<p>```</p>
+
+<p>接著, 來輸入 <code>--foo</code> 的值</p>
+
+<p>輸入方法如下, 在 <code>--foo</code> 後面接的argument就是它的值</p>
+
+<p>```sh
+$ python argprog1.py –foo FOO
+Namespace(foo=’FOO’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog1.py –foo BAR
+Namespace(foo=’BAR’)</p>
+
+<p>```</p>
+
+<p>也可以什麼都不輸入, 因為 <code>--foo</code> 是 <em>optional argument</em></p>
+
+<p>這樣的話 <code>foo</code> 的值就會是 <code>None</code></p>
+
+<p>```sh
+$ python argprog.py 
+Namespace(foo=None)</p>
+
+<p>```</p>
+
+<p>但是如果只輸入 <code>--foo</code> 而後面沒有值, 或是多輸入了一個值</p>
+
+<p>皆會出現error</p>
+
+<p>```sh
+$ python argprog1.py –foo 
+usage: argprog1 [-h] [–foo FOO]
+argprog1: error: argument –foo: expected one argument</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog1.py –foo FOO BAR
+usage: argprog1 [-h] [–foo FOO]
+argprog1: error: unrecognized arguments: BAR</p>
+
+<p>```</p>
+
+<h2 id="positional-argument">2.Positional Argument</h2>
+
+<p>再來, 於程式中加入 <em>positional argument</em></p>
+
+<p>和 <em>optional argument</em> 不一樣的地方在於</p>
+
+<p><em>positional argument</em> 是必須要輸入的argument</p>
+
+<p>且 <em>positional argument</em> 的值, 是根據argument的位置而定</p>
+
+<p><em>positional argument</em> 的開頭, 沒有 <code>-</code> , 或 <code>--</code></p>
+
+<p>把 <code>bar1</code> 和 <code>bar2</code> 這兩個 <em>positional argument</em> 加到程式中,如下：</p>
+
+<p>```python argprog2.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog2’)
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+parser.add_argument(‘bar1’, help=’bar1 of the %(prog)s program’)
+parser.add_argument(‘bar2’, help=’bar2 of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<p>```sh
+$ python argprog2.py -h
+usage: argprog2 [-h] [–foo FOO] bar1 bar2</p>
+
+<p>positional arguments:
+  bar1        bar1 of the argprog2 program
+  bar2        bar2 of the argprog2 program</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog2 program</p>
+
+<p>```</p>
+
+<p>接著輸入 <em>positional argument</em> 的值</p>
+
+<p>輸入的時候, 不需要輸入argument的名稱</p>
+
+<p>只要根據argument的位置, 依序輸入值就可以了</p>
+
+<p>輸入的位置不同, argument的值就會不同, 如下：</p>
+
+<p>```sh
+$ python argprog2.py x y 
+Namespace(bar1=’x’, bar2=’y’, foo=None)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py y x
+Namespace(bar1=’y’, bar2=’x’, foo=None)</p>
+
+<p>```</p>
+
+<p>另外, 也可以輸入 <em>optional argument</em></p>
+
+<p>可以在任意位置插入 <em>optional argument</em> </p>
+
+<p>不會影響 <em>positional argument</em> 的值</p>
+
+<p>```sh
+$ python argprog2.py x y –foo z
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x –foo z y
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py –foo z x y
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>以下為出現error的情形</p>
+
+<p>因為<em>positional argument</em> 是必須要輸入的</p>
+
+<p>沒有輸入的話, 就會出現error message</p>
+
+<p>```sh
+$ python argprog2.py 
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x –foo y
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<h2 id="description-and-epilog">3.Description and Epilog</h2>
+
+<p>如果我們要在 <em>help</em> 中, 加入關於整個程式的解說,</p>
+
+<p>而不是針對個別的 argument做解說</p>
+
+<p>可以用 <code>description</code> 和 <code>epilog</code> , 方法如下：</p>
+
+<p>```python argprog3.py
+import argparse
+parser = argparse.ArgumentParser(
+        prog=’argprog3’,
+        description=’### This is description. ###’,
+        epilog=’### This is epilog. ###’
+        )
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+parser.add_argument(‘bar’, help=’bar of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中, <code>description</code> 和 <code>epilog</code> 為解說內容, 唯出現的位置不同</p>
+
+<p>來看輸入 <code>-h</code> 後, 它們的位置在哪：</p>
+
+<p>```sh
+$ python argprog3.py -h
+usage: argprog3 [-h] [–foo FOO] bar</p>
+
+<h3 id="this-is-description">This is description.</h3>
+
+<p>positional arguments:
+  bar         bar of the argprog3 program</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog3 program</p>
+
+<h3 id="this-is-epilog">This is epilog.</h3>
+
+<p>```</p>
+
+<p>所以, description是在arguments解說的前方的內容</p>
+
+<p>而epilog是在arguments解說的後方的內容</p>
+
+<h2 id="default-value">4.Default Value</h2>
+
+<p>針對 <em>optional argument</em> 在沒有輸入值得情形下</p>
+
+<p>如果我們想要讓這個有 <em>Default</em> 的值, 而不是 <em>None</em></p>
+
+<p>可以用 <code>default</code> ,方法如下：</p>
+
+<p>```python argprog4.py
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog4’)
+parser.add_argument(‘–foo’, default=’10’,
+                    help=’foo of the %(prog)s program, (default: %(default)s)’)
+print parser.parse_args()</p>
+
+<p>```</p>
+
+<p>其中 <code>help='foo of the %(prog)s program, (default: %(default)s)'</code> </p>
+
+<p>是 <em>help</em> 中顯示的 <em>default</em> 值</p>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 default 的值是多少</p>
+
+<p>```sh
+$ python argprog4.py -h
+usage: argprog4 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog4 program, (default: 10)</p>
+
+<p>```</p>
+
+<p>接著我們可以什麼都不輸入</p>
+
+<p>看看 <code>foo</code> 的值是不是 <em>default</em> 的值</p>
+
+<p>```sh
+$ python argprog4.py 
+Namespace(foo=’10’)</p>
+
+<p>```</p>
+
+<p>或者在 <code>--foo</code> 後面接其他值, 改變它的值</p>
+
+<p>```sh
+$ python argprog4.py –foo 29
+Namespace(foo=’29’)</p>
+
+<p>```</p>
+
+<p>但是 <code>--foo</code> 後面沒有值的話, 還是會有Error</p>
+
+<p>```sh
+$ python argprog4.py –foo
+usage: argprog4 [-h] [–foo FOO]
+argprog4: error: argument –foo: expected one argument</p>
+
+<p>```</p>
+
+<h2 id="action">5.Action</h2>
+
+<p>上一節提到, 如果 <em>optional argument</em> , 例如 <code>--foo</code></p>
+
+<p>後面沒有值的話, 還是會有Error</p>
+
+<p>那麼像是 <code>--help</code> 這種 <em>optional argument</em>, 後面沒有接值, 也沒出現error</p>
+
+<p>這是怎麼辦到的呢？</p>
+
+<p>這就要用到 <code>action</code> 了, 例如以下程式中, </p>
+
+<p><code>action='store_true'</code> 表示有輸入 <code>--foo1</code> 則 <code>foo1</code> 為 <em>true</em> 若沒有則為 <em>Fales</em></p>
+
+<p><code>action='store_false'</code> 表示有輸入 <code>--foo2</code> 則 <code>foo2</code> 為 <em>Fales</em> 若沒有則為 <em>True</em></p>
+
+<p>```python argprog5.py
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog5’)
+parser.add_argument(‘–foo1’, action=’store_true’, help=’foo1 of the %(prog)s program’)
+parser.add_argument(‘–foo2’, action=’store_false’, help=’foo2 of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>接著,看看什麼都沒輸入的情形：</p>
+
+<p>```sh
+$ python argprog5.py 
+Namespace(foo1=False, foo2=True)</p>
+
+<p>```</p>
+
+<p>再來是有輸入 <code>--foo1</code> 或 <code>--foo2</code> 的情形：</p>
+
+<p>```sh
+$ python argprog5.py –foo1
+Namespace(foo1=True, foo2=True)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog5.py –foo2
+Namespace(foo1=False, foo2=False)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog5.py –foo1 –foo2
+Namespace(foo1=True, foo2=False)</p>
+
+<p>```</p>
+
+<h2 id="type">6.Type</h2>
+
+<p>如果要限定一個argument的 <em>Type</em></p>
+
+<p>例如 <em>type</em> 為 <em>Int</em>, 可以加入 <code>type=int</code> 於程式中</p>
+
+<p>例如以下程式, 我們限定 <code>type=int</code> , 表示 <code>--foo</code> 只接受整數值</p>
+
+<p>```python argprog6.py 
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog6’)
+parser.add_argument(‘–foo’, type=int,
+                    help=’foo of the %(prog)s program, (type: %(type)s)’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 <code>type</code> 了</p>
+
+<p>```sh
+$ python argprog6.py -h
+usage: argprog6 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog6 program, (type: int)</p>
+
+<p>```</p>
+
+<p>在 <code>--foo</code> 後接整數, 是可以的</p>
+
+<p>```sh
+$ python argprog6.py –foo 100
+Namespace(foo=100)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog6.py –foo -100
+Namespace(foo=-100)</p>
+
+<p>```</p>
+
+<p>但如果後面接的不是整數, 就會有error</p>
+
+<p>```sh
+$ python argprog6.py –foo -1.35
+usage: argprog6 [-h] [–foo FOO]
+argprog6: error: argument –foo: invalid int value: ‘-1.35’</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog6.py –foo abc
+usage: argprog6 [-h] [–foo FOO]
+argprog6: error: argument –foo: invalid int value: ‘abc’</p>
+
+<p>```</p>
+
+<h2 id="further-reading">7.Further Reading</h2>
+
+<p>關於 <code>argparse</code> 的用法</p>
+
+<p>今天只講了一小部份</p>
+
+<p>若有興趣更深入了解, 請看：</p>
+
+<p>http://docs.python.org/2/library/argparse.html#type</p>
+]]></content>
+  </entry>
+  
+</feed>

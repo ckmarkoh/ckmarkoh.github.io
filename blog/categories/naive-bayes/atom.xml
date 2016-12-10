@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Naive_bayes | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/naive-bayes/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Naive Bayes Classifier]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/"/>
+    <updated>2014-04-13T07:04:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/13/natural-language-processing-naive-bayes-classifier</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理的應用, 常常有分類的問題, 例如把某篇新聞分到哪一類</p>
+
+<p>處理分類問題, 有種簡單的方法, 就是看這篇文章有哪些關鍵字, 根據這些關鍵字的出現與否, 用 <em>Naive Bayes Classifier</em> 做分類</p>
+
+<p>要講 <em>Naive Bayes Classifier</em> 之前, 首先, 要知道 <em>Bayes rule</em> 是什麼, <em>Bayes rule</em> 很簡單, 如下</p>
+
+<script type="math/tex; mode=display">
+
+P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
+
+</script>
+
+<p>這個公式, 高中數學應該都有教過 , 如果 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 為 <em>Independence</em> , 則</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(A\mid B) = P(A) \\
+
+&P(A,B)=P(A\mid B) \times P(B) = P(A) \times P(B)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>所謂的 <em>Naive Bayes Classifier</em>  ,  其實就是應用 <em>Bayes rule</em>  來處理分類問題</p>
+
+<!--more-->
+
+<p>舉個例子, 文章分類問題, 如果有一篇文章有關鍵字有 <script type="math/tex">W_{1} , W_{2}</script> ,假設 <script type="math/tex">P(W_{1})</script>  和 <script type="math/tex">P(W_{2})</script> 為 <em>Independence</em> , 這篇文章被分到類別 <script type="math/tex">C</script> 的機率</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(C,W_{1},W_{2}) \\
+
+&=P(C \mid W_{1},W_{2}) \times P(W_{1},W_{2})  &(Bayes Rule) \\
+
+&= P(W_{1},W_{2}\mid C ) \times P(c) &(Bayes Rule) \\ 
+
+&= P(W_{1}\mid W_{2}, C) \times P(W_{2} \mid C)  \times P(c ) &(Bayes Rule) \\
+
+&= P(W_{1}\mid C ) \times P(W_{2} \mid C )  \times P(C )  & (Independence)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果某篇文章有關建字 <script type="math/tex">W_{1}</script> , 但沒有關鍵字 <script type="math/tex">W_{2}</script> , 這篇文章被分到類別 <script type="math/tex">C</script> 的機率,如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(C , W_{1} ,  W_{2}')  \\
+
+&= P(W_{1}  \mid C ) \times P( W_{2}'  \mid C)  \times P( C) \\
+
+&= P(W_{1}  \mid C ) \times (1- P( W_{2}  \mid C))  \times P( C)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中, 沒有關鍵字 <script type="math/tex">W_{2}</script> 字的機率, 取有關鍵字 <script type="math/tex">W_{2}</script> 的機率的補集,  <script type="math/tex">P( W_{2}'  \mid C)= 1- P( W_{2}  \mid C )</script></p>
+
+<p>如果所挑選的關鍵字超過兩個以上, 某篇文章有關鍵字 <script type="math/tex">W_{1} , W_{2},...,W_{k}</script> , 但沒有關鍵字 <script type="math/tex">V_{1},V_{2},...,V_{l}  </script> 則此文章被分到類別 <script type="math/tex">C</script> 的機率如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(C,W_{1},W_{2},...,W_{k}, V_{1}' , V_{2}' , ..., V_{l}' ) \\
+
+&= \prod_{i=1}^{k} P(W_{i}\mid C ) \times \prod_{j=1}^{l} (1-P(V_{j}\mid C )) \times P(C )  
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>來分析一下以上公式的物理意義</p>
+
+<p>| 成份 | 物理意義   |
+|:——————–|:—————————————————————————-|
+\mid  <script type="math/tex">P(C )</script>           \mid  在所有的文章中,  類別 <script type="math/tex">C</script> 所占的比例, 若比例越高, 就表示文章越有可能屬於此類別 \mid 
+\mid  <script type="math/tex">P(W_{i}\mid C )</script> \mid  若某文章的類別是 <script type="math/tex">C</script> , 則此文章有關鍵字 <script type="math/tex">W_{i}</script> 的機率              \mid 
+\mid  <script type="math/tex">1- P(W_{i}\mid C )</script> \mid  若某文章的類別是 <script type="math/tex">C</script> , 則此文章沒有關鍵字 <script type="math/tex">W_{i}</script> 的機率         \mid </p>
+
+<p>所以, 把以上三種全部乘起來, 得到文章和關鍵字的 <em>Joint Probablity</em> , 就可以用關鍵字來預測文章的類別</p>
+
+<h2 id="example--sentiment-analysis">2.Example : Sentiment Analysis</h2>
+
+<p><em>Sentiment Analysis</em> 是一種分類問題, 就是把評論性質的文句, 分類到 <em>正面評論</em> 和 <em>負面評論</em> 這兩類</p>
+
+<p>例如, 在課程的討論版上, 蒐集各種關於某門課的評論句子, 句子的種類如下</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">count</th>
+      <th style="text-align: left">sentence</th>
+      <th>sentiment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left">2000</td>
+      <td style="text-align: left">I really <strong>like</strong> this course and I learn a <strong>lot</strong> from it</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">800</td>
+      <td style="text-align: left">I <strong>hate</strong> this course and I think it is a <strong>waste</strong> of time</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">200</td>
+      <td style="text-align: left">The course is extremely <strong>simple</strong> and quite a <strong>bore</strong></td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">3000</td>
+      <td style="text-align: left">The course is <strong>simple</strong>, and very <strong>easy</strong> to follow</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">1000</td>
+      <td style="text-align: left">I <strong>enjoy</strong> this course a <strong>lot</strong> and learning something too</td>
+      <td>+</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">400</td>
+      <td style="text-align: left">I would <strong>enjoy</strong> myself a <strong>lot</strong> if i did not have to take this course</td>
+      <td>-</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">600</td>
+      <td style="text-align: left">I didn’t <strong>enjoy</strong> this course</td>
+      <td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>其中, 欄位 <em>count</em> 表示這種句子出現的次數, 句子中的粗體字的為 <em>keyword</em> , 欄位 <em>sentiment</em> 表示正評或負評, 正評記為 <em>+</em> , 負評記為 <em>-</em> , 給一個新的評論句子 </p>
+
+<script type="math/tex; mode=display">
+
+ \text{I really } \textbf{like } \text{this } \textbf{simple } \text{course a } \textbf{lot } \text{.}
+
+</script>
+
+<p>這個句子中有關鍵字 <strong>like</strong> , <strong>simple</strong> , <strong>lot</strong> , 但沒有關鍵字 <strong>hate</strong> , <strong>waste</strong> , <strong>bore</strong> , <strong>easy</strong> , <strong>enjoy</strong> , 則這個句子為正面評論的機率為</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(+,like,simple,lot,hate',waste',bore',easy',enjoy') \\
+
+&=P(+) \times P(like \mid  +) \times P(simple \mid  +) \times P(lot \mid  +)  \times (1- P(hate \mid  +)) \\
+
+& \times (1- P(waste \mid  +)) \times (1- P(bore \mid  +)) \times (1- P(easy \mid  +)) \times (1- P(enjoy \mid  +))  
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>先分別算出這些項目的機率, 再全部乘起來</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(+) =	\frac{2000+3000+1000}{2000+800+200+300+1000+4000+600} = \frac{6000}{8000} = 0.75 \\[10pt]
+
+& P(like \mid  +) =	\frac{2000}{6000}  \approx 0.333333 \\[10pt]
+
+& P(simple \mid  +) =	\frac{3000}{6000}  = 0.5 \\[10pt]
+
+& P(lot \mid  +) =	\frac{2000}{6000}  \approx 0.333333 \\[10pt]
+
+& P(hate \mid +) = \frac{1}{6000} \approx 0.000167 &(smoothing)\\[10pt]
+
+& P(waste \mid +) = \frac{1}{6000} \approx 0.000167 &(smoothing)\\[10pt]
+
+& P(bore \mid +) = \frac{1}{6000} \approx 0.000167 &(smoothing)\\[10pt]
+
+& P(easy \mid +) = \frac{3000}{6000} = 0.5 \\[10pt]
+
+& P(enjoy \mid +) = \frac{1000}{6000} \approx 0.166667 \\[10pt]
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中,  <strong>hate</strong> , <strong>waste</strong> , <strong>bore</strong> , 在 <em>sentiment = ‘+’</em> 時的 <em>count</em> 為 <em>0</em> , 為了避免最後相乘的結果變為 <em>0</em> , 所以要做 <em>smoothing</em> , 也就是說, 將 <em>count</em> 改為 <em>1</em>  </p>
+
+<p>將以上結果乘起來, 得出以下結果</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(+,like,simple,lot,hate',waste',bore',easy',enjoy') \\
+
+&= 0.75 \times  0.333333 \times   0.5\times   0.333333 \times   (1-0.000167) \times   (1-0.000167) \times   (1-0.000167)  
+
+\\& \times 0.5 \times    0.166667 \\
+
+& \approx 0.01716
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>再來算算看這個句子為負面評論的機率, 得出</p>
+
+<script type="math/tex; mode=display">
+
+P(-,like,simple,lot,hate',waste',bore',easy',enjoy') = 4.048 \times 10^{-7} \approx 0
+
+</script>
+
+<p>因為 <script type="math/tex"> 0.026 > 0 </script> , 故此句子較有可能為正面評論</p>
+
+<h2 id="implementation--sentiment-analysis">3.Implementation : Sentiment Analysis</h2>
+
+<p>接著來實作一下以上的例子</p>
+
+<p>首先, 開新檔案命名為 <em>sentiment.py</em> ,貼上以下內容</p>
+
+<p>```python sentiment.py
+_DATA = [ 
+{‘n’:2000., ‘s’:”I really like this course and I learn a lot from it               “, ‘p’: 1}, 
+{‘n’:800. , ‘s’:”I hate this course and I think it is a waste of time              “, ‘p’:-1}, 
+{‘n’:200. , ‘s’:”The course is extremely simple and quite a bore                   “, ‘p’:-1}, 
+{‘n’:3000., ‘s’:”The course is simple, and very easy to follow                     “, ‘p’: 1}, 
+{‘n’:1000., ‘s’:”I enjoy this course a lot and learning something too              “, ‘p’: 1}, 
+{‘n’:400. , ‘s’:”I would enjoy myself a lot if i did not have to take this course  “, ‘p’:-1}, 
+{‘n’:600. , ‘s’:”I didn’t enjoy this course                                        “, ‘p’:-1}, 
+]</p>
+
+<p>_KEYWORD = [‘like’,’lot’,’hate’,’waste’,’simple’,’bore’,’easy’,’enjoy’]</p>
+
+<p>def smooth(x):
+    if x==0.:
+        return 1.
+    else :
+        return x</p>
+
+<p>def pc(c):
+    return smooth(sum([d[‘n’] for d in _DATA if d[‘p’]==c]))/ \
+           smooth(sum([d[‘n’] for d in _DATA]))</p>
+
+<p>def pwc(w,c):
+    return smooth(sum([d[‘n’] for d in _DATA if d[‘p’]==c if w in d[’s’] ])) / \ 
+           smooth(sum([d[‘n’] for d in _DATA if d[‘p’]==c]))</p>
+
+<p>def psc(s,c):
+    return reduce(lambda a,b: a<em>b, 
+           map(lambda w : pwc(w,c) if w in s else 1.-pwc(w,c) , _KEYWORD))</em>pc(c) </p>
+
+<p>def sentiment(s):
+    if psc(s,1) &gt; psc(s,-1):
+       return “positive” 
+    elif psc(s,1) &lt; psc(s,-1):
+       return “negative” 
+    else:
+       return “neutral”</p>
+
+<p>```</p>
+
+<p>其中, <code>_DATA</code> 是我們蒐集的句子 , <code>_KEYWORD</code> 是關鍵字 , <code>pc(c)</code> , <code>pwc(w,c)</code> 和 <code>psc(s,c)</code> 是算機率用的 <em>function</em> 等下再解釋, <code>sentiment(s)</code> 用來算最後的結果, 是正評( <em>positive</em> )還是負評( <em>negative</em> )</p>
+
+<p>接著到 <em>python</em> 的 <em>interactive mode</em> 載入這個檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import sentiment as st</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>首先, 計算正負評的句子在 <code>_DATA</code> 裡面所占的比例, 分別為 <script type="math/tex">P(+)</script> 和 <script type="math/tex">P(-)</script> , 本程式給正評的 <em>label</em>  為 <code>1</code> , 附評的 <em>label</em> 為 <code>-1</code> , 操作方法如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.pc(1)
+0.75</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.pc(-1)
+0.25</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>得出, 正評的句子所占的比例為 <code>0.75</code> , 以此類推</p>
+
+<p>接著來算看看, 已知某個句子是正評, 則此文章出現關鍵字 <code>like</code> 的機率, 為 <script type="math/tex">P(like \mid  +)</script></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.pwc(‘like’,1)
+0.3333333333333333</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來, 給定一個句子, 如下</p>
+
+<script type="math/tex; mode=display">
+
+\text{I really like this simple course a lot.}
+
+</script>
+
+<p>計算這個句子是正評的機率</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.psc(‘I really like this simple course a lot’,1)
+0.026028648003351664</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以直接用 <code>st.sentiment(s)</code> 判斷這個句子是正評還是負評, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.sentiment(‘I really like this simple course a lot’)
+‘positive’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來, 看看負評的例子</p>
+
+<script type="math/tex; mode=display">
+
+\text{I hate this course, it is too boring.}
+
+</script>
+
+<p>經由程式計算的結果, 此句為負評, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>st.sentiment(‘I hate this course, it is too boring’)
+‘negative’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以上是簡單 <em>Sentiment Analysis</em>  實作 </p>
+
+<p>其實, 在現實生活的應用中, <em>Sentiment Analysis</em> 的演算法, 還需要考慮到否定詞可以反轉句子的意思, </p>
+
+<p>例如 <em>I don’t like this course.</em> 和 <em>I like this course.</em> 這兩句的意思是相反的, 但是只看關鍵字, 未必能準確判斷</p>
+
+<h2 id="reference">4.Reference</h2>
+
+<p>本文內容和範例, 參考至以下這門 <em>coursera</em> 的線上課程 </p>
+
+<h4 id="dr-gautam-shroff--web-intelligence-and-big-data">Dr. Gautam Shroff.  Web Intelligence and Big Data</h4>
+
+<p>https://www.coursera.org/course/bigdata</p>
+]]></content>
+  </entry>
+  
+</feed>

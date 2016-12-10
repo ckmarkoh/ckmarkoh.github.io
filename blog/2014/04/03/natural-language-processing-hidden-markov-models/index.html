@@ -1,0 +1,688 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>自然語言處理 -- Hidden Markov Model - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Markov Model Hidden Markov Model 在 natural language processing 中, 常用於 part-of speech tagging 想要了解 Hidden Markov Model ,就要先了解什麼是 Markov Model 例如, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/03/natural-language-processing-hidden-markov-models/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">自然語言處理 -- Hidden Markov Model</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-03T03:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:38 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="markov-model">1.Markov Model</h2>
+
+<p><em>Hidden Markov Model</em> 在 <em>natural language processing</em> 中,</p>
+
+<p>常用於 <em>part-of speech tagging</em></p>
+
+<p>想要了解 <em>Hidden Markov Model</em> ,就要先了解什麼是 <em>Markov Model</em></p>
+
+<p>例如, 可以把語料庫中,各種字串的機率分佈,</p>
+
+<p>看成是一個Random varaible 的 sequence , <script type="math/tex">X=(X_{1},X_{2},...,X_{T}) </script></p>
+
+<p>其中, <script type="math/tex">X</script> 的值是 alphabet (字)的集合 : <script type="math/tex">S=\{s_{1},s_{2},...,s_{n}\}</script></p>
+
+<p>如果想要知道一個字串出現的機率, 則可以把字串拆解成Bigram, 逐一用前一個字,來推估下一個字的機率是多少</p>
+
+<p>但是要先假設以下的 <em>Markov Assumption</em> </p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align*}
+
+&\text{Limited Horizon : } 
+
+P(X_{t+1} = s_{k}  \mid   X_{1},...,X_{t}  )  = P(X_{t+1} = s_{k} \mid X_{t} ) \\
+
+&\text{Time Invariant : } 
+
+P(X_{t+1} = s_{k} \mid X_{t} ) = P(X_{2} = s_{k} \mid X_{1})
+
+\end{align*} 
+
+ %]]></script>
+
+<p>其中, </p>
+
+<p><strong>Limited Horizon</strong> 的意思是, </p>
+
+<p>每個 <script type="math/tex">X_{t+1}</script> 是什麼字 <script type="math/tex">(s_{i})</script> 的機率, 只會受到上一個字 <script type="math/tex">X_{t}</script> 的影響</p>
+
+<p><strong>Time Invariant</strong> 的意思是, </p>
+
+<p>每個 <script type="math/tex">X_{t+1}</script> 是什麼字 <script type="math/tex">(s_{i})</script> 的機率, 和前一個字 <script type="math/tex">X_{t}</script> 的機率關係, 不會因為在字串中的位置不同, 而有所改變</p>
+
+<p><em>註：事實上, 這兩種假設是為了簡化計算, 在真實的自然語言中, 以上兩種假設都不成立</em></p>
+
+<p>做完以上兩個假設之後, </p>
+
+<p>再用語料庫, 把上一個字是 <script type="math/tex">s_{i}</script> 時, 這個字是 <script type="math/tex">s_{j}</script> 的機率, 建立成 <em>Transition Matrix</em> : <script type="math/tex">A</script>  , 則 <script type="math/tex">A</script> 中的元素可以寫成：</p>
+
+<script type="math/tex; mode=display">
+
+a_{i,j} = P(X_{t+1} =s_{j} \mid X_{t}=s_{i})
+
+</script>
+
+<p>也可以用 <em>Transition Diagram</em> 來表示：</p>
+
+<p><img src="/images/pic/pic_00010.png" alt="hmm1" /></p>
+
+<p>如果想要計算字串 <script type="math/tex">(s_{1},s_{2},...,s_{T})</script> 在 <em>Model</em> 中出現的機率, 可以從第一個字開始, 用 <em>Transition Matrix</em> 逐字推算下去</p>
+
+<p>設 <em>Initial State</em> (第一個字）的機率, <script type="math/tex">P(X_{1} = s_{1} )=\pi_{s_{1}}</script> , 則 Random sequence, <script type="math/tex">(X_{1},X_{2},...,X_{T})</script> ,的機率為：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P(X_{1} = s_{1} ,X_{2} = s_{2} ,...,X_{T} = s_{T}) \\[6pt]
+
+&=P(X_{1}= s_{1})P(X_{2}= s_{s}\mid X_{1}= s_{1})...P(X_{T}= s_{T}\mid X_{T-1}= s_{T-1}) \\[6pt]
+
+&=\pi_{s_{1}} \prod_{t=2}^{T} P(X_{t}= s_{t}\mid X_{t-1}= s_{t-1}) \\[6pt]
+
+&=\pi_{s_{1}} \prod_{t=2}^{T} a_{X_{t},X_{t+1}}
+
+\end{align}
+
+ %]]></script>
+
+<p>舉個例子</p>
+
+<p>假設有個 <em>Markov Model</em>,  </p>
+
+<p><em>alphabet</em> 的集合為 <script type="math/tex">S=\{ 0, 1 \}</script> </p>
+
+<p><em>Initial State</em> 的機率為 <script type="math/tex">\pi_{0}=0.2,\pi_{1}=0.8</script> </p>
+
+<p><em>Transition Matrix</em>  為</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{X_{t}}\setminus _{X_{t+1}} & 0  & 1 \\\hline
+
+    \hline 0 & 0.3 & 0.7 \\
+
+    \hline 1 & 0.6 & 0.4 \\
+
+		\end{array}
+
+ %]]></script>
+
+<p>用 <em>Transition Diagram</em> 表示成：</p>
+
+<p><img src="/images/pic/pic_00011.png" alt="hmm2" /></p>
+
+<p>則在此 <em>Model</em> 中, 出現字串 1011 的機率為： </p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P(X_{1}=1,X_{2}=0,X_{3}=1,X_{4}=1) \\[6pt]
+
+&=\pi_{1} \times P(X_{2}= 0 \mid X_{1} = 1)  \times P(X_{3}= 1 \mid X_{2} = 0) 
+
+ \times P(X_{4}= 1 \mid X_{3} = 1)  \\[6pt]
+
+&= 0.8 \times 0.6 \times 0.7 \times 0.4 \\[6pt]
+
+&= 0.1344
+
+\end{align}
+
+ %]]></script>
+
+<h2 id="hidden-markov-model">2.Hidden Markov Model</h2>
+
+<p>所謂的 <em>Hidden Markov Model</em> , 就是從表面上看不到 <em>state</em> 是什麼 </p>
+
+<p>例如在做 <em>part-of speech tagging</em> 的時候, <em>tag</em> 為 <em>state</em>, 不知道哪個字要給哪個 <em>tag</em></p>
+
+<p>只能看到表面上的字, 從 <em>words(observable)</em> 去推斷 <em>tag(hidden state)</em>  是什麼</p>
+
+<p>其中, <em>observable</em> 為一個集合 : <script type="math/tex">O=\{o_{1},o_{2},...,o_{n}\}</script></p>
+
+<p><em>hidden state</em> 為一集合 : <script type="math/tex">Q=\{q_{1},q_{2},...,q_{n}\}</script></p>
+
+<p>則表示當某個字的 <em>tag</em> 為<script type="math/tex">i</script>時, 這個字為 <script type="math/tex">o_{k}</script> 的機率, 可用 <em>Output Matrix</em>  : <script type="math/tex">B</script> 表示, 則` $B$$ 中的元素可以寫成：</p>
+
+<script type="math/tex; mode=display">
+
+b_{i}(o_{k})=P(X_{t}=o_{k} \mid q_{t} = i)
+
+</script>
+
+<p>則當上一個 <em>tag</em> 為 <script type="math/tex">j</script> 時, 這個字的 <em>tag</em> 為 <script type="math/tex">i</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+a_{j,i} = P(q_{t} =i \mid q_{t-1}=j)
+
+</script>
+
+<p>則我們可以算在上一個 <em>tag</em> 為 <script type="math/tex">j</script> 時,  這個字的 <em>tag</em> 為<script type="math/tex">i</script> , 且這個字為<script type="math/tex">o_{k}</script> 的機率：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P(q_{t} =i \mid q_{t-1}=j) (X_{t}=o_{k} \mid q_{t} = i) \\
+
+&= a_{j,i}  \times b_{i}(k) \\
+
+
+\end{align}
+
+ %]]></script>
+
+<p>如果我們要計算, 出現字串 <script type="math/tex">(o_{1},o_{2},...,o_{T})</script> 且 <em>tag</em> 為 <script type="math/tex">(r_{1},r_{2},...,r_{T})</script> 的機率:</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P(X_{1} = o_{1} ,X_{2} = o_{2} ,...,X_{T} = o_{T}, q_{1}=r_{1},q_{2}=r_{2},...,q_{T}=r_{T}) \\[6pt]
+
+&=
+
+P(q_{1}= r_{1}) 
+
+P(X_{1}=o_{1} \mid q_{1} = r_{1} ) 
+
+\times 
+
+
+P(q_{2} =r_{2} \mid q_{1}=r_{1}) 
+
+P(X_{2}= o_{2} \mid q_{2} = r_{2} )
+
+
+\times... \\
+
+& 
+
+\times 
+
+P(q_{T} =r_{T} \mid q_{T-1}=r_{T-1})
+
+P(X_{T}= o_{T} \mid q_{T} = r_{T} ) 
+
+
+\\[6pt]
+
+&=\pi_{r_{1}}  P(X_{1}=o_{1} \mid q_{1} = r_{1} ) 
+
+\prod_{t=2}^{T} 
+
+P(q_{t} =r_{t} \mid q_{t-1}=r_{t-1}) P(X_{t}= o_{t} \mid q_{t} = r_{t} ) 
+
+\\[6pt]
+
+&=\pi_{r_{1}}  b_{r_{1}}(o_{1}) 
+
+\prod_{t=2}^{T} 
+
+a_{r_{t-1},r_{t}} b_{r_{t}}(o_{t})
+
+\end{align}
+
+ %]]></script>
+
+<p>如果要求出這個字串最有可能個 <em>tag</em> , </p>
+
+<p>則找出 <script type="math/tex">r</script> 的序列, 可以讓 <script type="math/tex">P(X_{1} = o_{1} ,X_{2} = o_{2} ,...,X_{T} = o_{T}, q_{1}=r_{1},q_{2}=r_{2},...,q_{T}=r_{T})</script> 為最大值</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{r_{i},r_{m},r_{n} \in Q} 
+
+
+\pi_{r_{i}}  b_{r_{i}}(o_{1}) 
+
+\prod_{t=2}^{T} 
+
+a_{ r_{n} , r_{m} } b_{r_{m}}(o_{k})
+
+
+</script>
+
+<p>舉個例子, </p>
+
+<p>有個研究者, 想根據某地人們生活日記中, 記載每天吃冰淇淋的數量, 來推斷當時的天氣變化如何</p>
+
+<p>在某個地點有兩種天氣, 分別是 <em>Hot</em> 和 <em>Cold</em> , 而當地的人們會記錄他們每天吃冰淇淋的數量, 數量分別為 <em>1</em> , <em>2</em> 或 <em>3</em> , </p>
+
+<p>則可以把天氣變化的機率, 以及天氣吃冰淇淋數量的關係, 用 <em>Hidden Markov Model</em> 表示,</p>
+
+<p>由於天氣是未知的, 為 <em>hidden state</em> , 天氣的集合為 <script type="math/tex">Weather=\{HOT,COLD\}</script></p>
+
+<p>天氣的 <em>Transition Matrix</em> :</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{Day_{t}}\setminus _{Day_{t+1}} & HOT  & COLD \\\hline
+
+    \hline HOT & 0.7 & 0.3 \\
+
+    \hline COLD & 0.4 & 0.6 \\
+
+		\end{array}
+
+ %]]></script>
+
+<p>而冰淇淋數量是已知的, 為 <em>observable</em> , 冰淇淋數量的集合為 <script type="math/tex">Icecream=\{1,2,3\}</script></p>
+
+<p>天氣變化對於冰淇淋數量的 <em>Output Matrix</em> : </p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+    \begin{array}{c|c}
+
+     _{Weather}\setminus _{Icecream} & 1  & 2 & 3 \\\hline
+
+    \hline HOT & 0.2 & 0.4 & 0.4 \\
+
+    \hline COLD & 0.5 & 0.4 & 0.1\\
+
+		\end{array}
+
+ %]]></script>
+
+<p>而 <em>Initial State</em> 的機率為 <script type="math/tex">\pi_{HOT}=0.8, \pi_{COLD}=0.2</script></p>
+
+<p>根據這個 <em>Model</em> , 假設有個吃冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 想要預測當時的天氣如何,</p>
+
+<p>例如, 出現天氣序列為 <em>HCH</em> 且 冰淇淋的記錄為 <script type="math/tex">(3,1,3)</script> 的機率如下</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&P (X_{1} = 3 ,X_{2} = 1 ,X_{3} = 3 , q_{1}=H , q_{2}= C, q_{3}=H ) \\[6pt]
+
+&=P(q_{1}=H)P(X_{1}=3 \mid q_{1}=H) 
+
+\times P(q_{2}=C \mid q_{1}=H ) P(X_{2}=1 \mid q_{2}=C)\\
+
+&\times P(q_{3}=H \mid q_{2}=C) P(X_{3}=3 \mid q_{3}=H) \\[6pt]
+
+&=0.8 \times 0.4 \times 0.3 \times 0.5 \times 0.4 \times 0.4 \\[6pt]
+
+&=0.00768
+
+\end{align}
+
+ %]]></script>
+
+<p>如果有冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 但不知道當時天氣如何, 想要預測當時的天氣如何,</p>
+
+<p>可以把所有可能的天氣序列都列出來：</p>
+
+<p><em>HHH	HHC HCH HCC CHH CHC CCH CCC</em></p>
+
+<p>然後分別計算, 哪個天氣序列和冰淇淋的記錄為 <script type="math/tex">(3,1,3)</script> 共同發生的機率, 看看哪個機率最高</p>
+
+<h2 id="implementation">3.Implementation</h2>
+
+<p>接著來實作 <em>Hidden Markov Model</em></p>
+
+<p>根據上一個例子, 建立出以下的 <em>Model</em> 以及演算法</p>
+
+<figure class="code"><figcaption><span>hmm.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">_STATE</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span><span class="s">&#39;C&#39;</span><span class="p">]</span>
+</span><span class="line"><span class="n">_PI</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;H&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">8</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">2</span><span class="p">}</span>
+</span><span class="line"><span class="n">_A</span><span class="o">=</span><span class="p">{</span> <span class="s">&#39;H&#39;</span><span class="p">:{</span><span class="s">&#39;H&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">3</span> <span class="p">},</span> <span class="s">&#39;C&#39;</span><span class="p">:{</span><span class="s">&#39;H&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span><span class="s">&#39;C&#39;</span><span class="p">:</span><span class="o">.</span><span class="mi">6</span><span class="p">}</span> <span class="p">}</span>
+</span><span class="line"><span class="n">_B</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;H&#39;</span><span class="p">:{</span><span class="mi">1</span><span class="p">:</span><span class="o">.</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="o">.</span><span class="mi">4</span><span class="p">},</span> <span class="s">&#39;C&#39;</span><span class="p">:{</span><span class="mi">1</span><span class="p">:</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="o">.</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="o">.</span><span class="mi">1</span><span class="p">}</span> <span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">p_aij</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">_A</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">p_bik</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">_B</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">k</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">p_pi</span><span class="p">(</span><span class="n">i</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">_PI</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">seq_probability</span><span class="p">(</span><span class="n">obs_init</span><span class="p">):</span>
+</span><span class="line">    <span class="n">seq_val</span><span class="o">=</span><span class="p">[];</span>
+</span><span class="line">    <span class="k">def</span> <span class="nf">rec</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">val_pre</span><span class="p">,</span> <span class="n">qseq_pre</span><span class="p">):</span>
+</span><span class="line">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span> <span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+</span><span class="line">            <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">_STATE</span><span class="p">:</span>
+</span><span class="line">                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qseq_pre</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="p">:</span>
+</span><span class="line">                    <span class="n">val</span> <span class="o">=</span> <span class="n">val_pre</span> <span class="o">*</span> <span class="n">p_pi</span><span class="p">(</span><span class="n">q</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_bik</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">obs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="line">                <span class="k">else</span><span class="p">:</span>
+</span><span class="line">                    <span class="n">q_pre</span> <span class="o">=</span> <span class="n">qseq_pre</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">                    <span class="n">val</span> <span class="o">=</span> <span class="n">val_pre</span> <span class="o">*</span> <span class="n">p_aij</span><span class="p">(</span><span class="n">q_pre</span><span class="p">,</span><span class="n">q</span><span class="p">)</span> <span class="o">*</span> <span class="n">p_bik</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">obs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</span><span class="line">                <span class="n">qseq</span> <span class="o">=</span> <span class="n">qseq_pre</span> <span class="o">+</span> <span class="p">[</span><span class="n">q</span><span class="p">]</span>
+</span><span class="line">                <span class="n">rec</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">val</span><span class="p">,</span> <span class="n">qseq</span><span class="p">)</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">            <span class="n">seq_val</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">qseq_pre</span><span class="p">,</span> <span class="n">val_pre</span><span class="p">))</span>
+</span><span class="line">    <span class="n">rec</span><span class="p">(</span><span class="n">obs_init</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">[])</span>
+</span><span class="line">    <span class="k">for</span> <span class="p">(</span><span class="n">seq</span><span class="p">,</span><span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">seq_val</span><span class="p">:</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&#39;seq : </span><span class="si">%s</span><span class="s"> , value : </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+</span><span class="line">    <span class="k">print</span> <span class="s">&#39;max_seq : </span><span class="si">%s</span><span class="s">  max_val : </span><span class="si">%s</span><span class="s">&#39;</span><span class="o">%</span><span class="p">(</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span><span class="n">x2</span><span class="p">:</span> <span class="n">x2</span> <span class="k">if</span> <span class="n">x2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">x1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">x1</span><span class="p">,</span> <span class="n">seq_val</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中,</p>
+
+<p><code>_STATE=['H','C']</code> 是天氣的種類</p>
+
+<p><code>_PI={'H':.8, 'C':.2}</code> 是 <em>initial state</em> 的機率</p>
+
+<p><code>_A={ 'H':{'H':.7, 'C':.3 }, 'C':{'H':.4,'C':.6} }</code> 是 <em>Transition Matrix</em> </p>
+
+<p><code>_B={'H':{1:.2,2:.4,3:.4}, 'C':{1:.5,2:.4,3:.1} }</code> 是 <em>Output Matrix</em> </p>
+
+<p><code>p_aij(i, j)</code> , <code>p_bik(i, k)</code> , <code>p_pi(i)</code> 是 <em>Model</em> 和演算法的interface</p>
+
+<p><code>seq_probability(obs_init)</code> 是計算 <em>sequence probability</em> 的演算法</p>
+
+<p>這個演算法,會根據 <em>observable</em> 把每種天氣序列的機率都算出來, 並求出最有可能的序列是哪個</p>
+
+<p>接著到interactive mode試看看剛剛的例子</p>
+
+<p>輸入了冰淇淋的記錄 <script type="math/tex">(3,1,3)</script> , 程式會把每種可能的天氣序列都列出來, 並求得最有可能者, 如下：</p>
+
+<figure class="code"><figcaption><span>hmm.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">hmm</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">hmm</span><span class="o">.</span><span class="n">seq_probability</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.012544</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.001344</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.00768</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.00288</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.000448</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">4.8e-05</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.00096</span>
+</span><span class="line"><span class="n">seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;C&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">value</span> <span class="p">:</span> <span class="mf">0.00036</span>
+</span><span class="line"><span class="n">max_seq</span> <span class="p">:</span> <span class="p">[</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="s">&#39;H&#39;</span><span class="p">]</span>  <span class="n">max_val</span> <span class="p">:</span> <span class="mf">0.012544</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>程式算出答案, 最有可能的序列為 <code>['H', 'H', 'H']</code> ,機率為 <code>0.012544</code></p>
+
+<p>其實, 把所有的序列都列出來, 這樣的演算法是非常沒有效率的</p>
+
+<p>假設序列長度為 <script type="math/tex">T</script>, <em>state</em> 有 <script type="math/tex">N</script> 種, 則所有可能的序列有 <script type="math/tex">N^{T}</script> 種</p>
+
+<p>事實上, 我們要求機率最高的序列, 不需要把所有的序列都算出來, 用 <em>Dynamic Programming</em> 的技巧, 就可以了, </p>
+
+<p>有一種演算法, 叫 <em>Viterbi Algorithm</em> 是將 <em>Dynamic Programming</em> 應用於 <em>Hidden Markov Model</em> </p>
+
+<p>想知道什麼是 <em>Viterbi Algorithm</em> , 請看：<a href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm">Natural Language Processing – Viterbi Algorithm</a></p>
+
+<h2 id="reference">4. Reference</h2>
+
+<p>本文參考至兩本教科書</p>
+
+<p><a href="http://www.amazon.com/Foundations-Statistical-Natural-Language-Processing/dp/0262133601">Foundations of Statistical Natural Language Processing</a></p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-03T03:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:38 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/hmm/'>hmm</a>, <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/tagging/'>tagging</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/03/natural-language-processing-hidden-markov-models/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/03/natural-language-processing-hidden-markov-models/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/01/python-standard-library-copy/" title="Previous Post: Python Standard Library -- copy">&laquo; Python Standard Library -- copy</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/" title="Next Post: 形式語意學 -- Davidsonian Event Semantics">形式語意學 -- Davidsonian Event Semantics &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

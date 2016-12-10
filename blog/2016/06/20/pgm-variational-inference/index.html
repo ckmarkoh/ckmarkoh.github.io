@@ -1,0 +1,548 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機率圖模型 -- Variational Inference - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 若某個有 個維度的 data 的產生，是跟某個有 個維度的 hidden variable 有關，在機率圖模型，表示成： 從這機率圖形，可得出 hidden variable 和 的聯合分佈機率： 若是給定 hidden variable 的值，則可產生 data ，如下 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機率圖模型 -- Variational Inference</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-06-20T02:42:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:42 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>若某個有 <script type="math/tex">m</script> 個維度的 data <script type="math/tex">\textbf{x} = \{x_1,x_2,...,x_m\}</script> 的產生，是跟某個有 <script type="math/tex">n</script>個維度的 hidden variable <script type="math/tex">\textbf{z} = \{z_1,z_2,...,z_n\} </script> 有關，在機率圖模型，表示成：  </p>
+
+<p><img src="/images/pic/pic_00171.png" alt="" /></p>
+
+<p>從這機率圖形，可得出 hidden variable <script type="math/tex">\textbf{z}</script> 和 <script type="math/tex">\textbf{x}</script> 的聯合分佈機率：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x},\textbf{z})  = p(\textbf{z})p(\textbf{x}|\textbf{z})
+
+</script>
+
+<p>若是給定 hidden variable <script type="math/tex">\textbf{z}</script> 的值，則可產生 data <script type="math/tex">\textbf{x}</script> ，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x}|\textbf{z}) 
+
+</script>
+
+<p>但如果給定 data <script type="math/tex">\textbf{x}</script> 的值，這組 data 所對應到的 hidden variable 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\frac{p(\textbf{x} | \textbf{z}) p(\textbf{z}) }{\int p(\textbf{x} | \textbf{z})p(\textbf{z}) \text{d}\textbf{z}} 
+
+
+</script>
+
+<p>其中，分母 <script type="math/tex">\int p(\textbf{x} \mid  \textbf{z})p(\textbf{z}) \text{d}\textbf{z}</script> 積分如果無法算出來的時候，就無法直接算出 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值，則要用估計的方法來計算 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值。</p>
+
+<p>Variational Inference 用來估計 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值 。</p>
+
+<!--more-->
+
+<p><em>Variational Inference</em> 的做法是，不直接把 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 求出，而是用一個較好算的 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script> 來求出近似解。其中， <script type="math/tex">\mathbf{\theta}</script> 為參數，調整此參數可以讓 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script>。較接近 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 。</p>
+
+<p>求近似解的方法，是讓 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script> 和 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 這兩個機率分佈的 <em>KL Divergence</em> 越小越好：<a name="eq1">（公式一）</a></p>
+
+<script type="math/tex; mode=display">
+
+\min_{\theta} D_{KL}[  q(\textbf{z}| \mathbf{\theta} )  ||   p(\textbf{z}|\textbf{x})   ]
+
+</script>
+
+<h2 id="evidence-lower-bound-elob">Evidence Lower Bound (ELOB)</h2>
+
+<p>由於<a href="#eq1">（公式一）</a>中的 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 無法直接計算出，因此這個</p>
+
+<p><em>KL Divergence</em> 的值也無法算出來。但可以把它稍微整理一下，如下<a name="eq2">（公式二）</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+
+&
+
+D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})] = \int
+
+q(\textbf{z}) \text{log}  \frac{q(\textbf{z})}{p(\textbf{z}|\textbf{x})} \text{d}\textbf{z}
+
+\\&
+
+
+=  \int
+
+q(\textbf{z}) \text{log} \frac{  q(\textbf{z}) p(\textbf{x}) }{ p(\textbf{x},\textbf{z})  } \text{d}\textbf{z}
+
+\\
+
+&
+
+
+=  \int
+
+q(\textbf{z}) \text{log} \frac{  q(\textbf{z})  }{ p(\textbf{x},\textbf{z})  } \text{d}\textbf{z}
+
++ \int q(\textbf{z})\text{log} {p(\textbf{x})} \text{d}\textbf{z}
+
+\\
+
+
+&
+
+=  \int 
+
+q(\textbf{z})
+
+\bigg(\text{log}   q(\textbf{z})
+
+-\text{log} p(\textbf{z},\textbf{x} )\bigg)  \text{d} \textbf{z}
+
++ \text{log} p(\textbf{x})
+
+\\
+
+&
+
+= -\bigg( E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] - E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]\bigg) + \text{log}p(\textbf{x})
+
+
+\end{align}
+
+ %]]></script>
+
+<p>註：以上省略 <script type="math/tex">\theta</script></p>
+
+<p>定義 Evidence Lower Bound (ELOB) <script type="math/tex">L[q(\textbf{z})]</script> 為：</p>
+
+<script type="math/tex; mode=display">
+
+L[q(\textbf{z})]
+
+   =  E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] - E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]
+
+
+</script>
+
+<p>將 <script type="math/tex">L[q(\textbf{z})]</script> 代入<a href="#eq2">（公式二）</a>的推導結果，得出：</p>
+
+<script type="math/tex; mode=display">
+
+D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})]  = -L[q(\textbf{z})]
+
+ + \text{log}p(\textbf{x})
+
+</script>
+
+<p>因此：</p>
+
+<script type="math/tex; mode=display">
+
+\text{log}p(\textbf{x})  = D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})] +  L[q(\textbf{z})]
+
+</script>
+
+<p>由於 <script type="math/tex">p(\textbf{x})</script> 為一個固定的機率分佈，因此 <script type="math/tex">\text{log}p(\textbf{x})</script> 為常數。</p>
+
+<p>因此，只要將 <script type="math/tex">L[q(\textbf{z})]</script> 的最大化，即可將 <script type="math/tex">D_{KL}[q(\textbf{z})\mid \mid p(\textbf{z}\mid \textbf{x})] </script> 最小化。</p>
+
+<p>而 <script type="math/tex">L[q(\textbf{z})]</script> 中的 <script type="math/tex">p(\textbf{x}, \textbf{z})</script> 是可以算得出來的，因此目標函數為：</p>
+
+<script type="math/tex; mode=display">
+
+\max_{\theta} L[q(\textbf{z} | \theta )]
+
+
+</script>
+
+<h2 id="mean-field-variational-inference">Mean-Field Variational Inference</h2>
+
+<p><em>Variational Inference</em> 有很多種作法，其中一種常見的作法為 <em>Mean-Field Variational Inference</em> ，這種方法是，假設 <script type="math/tex">q(\textbf{z}\mid  \mathbf{\theta} )</script> 中的每個維度都是獨立的。這樣會比較容易求出它的值，即：<a name="eq3">（公式三）</a></p>
+
+<script type="math/tex; mode=display">
+
+q(\textbf{z}|\mathbf{\theta}) = \prod_{i} q_{i}(z_{i}| \theta_{i} ) 
+
+</script>
+
+<p>每個獨立的 <script type="math/tex">q(z_{i}\mid \theta)</script> 都是機率分佈，即積分結果為1：</p>
+
+<script type="math/tex; mode=display">
+
+\forall i  ,  \int q_{i}(z_{i}| \theta_{i} )  \text{d} z_{i} = 1
+
+</script>
+
+<h2 id="maximizing-elob">Maximizing ELOB</h2>
+
+<p>再來，用 <em>Mean-Field Variational Inference</em> 的方法，把  <script type="math/tex">L[q(\textbf{z})]</script>  整理一下。</p>
+
+<p><script type="math/tex">L[q(\textbf{z})]</script> 可分成兩部分：<script type="math/tex"> E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]</script> 和 <script type="math/tex">  E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] </script></p>
+
+<p>現在，要分別把<a href="#eq3">（公式三）</a>代入這兩項，並稍做整理，讓它們的值可以被求出來。</p>
+
+<p>首先，來看 <script type="math/tex"> E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]</script> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] = \int \prod_{i} q_{i}(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \int_{z_{1}}\int_{z_{2}} ... \int_{z_{n}} \int \prod_{i} q_{i}(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \text{d}z_{1} \text{d}z_{2}...\text{d}z_{n}
+
+\end{align}
+
+ %]]></script>
+
+<p>挑出 <script type="math/tex">\textbf{z}</script> 中的某個元素： <script type="math/tex">z_{j}</script> ，整理一下，繼續以上推導過程：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& = \int_{z_{j}} q_{j}(z_{j}) \bigg( \int... \int_{z_{i\neq j }} \prod_{i} q(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \prod_{i \neq j} \text{d}z_{i} \bigg) \text{d}z_{j}
+
+\\
+
+& =  \int_{z_{j}} q_{j}(z_{j}) \bigg( \int... \int_{z_{i\neq j }} \text{log} p (\textbf{z},\textbf{x}) \prod_{i \neq j } q(z_{i})  \text{d}z_{i} \bigg) \text{d}z_{j}
+
+\end{align}
+
+ %]]></script>
+
+<p>由於 <script type="math/tex"> \prod_{i \neq j } q(z_{i})</script> 是 joint distribution，可以把 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 放到此機率分布的期望值裡，繼續以上推導過程：<a name="eq4">（公式四）</a></p>
+
+<script type="math/tex; mode=display">
+
+=  \int q_{j}(z_{j}) E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg] \text{d}z_{j}
+
+</script>
+
+<p>由於 <script type="math/tex">E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg]</script> 中，把 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 中不是 <script type="math/tex">z_{j}</script> 的 <script type="math/tex">z_{i}</script> 全都消掉了，所以算完後的 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 只會剩 <script type="math/tex">z_{j}</script> ，令：</p>
+
+<script type="math/tex; mode=display">
+
+\text{log} \tilde{p}(\textbf{x},z_{j}) =  E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg] 
+
+</script>
+
+<p>將其代入<a href="#eq4">（公式四）</a>，繼續推導過程，得出<a name="eq5">公式五</a>：</p>
+
+<script type="math/tex; mode=display">
+
+ E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]  =  \int q_{j}(z_{j})   \text{log} \tilde{p}(\textbf{x},z_{j}) \text{d}z_{j}
+
+</script>
+
+<p>再來看 <script type="math/tex"> E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]</script>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] = \int \prod_{i} q_{i}(z_{i}) \text{log} \prod_{i} q (z_{i}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \int \prod_{i} q_{i}(z_{i}) \sum_{i} \text{log} q (z_{i}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \sum_{i} \bigg(\prod_{k \neq i} \int_{k}q_{k}(z_{k})\text{d}z_{k}  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+\\
+
+&
+
+= \sum_{i} \bigg(  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+\end{align}
+
+ %]]></script>
+
+<p>挑出 <script type="math/tex">\textbf{z}</script> 中的某個元素： <script type="math/tex">z_{j}</script> ，整理一下，繼續以上推導過程：</p>
+
+<script type="math/tex; mode=display">
+
+=  \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} + \sum_{i \neq j } \bigg(  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+</script>
+
+<p>不涉及 <script type="math/tex">j</script>的部分，就當 <script type="math/tex">const</script> 來處理，整理以上公式，得出：<a name="eq6">（公式六）</a></p>
+
+<script type="math/tex; mode=display">
+
+E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] =  \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} + const
+
+</script>
+
+<p>將 <a href="#eq5">（公式五）</a>和<a href="#eq6">（公式六）</a> 代入 <script type="math/tex">L[q(\textbf{z})]</script> ，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& L[q(\textbf{z})] =\int q_{j}(z_{j})   \text{log} \tilde{p}(\textbf{x},z_{j}) \text{d}z_{j}- \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} - const
+
+\\
+
+&
+
+= \int q_{j}(z_{j})   \text{log} \frac{ \tilde{p}(\textbf{x},z_{j}) } { q_{j}(z_{j}) } \text{d} z_{j} - const
+
+\\
+
+& 
+
+= -D_{KL}[\tilde{p}(\textbf{x},z_{j})|| q_{j}(z_{j} ) ] - const
+
+\end{align}
+
+ %]]></script>
+
+<p>根據以上結果，要將 <script type="math/tex"> L[q(\textbf{z})] =\int q_{j}(z_{j}) </script> 最大化，則：</p>
+
+<script type="math/tex; mode=display">
+
+D_{KL}[\tilde{p}(\textbf{x},z_{j})|| q_{j}(z_{j} ) ]  = 0
+
+</script>
+
+<p>因此：</p>
+
+<script type="math/tex; mode=display">
+
+q_{j}(z_{j}) = \tilde{p}(\textbf{x},z_{j}) 
+
+</script>
+
+<p>由於 <script type="math/tex">z_{j}</script> 有 <script type="math/tex">n</script> 個， 整個運算過程，有點類似 <em>EM</em> 演算法，就是挑選某個 <script type="math/tex">q_{j}(z_{j})</script> 根據以上公式，來更新其值，而其他的 <script type="math/tex">q_{i}(z_{i})</script> 則固定。這樣依序更新每個 <script type="math/tex">q_{j}(z_{j})</script> ，一直循環下去，則最後收斂的結果，即為 <script type="math/tex">L[q(\textbf{z})]</script> 的 <em>Local Maximum</em> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>A Tutorial on Variational Bayesian Inference</p>
+
+<p>http://www.orchid.ac.uk/eprints/40/1/fox_vbtut.pdf</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-06-20T02:42:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:42 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/02/08/optimization-method-adadelta/" title="Previous Post: Optimization Method -- AdaDelta">&laquo; Optimization Method -- AdaDelta</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/07/07/pgm-metropolis-hasting/" title="Next Post: 機率圖模型 -- Metropolis Hasting">機率圖模型 -- Metropolis Hasting &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

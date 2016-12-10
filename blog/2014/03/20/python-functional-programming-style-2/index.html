@@ -1,0 +1,613 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python -- Functional Programming Style 2 - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="用Functional Programming style來寫程式的時候 可以大幅減少行數和變數的數量 本文接續上一篇:/blog/2014/03/18/python-functional-programming-style-1 繼續探討這種Functional Programming &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/20/python-functional-programming-style-2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python -- Functional Programming Style 2</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-20T13:35:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:35 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>用Functional Programming style來寫程式的時候</p>
+
+<p>可以大幅減少行數和變數的數量</p>
+
+<p>本文接續上一篇:/blog/2014/03/18/python-functional-programming-style-1</p>
+
+<p>繼續探討這種Functional Programming style在python中的應用</p>
+
+<h2 id="operator">1. operator</h2>
+
+<p>首先,載入 <code>operator</code> 這個模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">operator</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後,來介紹到底要怎麼使用</p>
+
+<!--more-->
+
+<h4 id="operatoradd-operatormultiply-etc">1.1, operator.add, operator.multiply, etc</h4>
+
+<p><code>operator</code> 是一個提供加減乘除之類運算的module,</p>
+
+<p>有的時候不太方便直接用到 <code>+</code> , <code>-</code> 這些符號,</p>
+
+<p>這時候就要用到 <code>operator</code> 這個模組了</p>
+
+<p>如果要求一個list中所有元素的總和,如果不會functional programming style</p>
+
+<p>最基本的寫法,用for迴圈寫,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">s</span><span class="o">=</span><span class="mi">0</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">]:</span>
+</span><span class="line"><span class="o">...</span>     <span class="n">s</span> <span class="o">+=</span> <span class="n">i</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">s</span>
+</span><span class="line"><span class="mi">35</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣要寫很多行</p>
+
+<p>可以用lambda function簡化</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">:</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">,[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">])</span>
+</span><span class="line"><span class="mi">35</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但其實可以連lambda function都不用寫</p>
+
+<p>因為python就已經有內建好這些function</p>
+
+<p>我們可以用 <code>operator.add</code> 搭配 <code>reduce</code> 就可以了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">])</span>
+</span><span class="line"><span class="mi">35</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這就是 <code>operator</code> 的用法,可以把＋,-,之類的operator運算當成function來使用</p>
+
+<p>事實上,根本什麼都不用寫,用內建的function <code>sum()</code> 就可以了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">sum</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">,</span><span class="mi">11</span><span class="p">])</span>
+</span><span class="line"><span class="mi">35</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>本文是為了教Functional Programming style舉出operator和reduce搭配使用</p>
+
+<p>讓讀者懂得如何用這些功能</p>
+
+<p>再舉一例,如果有兩向量<script type="math/tex">V_{1},V_{2}</script> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">V1</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">V2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>求兩向量內積 <script type="math/tex">v_{11}v_{21}+v_{12}v_{22}+v_{13}v_{23}</script></p>
+
+<p>可以用 <code>operator.add</code> 和 <code>operator.mul</code> ,如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span><span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">mul</span><span class="p">,</span> <span class="n">V1</span><span class="p">,</span><span class="n">V2</span><span class="p">))</span>
+</span><span class="line"><span class="mi">16</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h4 id="operatoritemgetter">1.2 operator.itemgetter</h4>
+
+<p>在運算符號中, <code>operator.itemgetter</code> 相對於運算符號的 <code>[]</code>, </p>
+
+<p>可以取出list 或dict 中的element</p>
+
+<p>但有些情形 <code>operator.itemgetter</code> 會比較方便</p>
+
+<p>給定一個list</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>假如要取出某個list中index為1者</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">)(</span><span class="n">my_list</span><span class="p">)</span>
+</span><span class="line"><span class="mi">2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣還是直接用 <code>[]</code> 比較快</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_list</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line"><span class="mi">2</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但是如果要取出index為1,3,5的三個element</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_list</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">my_list</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="n">my_list</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span>
+</span><span class="line"><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣有點麻煩了,來用 <code>operator.itemgetter</code> 看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">)(</span><span class="n">my_list</span><span class="p">)</span>
+</span><span class="line"><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用, <code>operator.itemgetter</code> 就比較快了</p>
+
+<p>至於還有哪些情況會用到 <code>operator.itemgetter</code> ?</p>
+
+<p>例如在計算語言學的研究中,用freqdist計算每個單字在文章中出現的頻率,</p>
+
+<p>如下, <em>is</em> 出現了193次,之類的</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">freqdist</span><span class="o">=</span><span class="p">[(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="mi">185</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;is&#39;</span><span class="p">,</span> <span class="mi">93</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;the&#39;</span><span class="p">,</span> <span class="mi">219</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;he&#39;</span><span class="p">,</span><span class="mi">51</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果要取出每個單字的出現頻率,可以用 <code>itemgetter</code> 搭配 <code>map</code> 使用</p>
+
+<p>如果把單字依出現頻率高低排序,可以用 <code>itemgetter</code> 搭配 <code>sorted</code> 使用</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">map</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">freqdist</span><span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mi">185</span><span class="p">,</span> <span class="mi">93</span><span class="p">,</span> <span class="mi">219</span><span class="p">,</span> <span class="mi">51</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">freqdist</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</span><span class="line"><span class="p">[(</span><span class="s">&#39;the&#39;</span><span class="p">,</span> <span class="mi">219</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">,</span> <span class="mi">185</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;is&#39;</span><span class="p">,</span> <span class="mi">93</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;he&#39;</span><span class="p">,</span> <span class="mi">51</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h4 id="operatormethodcaller">1.3 operator.methodcaller</h4>
+
+<p>如果遇到一種情況,要根據某個variable的值,來判斷要call哪個function</p>
+
+<p>假設有個class有兩個function,如下:</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">class</span> <span class="nc">CallerDemo</span><span class="p">():</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">def</span> <span class="nf">print_a</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>         <span class="k">print</span> <span class="s">&#39;a&#39;</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">def</span> <span class="nf">print_b</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>         <span class="k">print</span> <span class="s">&#39;b&#39;</span>
+</span><span class="line"><span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後根據variable <code>x</code> 來判斷要call <code>print_a()</code> or <code>print_b()</code> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">def</span> <span class="nf">my_print</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s">&#39;a&#39;</span><span class="p">:</span>
+</span><span class="line"><span class="o">...</span>         <span class="n">CallerDemo</span><span class="p">()</span><span class="o">.</span><span class="n">print_a</span><span class="p">()</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="s">&#39;b&#39;</span><span class="p">:</span>
+</span><span class="line"><span class="o">...</span>         <span class="n">CallerDemo</span><span class="p">()</span><span class="o">.</span><span class="n">print_b</span><span class="p">()</span>
+</span><span class="line"><span class="o">...</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_print</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">a</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_print</span><span class="p">(</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">b</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣寫真的頗麻煩的,</p>
+
+<p>這個時候可以用 <code>operator.methodcaller</code>, 根據字串名稱,選擇要call哪個function</p>
+
+<p>例如:</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="p">{</span><span class="s">&#39;1&#39;</span><span class="p">:</span><span class="mi">11</span><span class="p">,</span><span class="s">&#39;2&#39;</span><span class="p">:</span><span class="mi">22</span><span class="p">}</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;1&#39;</span><span class="p">,</span> <span class="s">&#39;2&#39;</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">operator</span><span class="o">.</span><span class="n">methodcaller</span><span class="p">(</span><span class="s">&#39;keys&#39;</span><span class="p">)({</span><span class="s">&#39;1&#39;</span><span class="p">:</span><span class="mi">11</span><span class="p">,</span><span class="s">&#39;2&#39;</span><span class="p">:</span><span class="mi">22</span><span class="p">})</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;1&#39;</span><span class="p">,</span> <span class="s">&#39;2&#39;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用了 <code>operator.methodcaller</code> ,改寫之前的 <code>my_print(x)</code> ,一行就夠了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">def</span> <span class="nf">my_caller_print</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>     <span class="n">operator</span><span class="o">.</span><span class="n">methodcaller</span><span class="p">(</span><span class="s">&quot;print_</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">x</span><span class="p">))(</span><span class="n">CallerDemo</span><span class="p">())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_caller_print</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">a</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">my_caller_print</span><span class="p">(</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">b</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="functoolspartial">2 functools.partial</h2>
+
+<p>functools 是一些針對higher-order function的一個模組</p>
+
+<p>這些higher-order function可以把其他function當成argument</p>
+
+<p>先載入一下模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">functools</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>我們先來介紹一下 <code>functools.partial</code> 的功能</p>
+
+<p>假設現在要保留某個list之中等於1的element,</p>
+
+<p>可以用到先前提到的 <code>operator</code> 模組,的 <code>operator.eq(a,b)</code> 來比較大小</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果要搭配 <code>filter</code> 使用,來去掉list中不等於1的element,該怎麼辦呢？</p>
+
+<p>因為 <code>operator.eq(a,b)</code> 需要兩個argument, </p>
+
+<p>但 <code>filter</code> 只能接受一個function與另一個argument</p>
+
+<p>如果要輸入 <code>eq(a,b)</code> 所需要的兩個argument,會出現error,如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span><span class="mi">1</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line"><span class="ne">TypeError</span><span class="p">:</span> <span class="nb">filter</span> <span class="n">expected</span> <span class="mi">2</span> <span class="n">arguments</span><span class="p">,</span> <span class="n">got</span> <span class="mi">3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這個時候,就需要用到 <code>functools.partial</code> 了</p>
+
+<p>它可以先把 <code>operator.eq(a,b)</code> 先和其中一個argument做結合,包成一個function</p>
+
+<p>使用方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">eq1</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣產生出來的function, <code>eq1</code> 就只需要一個argument了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">eq1</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="bp">True</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">eq1</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line"><span class="bp">False</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也就是說,可以把它放到 <code>filter</code> 裡面使用了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">eq1</span><span class="p">,[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span>
+</span><span class="line"><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再舉一個例子,</p>
+
+<p>如果要十六進位的數轉成十進位,可以用 <code>int()</code> 這個function</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="s">&quot;ABCDEF&quot;</span><span class="p">,</span><span class="n">base</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+</span><span class="line"><span class="mi">11259375</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">int</span><span class="p">(</span><span class="s">&quot;AAAAAA&quot;</span><span class="p">,</span><span class="n">base</span> <span class="o">=</span> <span class="mi">16</span><span class="p">)</span>
+</span><span class="line"><span class="mi">11184810</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣每次都要輸入兩個argument,而且第二個argument要一直重複輸入,比較麻煩</p>
+
+<p>可以用 <code>functool.partial</code> 先把int和第二個argument包成一個,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">base16</span> <span class="o">=</span> <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">base</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">base16</span><span class="p">(</span><span class="s">&quot;ABCDEF&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">11259375</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">base16</span><span class="p">(</span><span class="s">&quot;AAAAAA&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">11184810</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣子看起來就簡潔多了</p>
+
+<h2 id="further-reading">Further Reading:</h2>
+
+<p>其實 <code>functool</code> 還有一個很好用的function: <code>functool.wraps</code></p>
+
+<p>但這個跟 <em>Design Pattern</em> 的 <em>decorator</em> 有關</p>
+
+<p>等之後有機會提到 <em>Design Pattern</em> 的時候再來講解</p>
+
+<p>關於本文所講到的,想知道更多,請看：</p>
+
+<p>operator: http://docs.python.org/2/library/operator.html</p>
+
+<p>functools: http://docs.python.org/2/library/functools.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-20T13:35:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:35 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/functional-programming/'>functional_programming</a>, <a class='category' href='/blog/categories/functools/'>functools</a>, <a class='category' href='/blog/categories/operator/'>operator</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/20/python-functional-programming-style-2/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/20/python-functional-programming-style-2/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/18/python-functional-programming-style-1/" title="Previous Post: Python -- Functional Programming Style 1">&laquo; Python -- Functional Programming Style 1</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/21/python-nltk-logic-3/" title="Next Post: Python nltk -- Logic 3 : Discourse Representation Theory">Python nltk -- Logic 3 : Discourse Representation Theory &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

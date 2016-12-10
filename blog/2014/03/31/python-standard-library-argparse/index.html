@@ -1,0 +1,836 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Standard Library -- Argparse - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="0.Introduction argparse是用來處理command line的argument所使用的 例如執行一個程式, 比如說 mv 在Terminal輸入 mv --help 之後 顯示如下： 1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+$ mv --help
+Usage: &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Standard Library -- Argparse</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-31T05:31:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>5:31 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">0.Introduction</h2>
+
+<p>argparse是用來處理command line的argument所使用的</p>
+
+<p>例如執行一個程式, 比如說 <code>mv</code>  </p>
+
+<p>在Terminal輸入 <code>mv --help</code> 之後</p>
+
+<p>顯示如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>mv --help
+</span><span class="line">Usage: mv <span class="o">[</span>OPTION<span class="o">]</span>... <span class="o">[</span>-T<span class="o">]</span> SOURCE DEST
+</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... SOURCE... DIRECTORY
+</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... -t DIRECTORY SOURCE...
+</span><span class="line">Rename SOURCE to DEST, or move SOURCE<span class="o">(</span>s<span class="o">)</span> to DIRECTORY.
+</span><span class="line">
+</span><span class="line">Mandatory arguments to long options are mandatory <span class="k">for</span> short options too.
+</span><span class="line">      --backup<span class="o">[=</span>CONTROL<span class="o">]</span>       make a backup of each existing destination file
+</span><span class="line">  -b                           like --backup but does not accept an argument
+</span><span class="line">  -f, --force                  <span class="k">do</span> not prompt before overwriting
+</span><span class="line">  -i, --interactive            prompt before overwrite
+</span><span class="line">......
+</span></code></pre></td></tr></table></div></figure>
+
+<p>由此可知, <code>mv</code> 後面可以有很多種argument</p>
+
+<p>那要寫程式去parse這些command line的argument很麻煩</p>
+
+<p>如果用了 <code>argparse</code> 這個module</p>
+
+<p>就不用自己寫程式去parse這些argument了</p>
+
+<!--more-->
+
+<p>接下來實作看看</p>
+
+<p>首先, 寫個很簡單的程式, 試試看 <code>argparse</code></p>
+
+<figure class="code"><figcaption><span>argprog0.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog0&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>prog='argprog0'</code> 為 <em>help</em> 的內容中,顯示的程式名稱</p>
+
+<p>而 <code>args</code> 為 <code>argparse</code> parse完後的argument</p>
+
+<p>這個程式可以判斷後面接的argument是不是 <code>-h</code> 或 <code>--help</code></p>
+
+<p>如果是的話, 則顯示出 <em>help</em> 的內容</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog0.py -h
+</span><span class="line">usage: argprog0 <span class="o">[</span>-h<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog0.py --help
+</span><span class="line">usage: argprog0 <span class="o">[</span>-h<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果輸入的argument不是<code>-h</code> 或 <code>--help</code></p>
+
+<p>則會顯示出error message</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog0.py 1
+</span><span class="line">usage: argprog0 <span class="o">[</span>-h<span class="o">]</span>
+</span><span class="line">argprog0: error: unrecognized arguments: 1
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果沒有輸入argument, 則顯示如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog0.py
+</span><span class="line">Namespace<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>Namespace()</code> 是 <code>args</code> 中的argument</p>
+
+<p>因為沒有輸入任何argument, 所以 <code>Namespace()</code> 是空的</p>
+
+<p>接下來,看看要怎麼把argument存到 <code>args</code> 裡面</p>
+
+<h2 id="optional-argument">1.Optional Argument</h2>
+
+<p>先來試試看加個 <em>optional argument</em> 到程式當中</p>
+
+<p>所謂 <em>optional argument</em> 就是可有可無的argument</p>
+
+<p>通常會以 <code>-</code> 或 <code>--</code> 開頭, 例如 <code>--help</code></p>
+
+<p>試試看加一個 <code>--foo</code> 到程式裡面 </p>
+
+<figure class="code"><figcaption><span>argprog1.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog1&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>help='foo of the %(prog)s program'</code> 為 <em>help</em> 中, 對於 <code>--foo</code> 的解說</p>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog1.py -h
+</span><span class="line">usage: argprog1 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span><span class="line">  --foo FOO   foo of the argprog1 program
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著, 來輸入 <code>--foo</code> 的值</p>
+
+<p>輸入方法如下, 在 <code>--foo</code> 後面接的argument就是它的值</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog1.py --foo FOO
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;FOO&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog1.py --foo BAR
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;BAR&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以什麼都不輸入, 因為 <code>--foo</code> 是 <em>optional argument</em></p>
+
+<p>這樣的話 <code>foo</code> 的值就會是 <code>None</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog.py
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span>None<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但是如果只輸入 <code>--foo</code> 而後面沒有值, 或是多輸入了一個值</p>
+
+<p>皆會出現error</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog1.py --foo
+</span><span class="line">usage: argprog1 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">argprog1: error: argument --foo: expected one argument
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog1.py --foo FOO BAR
+</span><span class="line">usage: argprog1 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">argprog1: error: unrecognized arguments: BAR
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="positional-argument">2.Positional Argument</h2>
+
+<p>再來, 於程式中加入 <em>positional argument</em></p>
+
+<p>和 <em>optional argument</em> 不一樣的地方在於</p>
+
+<p><em>positional argument</em> 是必須要輸入的argument</p>
+
+<p>且 <em>positional argument</em> 的值, 是根據argument的位置而定</p>
+
+<p><em>positional argument</em> 的開頭, 沒有 <code>-</code> , 或 <code>--</code></p>
+
+<p>把 <code>bar1</code> 和 <code>bar2</code> 這兩個 <em>positional argument</em> 加到程式中,如下：</p>
+
+<figure class="code"><figcaption><span>argprog2.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog2&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;bar1&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;bar1 of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;bar2&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;bar2 of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py -h
+</span><span class="line">usage: argprog2 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span> bar1 bar2
+</span><span class="line">
+</span><span class="line">positional arguments:
+</span><span class="line">  bar1        bar1 of the argprog2 program
+</span><span class="line">  bar2        bar2 of the argprog2 program
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span><span class="line">  --foo FOO   foo of the argprog2 program
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著輸入 <em>positional argument</em> 的值</p>
+
+<p>輸入的時候, 不需要輸入argument的名稱</p>
+
+<p>只要根據argument的位置, 依序輸入值就可以了</p>
+
+<p>輸入的位置不同, argument的值就會不同, 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py x y
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">bar1</span><span class="o">=</span><span class="s1">&#39;x&#39;</span>, <span class="nv">bar2</span><span class="o">=</span><span class="s1">&#39;y&#39;</span>, <span class="nv">foo</span><span class="o">=</span>None<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py y x
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">bar1</span><span class="o">=</span><span class="s1">&#39;y&#39;</span>, <span class="nv">bar2</span><span class="o">=</span><span class="s1">&#39;x&#39;</span>, <span class="nv">foo</span><span class="o">=</span>None<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>另外, 也可以輸入 <em>optional argument</em></p>
+
+<p>可以在任意位置插入 <em>optional argument</em> </p>
+
+<p>不會影響 <em>positional argument</em> 的值</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py x y --foo z
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">bar1</span><span class="o">=</span><span class="s1">&#39;x&#39;</span>, <span class="nv">bar2</span><span class="o">=</span><span class="s1">&#39;y&#39;</span>, <span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py x --foo z y
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">bar1</span><span class="o">=</span><span class="s1">&#39;x&#39;</span>, <span class="nv">bar2</span><span class="o">=</span><span class="s1">&#39;y&#39;</span>, <span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py --foo z x y
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">bar1</span><span class="o">=</span><span class="s1">&#39;x&#39;</span>, <span class="nv">bar2</span><span class="o">=</span><span class="s1">&#39;y&#39;</span>, <span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;z&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以下為出現error的情形</p>
+
+<p>因為<em>positional argument</em> 是必須要輸入的</p>
+
+<p>沒有輸入的話, 就會出現error message</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py
+</span><span class="line">usage: argprog2 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span> bar1 bar2
+</span><span class="line">argprog2: error: too few arguments
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py x
+</span><span class="line">usage: argprog2 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span> bar1 bar2
+</span><span class="line">argprog2: error: too few arguments
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog2.py x --foo y
+</span><span class="line">usage: argprog2 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span> bar1 bar2
+</span><span class="line">argprog2: error: too few arguments
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="description-and-epilog">3.Description and Epilog</h2>
+
+<p>如果我們要在 <em>help</em> 中, 加入關於整個程式的解說,</p>
+
+<p>而不是針對個別的 argument做解說</p>
+
+<p>可以用 <code>description</code> 和 <code>epilog</code> , 方法如下：</p>
+
+<figure class="code"><figcaption><span>argprog3.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+</span><span class="line">        <span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog3&#39;</span><span class="p">,</span>
+</span><span class="line">        <span class="n">description</span><span class="o">=</span><span class="s">&#39;### This is description. ###&#39;</span><span class="p">,</span>
+</span><span class="line">        <span class="n">epilog</span><span class="o">=</span><span class="s">&#39;### This is epilog. ###&#39;</span>
+</span><span class="line">        <span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;bar&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;bar of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>description</code> 和 <code>epilog</code> 為解說內容, 唯出現的位置不同</p>
+
+<p>來看輸入 <code>-h</code> 後, 它們的位置在哪：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog3.py -h
+</span><span class="line">usage: argprog3 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span> bar
+</span><span class="line">
+</span><span class="line"><span class="c">### This is description. ###</span>
+</span><span class="line">
+</span><span class="line">positional arguments:
+</span><span class="line">  bar         bar of the argprog3 program
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span><span class="line">  --foo FOO   foo of the argprog3 program
+</span><span class="line">
+</span><span class="line"><span class="c">### This is epilog. ###</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>所以, description是在arguments解說的前方的內容</p>
+
+<p>而epilog是在arguments解說的後方的內容</p>
+
+<h2 id="default-value">4.Default Value</h2>
+
+<p>針對 <em>optional argument</em> 在沒有輸入值得情形下</p>
+
+<p>如果我們想要讓這個有 <em>Default</em> 的值, 而不是 <em>None</em></p>
+
+<p>可以用 <code>default</code> ,方法如下：</p>
+
+<figure class="code"><figcaption><span>argprog4.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span> <span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog4&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&#39;10&#39;</span><span class="p">,</span>
+</span><span class="line">                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo of the </span><span class="si">%(prog)s</span><span class="s"> program, (default: </span><span class="si">%(default)s</span><span class="s">)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="k">print</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>help='foo of the %(prog)s program, (default: %(default)s)'</code> </p>
+
+<p>是 <em>help</em> 中顯示的 <em>default</em> 值</p>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 default 的值是多少</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog4.py -h
+</span><span class="line">usage: argprog4 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span><span class="line">  --foo FOO   foo of the argprog4 program, <span class="o">(</span>default: 10<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著我們可以什麼都不輸入</p>
+
+<p>看看 <code>foo</code> 的值是不是 <em>default</em> 的值</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog4.py
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;10&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>或者在 <code>--foo</code> 後面接其他值, 改變它的值</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog4.py --foo 29
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span><span class="s1">&#39;29&#39;</span><span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但是 <code>--foo</code> 後面沒有值的話, 還是會有Error</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog4.py --foo
+</span><span class="line">usage: argprog4 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">argprog4: error: argument --foo: expected one argument
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="action">5.Action</h2>
+
+<p>上一節提到, 如果 <em>optional argument</em> , 例如 <code>--foo</code></p>
+
+<p>後面沒有值的話, 還是會有Error</p>
+
+<p>那麼像是 <code>--help</code> 這種 <em>optional argument</em>, 後面沒有接值, 也沒出現error</p>
+
+<p>這是怎麼辦到的呢？</p>
+
+<p>這就要用到 <code>action</code> 了, 例如以下程式中, </p>
+
+<p><code>action='store_true'</code> 表示有輸入 <code>--foo1</code> 則 <code>foo1</code> 為 <em>true</em> 若沒有則為 <em>Fales</em></p>
+
+<p><code>action='store_false'</code> 表示有輸入 <code>--foo2</code> 則 <code>foo2</code> 為 <em>Fales</em> 若沒有則為 <em>True</em></p>
+
+<figure class="code"><figcaption><span>argprog5.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span> <span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog5&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo1&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo1 of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo2&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_false&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo2 of the </span><span class="si">%(prog)s</span><span class="s"> program&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著,看看什麼都沒輸入的情形：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog5.py
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo1</span><span class="o">=</span>False, <span class="nv">foo2</span><span class="o">=</span>True<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是有輸入 <code>--foo1</code> 或 <code>--foo2</code> 的情形：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog5.py --foo1
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo1</span><span class="o">=</span>True, <span class="nv">foo2</span><span class="o">=</span>True<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog5.py --foo2
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo1</span><span class="o">=</span>False, <span class="nv">foo2</span><span class="o">=</span>False<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog5.py --foo1 --foo2
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo1</span><span class="o">=</span>True, <span class="nv">foo2</span><span class="o">=</span>False<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="type">6.Type</h2>
+
+<p>如果要限定一個argument的 <em>Type</em></p>
+
+<p>例如 <em>type</em> 為 <em>Int</em>, 可以加入 <code>type=int</code> 於程式中</p>
+
+<p>例如以下程式, 我們限定 <code>type=int</code> , 表示 <code>--foo</code> 只接受整數值</p>
+
+<figure class="code"><figcaption><span>argprog6.py </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">argparse</span>
+</span><span class="line"><span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span> <span class="n">prog</span><span class="o">=</span><span class="s">&#39;argprog6&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s">&#39;--foo&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span>
+</span><span class="line">                    <span class="n">help</span><span class="o">=</span><span class="s">&#39;foo of the </span><span class="si">%(prog)s</span><span class="s"> program, (type: </span><span class="si">%(type)s</span><span class="s">)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+</span><span class="line"><span class="k">print</span> <span class="n">args</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 <code>type</code> 了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog6.py -h
+</span><span class="line">usage: argprog6 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">optional arguments:
+</span><span class="line">  -h, --help  show this <span class="nb">help </span>message and <span class="nb">exit</span>
+</span><span class="line">  --foo FOO   foo of the argprog6 program, <span class="o">(</span><span class="nb">type</span>: int<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在 <code>--foo</code> 後接整數, 是可以的</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog6.py --foo 100
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span>100<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog6.py --foo -100
+</span><span class="line">Namespace<span class="o">(</span><span class="nv">foo</span><span class="o">=</span>-100<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但如果後面接的不是整數, 就會有error</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog6.py --foo -1.35
+</span><span class="line">usage: argprog6 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">argprog6: error: argument --foo: invalid int value: <span class="s1">&#39;-1.35&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>python argprog6.py --foo abc
+</span><span class="line">usage: argprog6 <span class="o">[</span>-h<span class="o">]</span> <span class="o">[</span>--foo FOO<span class="o">]</span>
+</span><span class="line">argprog6: error: argument --foo: invalid int value: <span class="s1">&#39;abc&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="further-reading">7.Further Reading</h2>
+
+<p>關於 <code>argparse</code> 的用法</p>
+
+<p>今天只講了一小部份</p>
+
+<p>若有興趣更深入了解, 請看：</p>
+
+<p>http://docs.python.org/2/library/argparse.html#type</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-31T05:31:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>5:31 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/parser/'>parser</a>, <a class='category' href='/blog/categories/python-standard-library/'>python_standard_library</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/30/python-standard-library-difflib/" title="Previous Post: Python Standard Library -- difflib">&laquo; Python Standard Library -- difflib</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/01/python-standard-library-copy/" title="Next Post: Python Standard Library -- copy">Python Standard Library -- copy &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

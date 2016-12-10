@@ -1,0 +1,726 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在機器學習的過程中，常需要將 Cost Function 的值減小，需由最佳化的方法來達成。本文介紹 Gradient Descent 和 AdaGrad 兩種常用的最佳化方法。 Gradient Descent Gradient Descent 的公式如下： 其中， 為 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/posts/2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div class="blog-index">
+  
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/12/23/optimization-method-adagrad/">Optimization Method -- Gradient Descent & AdaGrad</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-23T17:14:00+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>5:14 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在機器學習的過程中，常需要將 <em>Cost Function</em> 的值減小，需由最佳化的方法來達成。本文介紹 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 兩種常用的最佳化方法。</p>
+
+<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex">\textbf{x} </script> 為最佳化時要調整的參數， <script type="math/tex">\textbf{g}</script> 為最佳化目標函數對 <script type="math/tex">\textbf{x}</script> 的梯度。 <script type="math/tex">\textbf{x}_{t}</script> 為調整之前的 <script type="math/tex">\textbf{x} </script> ，<script type="math/tex">\textbf{x}_{t+1}</script> 為調整之後的 <script type="math/tex">\textbf{x} </script> 。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，紅色的點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/12/23/optimization-method-adagrad/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/">Convex Optimization -- Duality & KKT Conditions</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-11-05T13:18:00+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>5</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>1:18 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在解「 <strong>有條件的最佳化問題</strong> 」時，有時需要把原本的問題轉換成對偶問題(Dual Problem)後，會比較好解。</p>
+
+<p>如果對偶問題有最佳解，原本問題也有最佳解，且這兩個最佳解相同，則必須要滿足 <em>Karush-Kuhn-Tucker (KKT) Conditions</em>：</p>
+
+<ol>
+  <li>
+    <p>Primal Feasibility </p>
+  </li>
+  <li>
+    <p>Dual Feasibility</p>
+  </li>
+  <li>
+    <p>Complementary Slackness</p>
+  </li>
+  <li>
+    <p>Stationarity</p>
+  </li>
+</ol>
+
+<p>至於這四項到底是什麼？講起來有點複雜。本文會先從對偶問題的概念開始介紹，再來講解這四個條件。</p>
+
+<h2 id="the-lagrange-dual-function">The Lagrange dual function</h2>
+
+<p>首先，講解一下什麼是對偶問題。</p>
+
+<p>通常，有條件的最佳化問題，可寫成 <a name="eq1">＜公式一＞</a> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{aligned}
+
+& \textbf{minimize} & f_{0}(x) & \\
+
+& \textbf{subject to } & f_{i}(x) \leq 0 ,& i=1, ... ,m \\
+
+& & h_{j}(x) = 0 , &j=1, ... ,p \\
+
+\end{aligned}
+
+ %]]></script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/10/26/neural-network-neural-turing-machine/">類神經網路 -- Neural Turing Machine</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-10-26T16:25:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>26</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>4:25 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Recurrent Neural Network</em> 在進行 <em>Gradient Descent</em> 的時候，會遇到所謂的 <em>Vanishing Gradient Problem</em> ，也就是說，在後面時間點的所算出的修正量，要回傳去修正較前面時間的參數值，此修正量會隨著時間傳遞而衰減。</p>
+
+<p>為了改善此問題，可以用類神經網路模擬記憶體的構造，把前面神經元所算出的值，儲存起來。例如： <em>Long Short-term Memory (LSTM)</em> 即是模擬記憶體讀寫的構造，將某個時間點算出的值給儲存起來，等需要用它的時候再讀出來。</p>
+
+<p>除了模擬單一記憶體的儲存與讀寫功能之外，也可以用類神經網路的構造來模擬 <em>Turing Machine</em> ，也就是說，有個 <em>Controller</em> ，可以更精確地控制，要將什麼值寫入哪一個記憶體區塊，或讀取哪一個記憶體區塊的值，這種類神經網路模型，稱為 <em>Neural Turing Machine</em> 。</p>
+
+<p>如果可以模擬 <em>Turing Machine</em> ，即表示可以學會電腦能做的事。也就是說，這種機器學習模型可以學會電腦程式的邏輯控制與運算。</p>
+
+<h2 id="neural-turing-machine">Neural Turing Machine</h2>
+
+<p><em>Neural Turing Machine</em> 的架構如下：</p>
+
+<p><img src="/images/pic/pic_00100.jpeg" alt="Neural Turing Machine" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/10/26/neural-network-neural-turing-machine/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/06/neural-network-recurrent-neural-network/">類神經網路 -- Recurrent Neural Network</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-06T09:32:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>9:32 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在數位電路裡面，如果一個電路沒有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 <em>combinational circuit</em> 。</p>
+
+<p>對於類神經網路而言，如果它的值只是從輸入端一層層地依序傳到輸出端，不會再把值從輸出端傳回輸入端，這種神經元就相當於 <em>combinational circuit</em> ，也就是說它的輸出值只取決於目前時刻的輸入值，這樣的類神經網路稱為 <em>feedforward neural network</em> 。</p>
+
+<p>如果一個電路有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值就跟上個時間點的輸入值有關，這種的電路它稱為 <em>sequential circuit</em> 。</p>
+
+<p>所謂的 <em>Recurrent Neural Network</em> ，是一種把輸出端再接回輸入端的類神經網路，這樣可以把上個時間點的輸出值再傳回來，記錄在神經元中，達成和 <em>latch</em> 類似的效果，使得下個時間點的輸出值，跟上個時間點有關，也就是說，這樣的神經網路是有 <em>記憶</em> 的。</p>
+
+<h2 id="recurrent-neural-network">Recurrent Neural Network</h2>
+
+<p>由一個簡單神經元所構成的 <em>Recurrent Neural Network</em> ，構造如下：</p>
+
+<p><img src="/images/pic/pic_00095.png" alt="" /></p>
+
+<p>這個神經元在 <script type="math/tex">t</script> 時間，訓練資料的輸入值為 <script type="math/tex">x_{t}</script> ，訓練資料的答案為 <script type="math/tex">y_{t}</script> ，神經元 <script type="math/tex">n</script> 的輸出值 <script type="math/tex">n_{out,t}</script> ，可用以下公式表示：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/06/neural-network-recurrent-neural-network/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/28/neural-network-backward-propagation/">類神經網路 -- Backward Propagation 詳細推導過程</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T07:47:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:47 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在做 <a href="/blog/2014/03/15/logisti-regression-model">Logistic Regression</a>的時候，可以用 <em>gradient descent</em> 來做訓練，而類神經網路本身即是很多層的 <em>Logistic Regression</em> 所構成，也可以用同樣方法來做訓練。</p>
+
+<p>但類神經網路在訓練過程時，需要分為兩個步驟，為： <em>Forward Phase</em> 與 <em>Backward Phase</em> 。 也就是要先從 <em>input</em> 把值傳到 <em>output</em>，再從 <em>output</em> 往回傳遞 <em>error</em> 到每一層的神經元，去更新層與層之間權重的參數。</p>
+
+<h2 id="forward-phase">Forward Phase</h2>
+
+<p>在 <em>Forward Phase</em> 時，先從 <em>input</em> 將值一層層傳遞到 <em>output</em>。</p>
+
+<p>對於一個簡單的神經元 <script type="math/tex">n</script> ，如下圖 <a name="pic1">＜圖一＞</a>：</p>
+
+<p><img src="/images/pic/pic_00086.png" alt="" /></p>
+
+<p>將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 和 <em>bias</em> <script type="math/tex">b</script> 輸入到神經元 <script type="math/tex">n</script> 到輸出的過程，分成兩步，分別為 <script type="math/tex">n_{in}</script>， <script type="math/tex">n_{out}</script> ，過程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& n_{in} = w_{1} x_{1}+w_{2}  x_{2}+w_{b} \\
+
+& n_{out} = \frac{1} {1+e^{-n_{in} } }
+
+\end{align}
+
+ %]]></script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/05/28/neural-network-backward-propagation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/">類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-23T15:33:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>3:33 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>將類神經網路應用在自然語言處理領域的模型有<a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model">Neural Probabilistic Language Model(NPLM)</a>，但在實際應用時，運算瓶頸在於 <em>output layer</em> 的神經元個數，等同於總字彙量 <script type="math/tex">\mid V\mid </script> 。</p>
+
+<p>每訓練一個字時，要讓 <em>output layer</em> 在那個字所對應的神經元輸出值為 <script type="math/tex">1</script> ，而其他 <script type="math/tex">\mid V\mid -1</script> 個神經元的輸出為 <script type="math/tex">0</script> ， 這樣總共要計算 <script type="math/tex">\mid V\mid </script> 次，會使得訓練變得沒效率。</p>
+
+<p>若要減少於 <em>output layer</em> 的訓練時間，可以把 <em>output layer</em> 的字作分類階層，先判別輸出的字是屬於哪類，再判斷其子類別，最後再判斷是哪個字。 </p>
+
+<h2 id="hierarchical-softmax">Hierarchical Softmax</h2>
+
+<p>給定訓練資料為<script type="math/tex">X</script> ，輸出字的集合為 <script type="math/tex">Y</script> 。當輸入的字串為 <script type="math/tex">x</script> ，輸出的字為 <script type="math/tex">y</script> 時，訓練的演算法要將機率 <script type="math/tex">P (Y=y \mid  X=x) </script> 最佳化。</p>
+
+<p>如果 <script type="math/tex">Y</script> 有 <em>10000</em> 種字，若沒有分類階層，訓練時就要直接對 <script type="math/tex">P (Y = y \mid  X = x) </script> 做計算，即是對這 <em>10000</em>種字做計算，使 <script type="math/tex">y</script> 所對應的神經元輸出為 <em>1</em> ，其它 <em>9999</em> 個神經元輸出 <em>0</em> ，這樣要計算 <em>10000</em> 次，如下圖：</p>
+
+<p><img src="/images/pic/pic_00079.png" alt="" /></p>
+
+<p>若在訓練前，就事先把 <script type="math/tex">Y</script> 中的字彙分類好，以 <script type="math/tex">C(y)</script> 代表字 <script type="math/tex">y</script> 的類別，則可以改成用以下機率做最佳化：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">類神經網路 -- Neural Probabilistic Language Model</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-15T02:38:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:38 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>傳統的語言模型 <em>Ngram</em> ，只考慮一個句子中的前面幾個字，來預測下個字是什麼。</p>
+
+<p>當使用較長的 <em>Ngram</em> 的時候，則在測試資料中，找到和訓練資料相同的機率，就會大幅降低，甚至使機率為0，此種現象稱為 <em>curse of dimensionality</em> 。這類問題，傳統上可用 <a href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing"><em>Smoothing, Interpolation</em> 或 <em>Backoff</em></a>來處理。</p>
+
+<p>另一種對付 <em>curse of dimensionality</em> 的方法，可以用 <em>Distributional Semantics</em> 的概念，即把詞彙的語意用向量來表示。在訓練資料中，根據這個詞和鄰近周圍的詞的關係，計算出向量中各個維度的值，得出來的值即可表示這個詞的語意。例如，假設在訓練資料中出現 <em>The cat is walking in the bedroom</em> 和 <em>A dog was running in a room</em> 這兩個句子，計算出 <em>dog</em> 和 <em>cat</em> 語意向量中的詞，可得出這兩個詞在語意上是相近的。</p>
+
+<p>所謂的 <em>Neural Probabilistic Language Model</em> ，即是用類神經網路，從語料庫中計算出各個詞彙的語意向量值。</p>
+
+<h2 id="neural-probabilistic-language-model">Neural Probabilistic Language Model</h2>
+
+<p>給定訓練資料為 <script type="math/tex"> w_{1} \cdots w_{T} </script> 一連串的字，每個字都可包含於詞庫 <script type="math/tex">V</script> 中，即 <script type="math/tex">w_{t} \in V</script> ，然後，用此資料訓練出語言模型：</p>
+
+<script type="math/tex; mode=display">
+
+
+f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
+
+
+</script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/21/mt-ibm-model-1/">機器翻譯 -- IBM Model 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-21T09:31:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>9:31 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>繼續之前<a href="/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>所提到的，要計算 <em>Translation Model</em> <script type="math/tex">p(F∣E)</script> ，即給定某個英文句子 <script type="math/tex">E</script> ，則它被翻自成中文句子 <script type="math/tex">F</script> 的機率是多少？</p>
+
+<p>計算 <em>Translation Model</em> 需要用到較複雜的模型，例如 <em>IBM Model</em> 。而 <em>IBM Model 1</em>  是最基本的一種 <em>IBM Model</em> 。</p>
+
+<h2 id="alignment">Alignment</h2>
+
+<p>在講 <em>IBM Model 1</em> 之前，要先介紹 <em>alignment</em> 是什麼。因為，要將英文翻譯成中文，則中文字詞的順序可能跟英文字詞的順序，不太一樣。例如：</p>
+
+<blockquote>
+  <p>這不是一個蘋果
+This is not an apple </p>
+</blockquote>
+
+<p>這兩個句子，在中文中的 <strong>“不是”</strong> 英文為 <strong>“is not（是不）”</strong> 。為了考慮到字詞順序會變，因此要定義 <em>alignment</em> ，來記錄中文句子中的哪個字，對應到英文句子中的哪個字。</p>
+
+<p><img src="/images/pic/pic_00075.tiff" alt="" /></p>
+
+<p>此例中， <em>alignment</em> 為 <script type="math/tex">\{1\rightarrow 1,3\rightarrow 2,2\rightarrow 3,4 \rightarrow 4,5\rightarrow 5 \}</script>，表示第一個中文字對應到第一個英文字，第二個中文字對應到第三個英文字，以此類推。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/21/mt-ibm-model-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/">資訊檢索 -- Boolean Retrieval</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-09T00:27:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>12:27 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="information-retrieval">Information Retrieval</h2>
+
+<p>所謂的資訊檢索（ <em>Information Retrieval</em> )，就是從大量非結構的資料，例如網頁，根據某些關鍵字，找出具有此關鍵字的文件。例如，搜尋引擎，即是一種資訊檢索的應用。</p>
+
+<p>資訊檢索的演算法，其實跟我們要在某本書中，找尋某個字的方法差不多。</p>
+
+<p>例如我們想在 <em>Introduction to Information Retrieval</em> 這本教科書中，找到 <em>informational queries</em> 這個詞在哪一頁，如果從第一頁開始，一個字一個字慢慢找，要比對成千上萬個字才能找到。</p>
+
+<p>但如果我們翻到書本後面的 <em>Index</em> （如下） ，即可很快找到 <em>informational queries</em> 這個字是在第 <em>432</em> 頁。</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">...
+</span><span class="line">information gain, 285 
+</span><span class="line">information need, 5, 152 
+</span><span class="line">information retrieval, 1 
+</span><span class="line">informational queries, 432 
+</span><span class="line">inner product, 121 
+</span><span class="line">...
+</span></code></pre></td></tr></table></div></figure>
+
+<p>所以，資訊檢索，最核心的概念就是建立 <em>Index</em> ，這樣就可以快速找到哪些文件中具有某個關鍵字。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/10/27/machine-translation-statistical-machine-translation/">機器翻譯 -- Statistical Machine Translation</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-10-27T16:49:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:49 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Statistical Machine Translation</em> （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 <em>parallel corpus</em>（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。</p>
+
+<p>平行語料庫中包含大量句子，這些句子意思一樣，但分別用兩種語言寫成，例如：</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">這是一個蘋果。
+</span><span class="line">This is an apple.
+</span><span class="line">
+</span><span class="line">桌上有一本書。
+</span><span class="line">There is a book on the table．
+</span><span class="line">
+</span><span class="line">...... 
+</span></code></pre></td></tr></table></div></figure>
+
+<p>藉由這種平行語料庫，就可以用統計的方式，讓機器學會如何將一種語言，翻譯成另一種語言。</p>
+
+<h2 id="noisy-channel-model">Noisy Channel Model</h2>
+
+<p><em>Noicy Channel Model</em> 是一種常用的統計機器翻譯的模型。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/10/27/machine-translation-statistical-machine-translation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  <div class="pagination">
+    
+      <a class="prev" href="/posts/3">&larr; Older</a>
+    
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="/index.html">Newer &rarr;</a>
+    
+  </div>
+</div>
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

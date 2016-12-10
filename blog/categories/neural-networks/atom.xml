@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Neural_networks | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[類神經網路 -- Neural Turing Machine]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2015/10/26/neural-network-neural-turing-machine/"/>
+    <updated>2015-10-26T16:25:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2015/10/26/neural-network-neural-turing-machine</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p><em>Recurrent Neural Network</em> 在進行 <em>Gradient Descent</em> 的時候，會遇到所謂的 <em>Vanishing Gradient Problem</em> ，也就是說，在後面時間點的所算出的修正量，要回傳去修正較前面時間的參數值，此修正量會隨著時間傳遞而衰減。</p>
+
+<p>為了改善此問題，可以用類神經網路模擬記憶體的構造，把前面神經元所算出的值，儲存起來。例如： <em>Long Short-term Memory (LSTM)</em> 即是模擬記憶體讀寫的構造，將某個時間點算出的值給儲存起來，等需要用它的時候再讀出來。</p>
+
+<p>除了模擬單一記憶體的儲存與讀寫功能之外，也可以用類神經網路的構造來模擬 <em>Turing Machine</em> ，也就是說，有個 <em>Controller</em> ，可以更精確地控制，要將什麼值寫入哪一個記憶體區塊，或讀取哪一個記憶體區塊的值，這種類神經網路模型，稱為 <em>Neural Turing Machine</em> 。</p>
+
+<p>如果可以模擬 <em>Turing Machine</em> ，即表示可以學會電腦能做的事。也就是說，這種機器學習模型可以學會電腦程式的邏輯控制與運算。</p>
+
+<h2 id="neural-turing-machine">Neural Turing Machine</h2>
+
+<p><em>Neural Turing Machine</em> 的架構如下：</p>
+
+<p><img src="/images/pic/pic_00100.jpeg" alt="Neural Turing Machine" /></p>
+
+<!--more-->
+
+<p>可分為幾個部分：</p>
+
+<p><strong>Input:</strong> 從外部輸入的值。</p>
+
+<p><strong>Output:</strong> 輸出到外部的值。</p>
+
+<p><strong>Controller:</strong> 相當於電腦的IO和CPU，可以從外部輸入值，或從記憶體讀取值，經過運算，再將算出的結果輸出去，或寫入記憶體， <em>Controller</em> 可以用 <em>feed forward neural network</em> 或者 <em>recurrent neural network</em> （相當於有register的CPU）來模擬。</p>
+
+<p><strong>Read/Write Head:</strong> 記憶體的讀寫頭，相當於pointer ，是要被讀取或被寫入的記憶體的address。</p>
+
+<p><strong>Memory:</strong> 記憶體，相當於電腦的RAM，同一個地址可對應到一整排的記憶體單位，就像電腦一樣，用8個bit組成的一個byte，具有同一個memory address。</p>
+
+<p>以下細講每一部份的數學模型。</p>
+
+<h3 id="memory">Memory</h3>
+
+<p><em>memory</em> 是一個二維陣列。如下圖，一個 <em>memory block</em> 是由數個 <em>memory cell</em> 所構成。同一個 <em>block</em> 中的 <em>cell</em> 有相同的 <em>address</em> 。如下圖中，共有 <script type="math/tex">n</script> 個 <em>block</em> ， 每個 <em>block</em> 有 <script type="math/tex">m</script> 個 <em>cell</em> 。</p>
+
+<p><img src="/images/pic/pic_00101.jpeg" alt="" /></p>
+
+<p>操作 <em>Memory</em> 的動作有三種：即 <em>Read</em> ， <em>Erase</em> 和 <em>Add</em> 。</p>
+
+<h4 id="read">Read</h4>
+
+<p><em>Read</em> 是將記憶體裡面的值，讀出來，並傳給 <em>controller</em> 。由於記憶體有很多個 <em>memory block</em> ，至於要讀取哪個，由讀寫頭（ <em>Read/Write Head</em> ）來控制，讀寫頭為一個向量 <script type="math/tex">\textbf{w}</script> ，其數值表示要讀取記憶體位置的權重，滿足以下條件：</p>
+
+<script type="math/tex; mode=display">
+
+\sum_{i}w(i) = 1 \\
+
+ 0 \leq w(i) \leq 1, \forall i 
+
+</script>
+
+<p>讀寫頭內部各元素 <script type="math/tex">w_{i}</script> 的值介於 0 到 1 之間，且加起來的和為 1 ，這可解釋為，讀寫頭存在的位置，是用機率來表示。而讀出來的值，為記憶體區塊所儲存的值，乘上讀寫頭在此區塊 <script type="math/tex">i</script> 的機率 <script type="math/tex">w(i)</script> ，所得出之期望值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{r} \leftarrow \sum_{i}w(i)\textbf{M}(i) \mspace{40mu} \text{(1)}
+
+</script>
+
+<p>其中，<script type="math/tex">\textbf{r}</script> 為 <em>Read vector</em> ，即從記憶體讀出來的值，  <script type="math/tex">\textbf{M(i)}</script> 為記憶體 <script type="math/tex">i</script> 區塊的值， 而  <script type="math/tex">w(i)</script> 為讀寫頭 <script type="math/tex">w</script> 在區塊 <script type="math/tex">i</script> 的機率。</p>
+
+<p>例如下圖中， <script type="math/tex">w(0) = 0.9</script> ， <script type="math/tex">w(1) = 0.1</script> ，即表示，讀寫頭在位置 0 的機率為 0.9，在位置 1 的機率為 0.1 。</p>
+
+<p><img src="/images/pic/pic_00102.jpeg" alt="Read" /></p>
+
+<p>將上圖中記憶體內部的值 <script type="math/tex">\textbf{M(i)}</script> ，以及讀寫頭位置的值 <script type="math/tex">w(i)</script> ，代入公式(1)，即可得出</p>
+
+<script type="math/tex; mode=display">
+
+\begin{bmatrix}
+
+      r_{0}  \\[0.3em]
+
+      r_{1}  \\[0.3em]
+
+      r_{2}  \\[0.3em]
+
+    \end{bmatrix}
+
+=\begin{bmatrix}
+
+      1*0.9+2*0.1  \\[0.3em]
+
+      1*0.9+1*0.1  \\[0.3em]
+
+      2*0.9+4*0.1  \\[0.3em]
+
+    \end{bmatrix}
+
+＝
+
+\begin{bmatrix}
+
+      1.1  \\[0.3em]
+
+      1.0  \\[0.3em]
+
+      2.2  \\[0.3em]
+
+    \end{bmatrix}
+
+</script>
+
+<h4 id="erase">Erase</h4>
+
+<p>如果要刪除記憶體內部的值，則要進行 <em>Erase</em> ，過程跟 <em>Read</em> 類似，都需要用讀寫頭 <em>w</em> 來控制。但刪除的動作，需要控制去刪除掉哪個 <em>memory cell</em> 的值，而不是一次就把整個 <em>memory block</em> 的值都刪除。所以需要另一個 <em>erase vector</em> <script type="math/tex">\textbf{e}</script> 來選擇要被刪除的 <em>cell</em> 。 <em>erase vector</em> 為一向量，如下：</p>
+
+<script type="math/tex; mode=display">
+
+ 0 \leq e(j) \leq 1,  \mspace{10mu} 0 \leq j \leq m-1 , \mspace{10mu} \forall j 
+
+</script>
+
+<p>其中， <script type="math/tex">j</script> 為一個介於 0~m-1 之間的數， m 為 <em>block size</em> 。向量元素的值 <script type="math/tex">e(j)</script> 介於 0~1 之間。如果值為1，則表示要清空這個 <em>cell</em> 的值，若為 0 則表示保留 <em>cell</em> 原本的值， <em>erase</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{M}(i) \leftarrow (1-w(i) \textbf{e} ) \textbf{M}(i) \mspace{40mu} \text{(2)}
+
+
+</script>
+
+<p>其中， <script type="math/tex">\textbf{w}</script> 是用來控制要清除哪個 <em>memory block</em> 而 <script type="math/tex">\textbf{e}</script> 是要控制清除這個 <em>block</em> 裡面的哪些 <em>cell</em> ，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00103.jpeg" alt="Erase" /></p>
+
+<p>上圖中，根據 <script type="math/tex">\textbf{w}</script> 和 <script type="math/tex">\textbf{e}</script> 這兩個向量所選擇的結果， 在 <script type="math/tex">\textbf{M}</script> 中，共有四個 <em>cell</em> 的值被削減了，分別位於左上角和左下角，用較明亮的背景色表示其位置。</p>
+
+<p>將上圖中 <script type="math/tex">\textbf{w}</script> 、 <script type="math/tex">\textbf{e}</script> 和 <script type="math/tex">\textbf{M}</script> 中的值，代入公式(2) ，可得出此結果，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+M= 
+
+\begin{bmatrix}
+
+      1(1-0.9) & 2(1-0.1) & 3 & ...  \\[0.3em]
+
+      1 & 1 & 2 & ...  \\[0.3em]
+
+      2(1-0.9) & 4(1-0.1) & 1 & ...  \\[0.3em]
+
+    \end{bmatrix}
+
+=\begin{bmatrix}
+
+      0.1 & 1.8 & 3 & ...  \\[0.3em]
+
+      1 & 1 & 2 & ...  \\[0.3em]
+
+      0.2 & 3.6 & 1 & ...  \\[0.3em]
+
+    \end{bmatrix}
+
+
+ %]]&gt;</script>
+
+<h4 id="add">Add</h4>
+
+<p>將新的值寫入記憶體的動作為 <em>add</em> 。之所以稱為 <em>add</em> （而非 <em>write</em> ）因為這個動作是會把記憶體內原本的值，再「加上」要寫入的值。至於要把哪些值加到記憶體，則需要有一個 <em>add vector</em> ，其維度和 <em>memory block</em> 的大小 <script type="math/tex">m</script> 相同。 <em>Add</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{M}(i) \leftarrow  \textbf{M}(i)  + w(i) \textbf{a} \mspace{40mu} \text{(3)}
+
+</script>
+
+<p>過程如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00104.jpeg" alt="Add" /></p>
+
+<p>上圖中，位於 <script type="math/tex">M</script> 的左上角，共有四個 <em>cell</em> 的值被增加了。</p>
+
+<p>將上圖中 <script type="math/tex">\textbf{w}</script> 、 <script type="math/tex">\textbf{a}</script> 和 <script type="math/tex">\textbf{M}</script> 中的值，代入公式(3) ，可得出此結果，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+M= 
+
+\begin{bmatrix}
+
+      0.1+0.9 & 1.8+0.1 & 3 & ...  \\[0.3em]
+
+      1.0+0.9 & 1.0+0.1 & 2 & ...  \\[0.3em]
+
+      0.2 & 3.6 & 1 & ...  \\[0.3em]
+
+    \end{bmatrix}
+
+=\begin{bmatrix}
+
+      1.0 & 1.9 & 3 & ...  \\[0.3em]
+
+      1.9 & 1.1 & 2 & ...  \\[0.3em]
+
+      0.2 & 3.6 & 1 & ...  \\[0.3em]
+
+    \end{bmatrix}
+
+ %]]&gt;</script>
+
+<h3 id="controller">Controller</h3>
+
+<p><em>Controller</em> 為控制器，它可以用類神經網路之類的機器學習模型來代替，但其實可以把它當成是黑盒子，只要可以符合下圖中所要求的 <em>input</em> 、 <em>output</em> 以及各種參數的值，就可以當 <em>controller</em> 。</p>
+
+<p><img src="/images/pic/pic_00105.jpeg" alt="Controller" /></p>
+
+<p>上圖中， <em>controller</em> 根據外部環境的輸入值 <em>input</em>，以及 <em>read vector</em> <script type="math/tex">\textbf{r}</script> ，經過其內部運算，會輸出 <em>output</em> 值到外在環境，還有 <em>erase vector</em> <script type="math/tex">\textbf{e}</script> 和 <em>add vector</em> <script type="math/tex">\textbf{a}</script> ，來控制記憶體的清除與寫入。但還缺少了讀寫頭向量 <script type="math/tex">\textbf{w}</script> 。</p>
+
+<p>如果要產生讀寫頭向量 <script type="math/tex">\textbf{w}</script> ， 需要透過一連串的 <em>Addressing Mechanisms</em> 的運算，最後即可得出讀寫頭位置。而 <em>controller</em> 則負責產生出 <em>Addressing Mechanisms</em> 所需的參數。</p>
+
+<h3 id="addressing-mechanism">Addressing Mechanism</h3>
+
+<p><em>controller</em> 會產生五個參數來進行 <em>addressing mechanisms</em> ，這些參數分別為： <script type="math/tex">\textbf{k}, \beta, g , \textbf{s}, \gamma </script> 。其中， <script type="math/tex">\textbf{k}</script> 和 <script type="math/tex">\textbf{s}</script> 為向量，其餘參數為純量，這些參數的意義，在以下篇章會解釋，整個 <em>addressing mechanisms</em>  的過程如下圖所示。</p>
+
+<p><img src="/images/pic/pic_00106.jpeg" alt="Addressing Mechanism" /></p>
+
+<p>上圖中，總共有四個步驟，這四個步驟共需要用到這五種參數，經過了這一連串的過程之後，最後所產生出的 <script type="math/tex">\textbf{w}</script> 即為讀寫頭位置，如上圖左下角所示。以下細講每個步驟在做什麼。</p>
+
+<h4 id="content-addressing">Content Addressing</h4>
+
+<p>首先，是找出記憶體中跟參數 <em>memory key</em> <script type="math/tex">\textbf{k}</script> 值最相近的記憶體區塊。</p>
+
+<p>讀寫頭的位置 <script type="math/tex">w</script> ，就先根據記憶體區塊中，跟 <script type="math/tex">\textbf{k}</script> 的相似度來決定，公示如下：</p>
+
+<script type="math/tex; mode=display">
+
+w(i) \leftarrow \frac{e^{\beta K[\textbf{k},\textbf{M}(i)] } }{ \sum_{j} e^{ \beta K[\textbf{k},\textbf{M}(j)] } }
+
+</script>
+
+<p>其中， <script type="math/tex">K[\textbf{k},\textbf{M}(i)]</script> 表示 <em>memory key</em> <script type="math/tex">\textbf{k}</script> 跟記憶體區塊 <script type="math/tex">M(i)</script> 的 <em>cosine similarity</em> ，即兩向量的夾角，如果 <script type="math/tex">\textbf{k}</script> 跟 <script type="math/tex">M(i)</script> 的內容越接近的話，則 <script type="math/tex"> K[\textbf{k},\textbf{M}(i)]</script> 算出來的值會越大。 最後算出來的值 <script type="math/tex">w(i)</script> ，即是 <script type="math/tex">\textbf{k}</script> 跟 <script type="math/tex">M(i)</script> 的相似度，除以記憶體內所有區塊相似度，標準化的結果。</p>
+
+<p><em>cosine similarity</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+K[\textbf{u},\textbf{v} ] = \frac{ \textbf{u} \cdot \textbf{v} }{ |\textbf{u}| \cdot |\textbf{v}| } 
+
+</script>
+
+<p>經過了 <em>cosine similarity</em> 後，越相似的向量，值會越大，而參數 <script type="math/tex">\beta</script> 是個大於0的參數，可用來控制 <script type="math/tex">\textbf{w}</script> 內的元素值，集中與分散程度，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00107.jpeg" alt="Content Addressing" /></p>
+
+<p>上圖中，向量 <script type="math/tex">\textbf{k}</script> 中的值，與記憶體中第三行區塊的值最相似（用較淺色的背景表示）。但如果 <script type="math/tex">\beta</script> 很大（例如： <script type="math/tex">\beta=50</script>），算出來的 <script type="math/tex">\textbf{w}</script> 值會集中在第三個位置，也就是說，只有第三個位置的值是1，其他都是0（用較淺色的背景表示），如上圖的左下方。如果 <script type="math/tex">\beta</script> 很小（例如： <script type="math/tex">\beta=0</script>），則算出來的 <script type="math/tex">\textbf{w}</script> 值會平均分散到每個元素之中，如上圖的右下方。 </p>
+
+<h4 id="interpolation">Interpolation</h4>
+
+<p>讀寫頭其實也是有「記憶」的，也就是說，目前時間點的 <script type="math/tex">\textbf{w}_{t} </script> ，也可能會受到上個時間點 <script type="math/tex">\textbf{w}_{t-1}</script> 的影響，要達到這樣的效果，就是用 <em>content addressing</em> 所算出的值 <script type="math/tex">\textbf{w}_{t} </script> ，和上個時間點的讀寫頭位置 <script type="math/tex">\textbf{w}_{t-1}</script> 做 <em>interpolation</em> ，公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{w}_{t} \leftarrow g \textbf{w}_{t} + (1-g) \textbf{w}_{t-1} 
+
+</script>
+
+<p>其中，參數 <script type="math/tex">g</script> 用來表示 <script type="math/tex"> \textbf{w} </script> 有多少比例是這個時間點 <em>content addressing</em> 所算出的值，還是上個時間點的值。如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00108.jpeg" alt="Interpolation" /></p>
+
+<p>如果 <script type="math/tex">g=1</script> ，則 <script type="math/tex">\textbf{w}</script> 的值會完全取決於這個時間點 <em>content addressing</em> 所算出的值，如上圖的左下方，若 <script type="math/tex">g=0</script> ，  <script type="math/tex">\textbf{w}</script> 會完全取決於上個時間點的值，如上圖的右下方。</p>
+
+<h4 id="convolutional-shift">Convolutional Shift</h4>
+
+<p>如果要讓讀寫頭的位置可以稍微往左或往右移動，這就要用 <em>Convolutional Shift</em> 來做調整。 參數 <script type="math/tex">\textbf{s}</script> 是一個向量，用 <em>convolutional shift</em> ，來將 <script type="math/tex">\textbf{w}</script> 的值往左或往右平移，公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+w(i) \leftarrow \sum_{j} w(j) s(i-j)
+
+</script>
+
+<p>舉個例子，如果 <script type="math/tex">\textbf{s}</script> 中有三個元素：<script type="math/tex">s_{-1}, s_{0}, s_{1}</script> ，則 <script type="math/tex">w(i)</script> 經過了以上公式後，結果如下：</p>
+
+<script type="math/tex; mode=display">
+
+w(i) \leftarrow w(i+1) s(-1) + w(i)s(0) + w(i-1)s(1)
+
+</script>
+
+<p>根據此公式， <script type="math/tex">w(i)</script> 的值，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00109.jpeg" alt="Convolutional" /></p>
+
+<p>也就是說， <script type="math/tex">s_{-1}=1</script> 時，可讓原本的 <script type="math/tex">w_{i+1}</script> 往左移一格，移到 <script type="math/tex">w_{i}</script> ，若 <script type="math/tex">s_{1}=1</script> 時，可讓原本的 <script type="math/tex">w_{i-1}</script> 往右移一格，移到 <script type="math/tex">w_{i}</script> 。</p>
+
+<p>舉個例子，如果 <script type="math/tex">s_{-1} = 1, s_{0}=0, s_{1} = 0</script> ，則  <script type="math/tex">\textbf{w}</script> 中的值，全部往左移動一格，若碰到邊界則再循環到最右邊，如下圖左方所示。 如果 <script type="math/tex">s_{-1} = 0, s_{0}=0, s_{1} = 1</script> ，則  <script type="math/tex">\textbf{w}</script> 中的值，全部往右移動一格。若 <script type="math/tex">s_{-1} = 0.5, s_{0}=0, s_{1} = 0.5</script> ，則 <script type="math/tex">\textbf{w}</script> 為往左和往右移動後的平均，如下圖右方所示。</p>
+
+<p><img src="/images/pic/pic_00110.jpeg" alt="Convolutional Shift" /></p>
+
+<h4 id="sharpening">Sharpening</h4>
+
+<p>此過程是再一次調整 <script type="math/tex">\textbf{w}</script> 的集中與分散程度，公示如下：</p>
+
+<script type="math/tex; mode=display">
+
+w(i) \leftarrow \frac{w(i)^{\gamma}}{\sum_{j}w(j)^{\gamma}}
+
+</script>
+
+<p>其中， <script type="math/tex">\gamma</script> 的功能和 <em>Content Addressing</em> 中的 <script type="math/tex">\beta</script> 是一樣的，但是經過了接下來的 <em>Interpolation</em> 跟 <em>Convolutional Shift</em> 之後，<script type="math/tex">\textbf{w}</script> 裡面的集中度又會改變，所以要再重新調整一次。</p>
+
+<p><img src="/images/pic/pic_00111.jpeg" alt="Sharpening" /></p>
+
+<h2 id="experiment-repeat-copy">Experiment: Repeat Copy</h2>
+
+<p>關於 <em>Neural Turing Machine</em> 的學習能力，可以參考以下例子。</p>
+
+<p>在訓練資料中，給定一個區塊的 <em>data</em> （如下圖左上角紅色區塊）做為 <em>input data</em> ，將這個區塊複製成七份，做為 <em>output data</em> 。則 <em>Neural Turing Machine</em> 有辦法學會這個「複製」過程所需的運算程序，也就是重複跑七次輸出一樣的東西。</p>
+
+<p><img src="/images/pic/pic_00112.png" alt="Experiment" /></p>
+
+<p><img src="/images/pic/pic_00113.png" alt="Experiment" /></p>
+
+<p>從上圖中，可看到讀寫頭的移動，重複走了相同的路徑，走了七次，依序將記憶體中儲存的 <em>input data</em> 的值，讀出來並輸出到 <em>output</em> 。</p>
+
+<p>有個完整的  <em>Neural Turing Machine</em> 套件，以及此實驗的相關程式碼於：https://github.com/fumin/ntm</p>
+
+<h2 id="reference">Reference</h2>
+
+<p><a href="http://arxiv.org/abs/1410.5401">Alex Graves, Greg Wayne, Ivo Danihelka. Neural Turing Machines. 2014</a></p>
+]]></content>
+  </entry>
+  
+</feed>

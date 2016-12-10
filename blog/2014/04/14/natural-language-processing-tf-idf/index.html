@@ -1,0 +1,483 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>自然語言處理 -- TF-IDF - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 所謂的 TF-IDF , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法 例如, 有一篇新聞, 是 nltk 的 Reuters Corpus 中的文章, 這篇文章被歸類在 grain , ship 這兩種類別下, 文章的內容如下： GRAIN SHIPS &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/14/natural-language-processing-tf-idf/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">自然語言處理 -- TF-IDF</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-14T10:12:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:12 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的 <em>TF-IDF</em> , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法</p>
+
+<p>例如, 有一篇新聞, 是 <em>nltk</em> 的 <em>Reuters Corpus</em> 中的文章, 這篇文章被歸類在 <em>grain</em> , <em>ship</em> 這兩種類別下, 文章的內容如下：</p>
+
+<blockquote>
+  <p>GRAIN SHIPS LOADING AT PORTLAND 
+There were three grain ships loading and two ships were waiting to load at Portland , according to the Portland Merchants Exchange .</p>
+</blockquote>
+
+<p>假設不知道什麼是 <em>TF-IDF</em>, 先用人工判別法試看看, 這篇新聞的關鍵字, 應該是 <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的字, 而不會是 <em>to</em> , <em>at</em> 這種常常出現的字</p>
+
+<p>為什麼呢？因為 <em>to</em> 或 <em>at</em> 雖然在這篇文章中出現較多次, 但其他文章中也常有這些字, 所謂的關鍵的字, 應該是在這篇文章中出現較多次, 且在其他文章中比較少出現的字</p>
+
+<p>所以,如果要在一篇文章中, 尋找這樣的關鍵字, 要考慮以下兩個要素:</p>
+
+<!--more-->
+
+<h4 id="term-frequency-tf-">1.這個字在這篇文章中出現的頻率( <em>Term-Frequency TF</em> )</h4>
+
+<h4 id="inverse-document-frequency-idf-">2.在所有的文章中,有幾篇文章有這個字( <em>Inverse-Document-Frequency IDF</em> )</h4>
+
+<p>這就是所謂的 IF-IDF</p>
+
+<p>公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF
+
+\mspace{5mu}=\mspace{5mu} TF \times IDF
+
+\mspace{5mu}=\mspace{5mu} n_{w}^{d} \times log_{2} \frac{N}{N_{w}}
+
+</script>
+
+<p>其中, <script type="math/tex">n_{w}^{d}</script> 表示在文章 <script type="math/tex">d</script> 中, 文字 <script type="math/tex">w</script> 出現的次數, <script type="math/tex">N</script> 表示總共有幾篇文章, <script type="math/tex">N_{w}</script> 表示有文字 <script type="math/tex">w</script> 的文章有幾篇</p>
+
+<p>例如以上 <em>Reuters Corpus</em> 文章的例子, <em>Portland</em> 在這篇文章中出現了 <em>3</em> 次, 所以 <script type="math/tex">n_{w}^{d} =3 </script> , 而 <em>Reuters Corpus</em>  , 總共有 <em>10788</em> 篇文章, <script type="math/tex">N = 10788</script> , 在這些文章中, 有 <em>Portland</em> 這個字的文章, 有 <em>28</em> 篇, 所以 <script type="math/tex">N_{w} = 28.0</script> , 把這些數值帶入公式, 得出</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF_{Portland} \mspace{5mu}=\mspace{5mu}  3 \times log_{2} \frac{10788}{28} \mspace{5mu}  \approx \mspace{5mu} 25.769
+
+</script>
+
+<p>如果是 <em>to</em> 這個字, 在這篇文章出現 <em>2</em> 次, 但是總共有 <em>6944</em> 篇文章有這個字, 所以算出來的 <em>TF-IDF</em>  是</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF_{Portland} \mspace{5mu}=\mspace{5mu}  2 \times log_{2} \frac{10788}{6944} \mspace{5mu}  \approx \mspace{5mu} 1.271
+
+</script>
+
+<p>就這樣, 根據公式算出 <em>TF-IDF</em> 值的大小, 值越大的, 越可以作為代表這篇文章的關鍵字</p>
+
+<h2 id="implementation">2.Implementation</h2>
+
+<p>首先來瞭解一下 <em>nltk</em> 的 <em>Reuters Corpus</em>  和本文中的範例文章  </p>
+
+<p>先到 <em>python</em> 的 <em>Interactive Mode</em> 載入 <code>reuters</code> 模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="kn">import</span> <span class="n">reuters</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>本文中的範例文章, 在 <em>Reuters Corpus</em>  裡面的 <em>Id</em> 為 <code>training/3386</code></p>
+
+<p>可以把文章內容印出來看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">fileid</span> <span class="o">=</span> <span class="s">&#39;training/3386&#39;</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="s">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">reuters</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="n">fileids</span><span class="o">=</span><span class="n">fileid</span><span class="p">))</span>
+</span><span class="line"><span class="s">&#39;GRAIN SHIPS LOADING AT PORTLAND There were three grain ships loading and two ships were </span><span class="se">\</span>
+</span><span class="line"><span class="s">waiting to load at Portland , according to the Portland Merchants Exchange .&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以看一下這篇文章的分類, 是被分在 <em>grain</em> 和 <em>ship</em>  這兩個類別</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">reuters</span><span class="o">.</span><span class="n">categories</span><span class="p">(</span><span class="n">fileids</span><span class="o">=</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="s">&#39;grain&#39;</span><span class="p">,</span> <span class="s">&#39;ship&#39;</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是實作 <em>TF_IDF</em> 的公式, </p>
+
+<p>開一個新的檔案, 命名為 <em>tf_idf.py</em> , 並貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>tf_idf.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="kn">import</span> <span class="n">reuters</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">WordNetLemmatizer</span>
+</span><span class="line"><span class="n">wnl</span><span class="o">=</span><span class="n">WordNetLemmatizer</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line"><span class="n">_DN</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">reuters</span><span class="o">.</span><span class="n">fileids</span><span class="p">()))</span>
+</span><span class="line"><span class="n">_RTS</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:[</span><span class="n">wnl</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">reuters</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">reuters</span><span class="o">.</span><span class="n">fileids</span><span class="p">()}</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">idf</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+</span><span class="line">    <span class="n">w</span> <span class="o">=</span> <span class="n">wnl</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">log</span><span class="p">(</span> <span class="n">_DN</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span> <span class="ow">in</span> <span class="n">_RTS</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_RTS</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="p">])</span> <span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">tf</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">):</span>
+</span><span class="line">    <span class="n">w</span> <span class="o">=</span> <span class="n">wnl</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+</span><span class="line">    <span class="k">return</span> <span class="nb">sum</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">w</span> <span class="o">==</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">_RTS</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">tf_idf</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">):</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">tf</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">idf</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+</span><span class="line">    <span class="n">word_tfidf</span> <span class="o">=</span> <span class="p">[(</span><span class="n">w</span><span class="p">,</span><span class="n">tf_idf</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">_RTS</span><span class="p">[</span><span class="n">f</span><span class="p">])]</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">w</span><span class="p">,</span><span class="n">t</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">word_tfidf</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span> <span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&quot;</span><span class="si">%-15s</span><span class="s"> </span><span class="si">%.10f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">w</span><span class="p">,</span><span class="n">t</span><span class="p">)</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>_DN</code> 是 <em>Reuters Corpus</em>  中, 所有文章的數量, </p>
+
+<p>而 <code>_RTS = {k:[wnl.lemmatize(w.lower()) for w in reuters.words(k)] for k in reuters.fileids()}</code> </p>
+
+<p>是先把所有文章中的字都轉成小寫, 並轉換成單數, 例如把 <em>SHIPS</em>, <em>ships</em> , <em>ship</em> 這三種字, 都轉成同一種字 <em>ship</em></p>
+
+<p>剩下的 <em>function</em>  <code>idf(w)</code> , <code>tf(w,f)</code> , <code>tf_idf(w,f)</code> 就是 <em>TF-IDF</em> 公式, 而 <code>run(f)</code> 是把一篇文章每一個字都去跑 <em>TF-IDF</em> , 並印出結果</p>
+
+<p>再來到 <em>python</em> 的 <em>Interactive Mode</em> 載入 <em>tf_idf.py</em> 這個檔案</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">tf_idf</span> <span class="kn">as</span> <span class="nn">ti</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這可能需要花十幾秒甚至數分鐘的時間, 因為程式要把所有大小寫和單複數不同的字, 都轉成同樣的字, 要花一些時間</p>
+
+<p>再來, 別忘了先前看的那篇文章 <em>id</em> 是什麼, 因為等一下還會用到</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">fileid</span> <span class="o">=</span> <span class="s">&#39;training/3386&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>算一下 <em>Portland</em> 這個字在那篇文章中的 <em>TF</em> , <em>IDF</em> 以及 <em>TF-IDF</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">tf</span><span class="p">(</span><span class="s">&#39;Portland&#39;</span><span class="p">,</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="mf">3.0</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">idf</span><span class="p">(</span><span class="s">&#39;Portland&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">8.589784884178</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">tf_idf</span><span class="p">(</span><span class="s">&#39;Portland&#39;</span><span class="p">,</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="mf">25.769354652534</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>還有, <em>to</em> 這個字在那篇文章中的 <em>TF</em> , <em>IDF</em> 以及 <em>TF-IDF</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">tf</span><span class="p">(</span><span class="s">&#39;to&#39;</span><span class="p">,</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="mf">2.0</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">idf</span><span class="p">(</span><span class="s">&#39;to&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.6355885737911242</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">tf_idf</span><span class="p">(</span><span class="s">&#39;to&#39;</span><span class="p">,</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="mf">1.2711771475822484</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來,把文章中每個字的 <em>TF-IDF</em> 都算出來, 並做排序</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">ti</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">fileid</span><span class="p">)</span>
+</span><span class="line"><span class="n">portland</span>        <span class="mf">25.7693546525</span>
+</span><span class="line"><span class="n">ship</span>            <span class="mf">17.9126251546</span>
+</span><span class="line"><span class="n">loading</span>         <span class="mf">15.9417501031</span>
+</span><span class="line"><span class="n">grain</span>           <span class="mf">10.3270402590</span>
+</span><span class="line"><span class="n">load</span>            <span class="mf">8.7532836165</span>
+</span><span class="line"><span class="n">waiting</span>         <span class="mf">7.6967000881</span>
+</span><span class="line"><span class="n">merchant</span>        <span class="mf">7.4198598827</span>
+</span><span class="line"><span class="n">according</span>       <span class="mf">5.0979317878</span>
+</span><span class="line"><span class="n">were</span>            <span class="mf">4.9210037345</span>
+</span><span class="line"><span class="n">there</span>           <span class="mf">3.5817565104</span>
+</span><span class="line"><span class="n">exchange</span>        <span class="mf">3.4056179602</span>
+</span><span class="line"><span class="n">at</span>              <span class="mf">3.3358878942</span>
+</span><span class="line"><span class="n">three</span>           <span class="mf">3.0888007761</span>
+</span><span class="line"><span class="n">two</span>             <span class="mf">2.4827546741</span>
+</span><span class="line"><span class="n">to</span>              <span class="mf">1.2711771476</span>
+</span><span class="line"><span class="ow">and</span>             <span class="mf">0.6732655874</span>
+</span><span class="line"><span class="n">the</span>             <span class="mf">0.6341349766</span>
+</span><span class="line"><span class="p">,</span>               <span class="mf">0.2614305201</span>
+</span><span class="line"><span class="o">.</span>               <span class="mf">0.1459533027</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上結果顯示, <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的關鍵字, 所算出來的 <em>TF-IDF</em> 值都比較高, 而 <em>to</em> , <em>at</em> , 或其他標點符號, 算出來的值就較低, 因此 <em>TF-IDF</em> 可以把文章中的關鍵字區分出來</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文使用 nltk 的 <em>Reuters Corpus</em> 做為範例, 若想知道 <em>Reuters Corpus</em> 要怎麼用, 請到以下網址</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch02.html</p>
+
+<p>另外, 本文的公式與觀念, 參考至以下這門 <em>coursera</em> 的線上課程 </p>
+
+<h4 id="dr-gautam-shroff--web-intelligence-and-big-data">Dr. Gautam Shroff.  Web Intelligence and Big Data</h4>
+
+<p>https://www.coursera.org/course/bigdata</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-14T10:12:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:12 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/tf-idf/'>tf-idf</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/14/natural-language-processing-tf-idf/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/14/natural-language-processing-tf-idf/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/" title="Previous Post: 自然語言處理 -- Naive Bayes Classifier">&laquo; 自然語言處理 -- Naive Bayes Classifier</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/17/machine-learning-model-selection/" title="Next Post: 機器學習 -- Model Selection">機器學習 -- Model Selection &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

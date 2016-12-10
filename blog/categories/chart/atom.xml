@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Chart | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/chart/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Chart Parsing]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing/"/>
+    <updated>2014-04-26T03:41:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理中, 剖析 ( <em>Parsing</em>  ) 是根據定義好的文法, 把句子轉換成 <em>Syntax Tree</em> 的過程</p>
+
+<p><em>Chart Parsing</em> 是利用一種叫做 <em>Chart</em> 的資料結構, 來進行剖析的演算法</p>
+
+<p><em>Chart</em> 的結構如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c}
+
+& <START> & \text{ some integer } \\
+
+& <FINISH> & \text{ some integer } \\
+
+& <LABEL> & \text{ some category } \\
+
+& <FOUND> & \text{ some category sequence } \\
+
+& <TOFIND> & \text{ some category sequence } \\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>以下為一個 <em>Chart</em> 的例子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,2,S \rightarrow NP * VP>
+
+ %]]&gt;</script>
+
+<!--more-->
+
+<p>其中, 前兩個數字分別是 <script type="math/tex">% &lt;![CDATA[
+<START> %]]&gt;</script> , <script type="math/tex">% &lt;![CDATA[
+<FINISH> %]]&gt;</script> , 數字後面的英文字是 <script type="math/tex">% &lt;![CDATA[
+<LABEL> %]]&gt;</script> , 而 <script type="math/tex">*</script> 符號左方的代表 <script type="math/tex">% &lt;![CDATA[
+<FOUND> %]]&gt;</script> , <script type="math/tex">*</script> 右方的代表 <script type="math/tex">% &lt;![CDATA[
+<TOFIND> %]]&gt;</script> .</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c}
+
+& <START> & \text{ 0 } \\
+
+& <FINISH> & \text{ 2 } \\
+
+& <LABEL> & \text{ S } \\
+
+& <FOUND> & \text{ <NP> } \\
+
+& <TOFIND> & \text{ <VP> } \\
+
+\end{array}
+
+
+ %]]&gt;</script>
+
+<p>這樣講還不是很清楚, 這些數字文字代表什麼, 為什麼要這樣定義呢？</p>
+
+<p>舉個例子, 如果要用以下的 <em>Grammar</em> 來剖析 <em>I run .</em>  這個句子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& S \rightarrow NP\mspace{10mu} VP \\
+
+& NP \rightarrow \text{I} \\
+
+& VP \rightarrow \text{run} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>如果我們現在要開始剖析 <script type="math/tex">S \rightarrow NP\mspace{10mu} VP</script> 這條 <em>Rule</em>,  剛開始時, <em>Chart</em> 的結構如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,0,S \rightarrow * \mspace{10mu} NP \mspace{10mu} VP>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>0</em> 結束, 還沒有 <em>FOUND</em> 任何一個 <em>category</em> , 而有兩個 <em>TOFIND</em> 的 <em>category</em> , 分別是 <em>NP</em> 和 <em>VP</em> , 如下圖</p>
+
+<p><img src="/images/pic/pic_00048.png" alt="status1" /></p>
+
+<p>接著,往右方尋找可以符合這條 <em>Rule</em> 的 <em>category</em> , 發現, 在位置 <em>0</em> 到 <em>1</em> 中間的 <em>category</em> 為 <em>NP</em> , 剛好符合這條 <em>Grammar</em> 的 <em>category</em>, 此時的 <em>Chart</em> 變為 </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,1,S \rightarrow NP \mspace{10mu} * \mspace{10mu} VP>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>1</em> 結束, 有一個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , 還剩一個 <em>TOFIND</em> 的 <em>category</em> , 為 <em>VP</em> , 如下圖</p>
+
+<p><img src="/images/pic/pic_00049.png" alt="status2" /></p>
+
+<p>以上兩種情形, 由於 <em>TOFIND</em> 不為空集合, 表示還有東西要找, 這個時候的 <em>Chart</em> 稱為 <em>active edge</em></p>
+
+<p>再來, 從 <em>1</em> 繼續往下一個位置找, 到 <em>2</em> 結束, 這一段是 <em>VP</em> , 也和 <em>Rule</em> 符合 , 此時的 <em>Chart</em> 變成這樣</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+<0,1,S \rightarrow NP \mspace{10mu}   VP \mspace{10mu} *>
+
+ %]]&gt;</script>
+
+<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>2</em> 結束, 有兩個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , <em>VP</em> ,已經沒有個 <em>TOFIND</em> 的 <em>category</em> 了, 此時可把這個  <em>Chart</em> 稱為 <em>inactive edge</em> , 表示它已經完成了, 如下圖</p>
+
+<p><img src="/images/pic/pic_00050.png" alt="status3" /></p>
+
+<h2 id="implementation">2. Implementation</h2>
+
+<p>由於要寫完一個 <em>Chart Parser</em> 需要寫較多行程式碼, 故這次不打算重頭寫起, 而採用 <em>python nltk</em> 的套件 <code>nltk.parse.chart</code> 來操作 <em>Chart Parser</em> </p>
+
+<p>用以上的例句和 <em>Grammar</em> 來實作</p>
+
+<p>將以下程式碼貼到 <em>chart.py</em> 這個檔案</p>
+
+<p>```python chart.py
+from nltk.parse.chart import *
+from nltk.grammar import parse_cfg</p>
+
+<p>_Grammar = parse_cfg(“””
+S  -&gt; NP VP
+NP -&gt; “I”
+VP -&gt; “run”
+“””)</p>
+
+<p>_Sent = “I run”.split()</p>
+
+<p>def chart_parser(strategy):
+    Strategy={‘top-down’:TD_STRATEGY,’bottom-up’:BU_STRATEGY}
+    cp = ChartParser(_Grammar, Strategy[strategy], trace=1)
+    chart = cp.chart_parse(_Sent)
+    parses = chart.parses(_Grammar.start())</p>
+
+<p>```</p>
+
+<p>其中, <code>_Grammar</code> 是 <em>parsing</em> 所使用的 <em>Grammar</em> , <code>_Sent</code> 是例句 <em>I run.</em> </p>
+
+<p>而 <code>chart_parser(strategy)</code> 是 <em>Chart parsing</em> 的 <em>function</em> , 有兩種策略 , 分別是　<em>Top-Down</em> 和 <em>Bottom-Up</em> , 這兩者的差別在哪, 之後會介紹</p>
+
+<p>先到 <em>python interactve mode</em> 載入 <code>chart_parser</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from chart import chart_parser</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="top-down-strategy">2.1 Top-Down Strategy</h3>
+
+<p>於 <code>chart_parser</code> 輸入 <em>argument</em> <code>'top-down'</code>　, 會印出 <em>Top-Down Strategy</em> 的整個過程, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>chart_parser(‘top-down’)
+|.       I       .      run      .|
+|[—————]               .| [0:1] ‘I’
+|.               [—————]| [1:2] ‘run’
+|&gt;               .               .| [0:0] S  -&gt; * NP VP
+|&gt;               .               .| [0:0] NP -&gt; * ‘I’
+|[—————]               .| [0:1] NP -&gt; ‘I’ *
+|[—————&gt;               .| [0:1] S  -&gt; NP * VP
+|.               &gt;               .| [1:1] VP -&gt; * ‘run’
+|.               [—————]| [1:2] VP -&gt; ‘run’ *
+|[===============================]| [0:2] S  -&gt; NP VP *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先來看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  其實就是 <em>Initalize</em> 的過程, 如下</p>
+
+<p><img src="/images/pic/pic_00059.png" alt="td1" /></p>
+
+<p>再來會開始所謂的  <em>Top-Down Strategy</em> , 就是會先從最上層的 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code>  開始</p>
+
+<p><img src="/images/pic/pic_00052.png" alt="td2" /></p>
+
+<p>由於這條 <em>Rule</em> 右邊的第一個 <em>category</em> 為 <em>NP</em> , 所以會先找 <em>NP</em> 開頭的 <em>Rule</em> , ` [0:0] NP -&gt; * ‘I’` 看看是否符合</p>
+
+<p><img src="/images/pic/pic_00053.png" alt="td3" /></p>
+
+<p>如果符合的話, 可以往下走一步, <code>[0:1] NP -&gt; 'I' *</code> </p>
+
+<p>當這條 <em>Rule</em> 變成 <em>inactive edge</em> 後, 再回到上一層 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code></p>
+
+<p><img src="/images/pic/pic_00054.png" alt="td4" /></p>
+
+<p>如果也符合, 則上一層 <em>Rule</em> 往下走一步 <code>[0:1] S  -&gt; NP * VP</code> , 此時還是 <em>active edge</em> , 因為 <em>VP</em> 還沒走完</p>
+
+<p><img src="/images/pic/pic_00055.png" alt="td5" /></p>
+
+<p>這時就要往下一層找, 找到 <em>VP</em> 的 <em>Rule</em> <code>[1:1] VP -&gt; * 'run'</code></p>
+
+<p><img src="/images/pic/pic_00064.png" alt="td6" /></p>
+
+<p>這樣繼續下去…</p>
+
+<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 為  <em>inactive edge</em>,  如下</p>
+
+<p><img src="/images/pic/pic_00065.png" alt="td7" /></p>
+
+<p>這樣就大功告成了, 以下為動畫版</p>
+
+<p><img src="/images/pic/pic_00058.gif" alt="td_animation" /></p>
+
+<h3 id="bottom-up-strategy">2.2 Bottom-Up Strategy</h3>
+
+<p>在 <code>chart_parser</code> 輸入 <code>'bottom-up'</code>　, 會印出 <em>Bottom-Up Strategy</em> 的整個過程, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>chart_parser(‘bottom-up’)
+|.       I       .      run      .|
+|[—————]               .| [0:1] ‘I’
+|.               [—————]| [1:2] ‘run’
+|&gt;               .               .| [0:0] NP -&gt; * ‘I’
+|[—————]               .| [0:1] NP -&gt; ‘I’ *
+|&gt;               .               .| [0:0] S  -&gt; * NP VP
+|[—————&gt;               .| [0:1] S  -&gt; NP * VP
+|.               &gt;               .| [1:1] VP -&gt; * ‘run’
+|.               [—————]| [1:2] VP -&gt; ‘run’ *
+|[===============================]| [0:2] S  -&gt; NP VP *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來仔細看看 <em>Bottom-Up Strategy</em>  和  <em>Top-Down Strategy</em> 的差異在哪</p>
+
+<p>看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  都是 <em>Initalize</em> 的過程, 都一樣</p>
+
+<p><img src="/images/pic/pic_00059.png" alt="bt1" /></p>
+
+<p>再來就是 <em>Bottom-Up Strategy</em>  了, 和 <em>Top-Down Strategy</em>  不一樣的地方在於, <em>Bottom-Up Strategy</em> 是先從最底層的 <em>Rule</em> <code>[0:0] NP -&gt; * 'I'</code>  開始找, 看看符不符合</p>
+
+<p><img src="/images/pic/pic_00060.png" alt="bt2" /></p>
+
+<p>如果符合的話, 往前走一步, 變為 <code>[0:1] NP -&gt; 'I' *</code> , 為 <em>inactive edge</em></p>
+
+<p><img src="/images/pic/pic_00061.png" alt="bt3" /></p>
+
+<p>然後再來找上一層的 <em>Rule</em> , <code>[0:0] S  -&gt; * NP VP</code>  看看是否符合</p>
+
+<p><img src="/images/pic/pic_00062.png" alt="bt4" /></p>
+
+<p>如果符合, 則往前走一步, 變為 <code>[0:1] S  -&gt; NP * VP</code> </p>
+
+<p><img src="/images/pic/pic_00063.png" alt="bt5" /></p>
+
+<p>再回到下層的 <em>VP</em> <em>Rule</em> , <code>[1:1] VP -&gt; * 'run'</code></p>
+
+<p><img src="/images/pic/pic_00064.png" alt="bt6" /></p>
+
+<p>這樣繼續下去…</p>
+
+<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 如下</p>
+
+<p><img src="/images/pic/pic_00065.png" alt="bt7" /></p>
+
+<p>這樣就大功告成了, 以下為動畫版</p>
+
+<p><img src="/images/pic/pic_00066.gif" alt="bt_animation" /></p>
+
+<p>以上為 <em>Top-Down Strategy</em>  以及 <em>Bottom-Up Strategy</em>  很簡短的介紹 , 尚未考慮到 <em>Rule</em> 不符合的情形, 想了解這部份, 請看 <em>Furtuer Reading</em> </p>
+
+<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+
+<p>本文參考至這本教科書</p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+]]></content>
+  </entry>
+  
+</feed>

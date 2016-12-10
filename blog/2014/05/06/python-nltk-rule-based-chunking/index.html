@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Rule-Based Chunking - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Chunking 分析句子的成份, 當句子不符合文法時, 使用 Context-Free Grammar 去做 Parsing , 可能會得不出結果, 而某些應用, 需要的並不是完整的剖析樹, 而是把句子中某些成份給找出來 Chunking 的概念就是, 把句子中的單字分組, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Rule-Based Chunking</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-05-06T14:46:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:46 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="chunking">Chunking</h2>
+
+<p>分析句子的成份, 當句子不符合文法時, 使用 <em>Context-Free Grammar</em> 去做 <em>Parsing</em> , 可能會得不出結果, 而某些應用, 需要的並不是完整的剖析樹, 而是把句子中某些成份給找出來</p>
+
+<p><em>Chunking</em> 的概念就是, 把句子中的單字分組, 每一組是由一到多個相鄰的單字所組成, 例如, 想要得出句子中有哪些名詞片語, 就可以把相鄰的定冠詞, 名詞修飾語, 以及名詞, 分成一組, 分組所得出的即為名詞片語</p>
+
+<p>舉個例子, 在以下的句子中, 想要找出名詞片語有哪些</p>
+
+<script type="math/tex; mode=display">
+
+\text{The little yellow dog barked at the cat}.
+
+</script>
+
+<p>首先, 對這個句子進行 <em>Part of speech Tagging</em></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c}
+
+&\text{The} &\text{little} &\text{yellow} &\text{dog} &\text{barked} &\text{at} &\text{the} &\text{cat} \\
+
+&\text{DT} &\text{JJ} &\text{JJ} &\text{NN} &\text{VBD} &\text{IN} &\text{DT} &\text{NN} 
+
+\end{array}
+
+ %]]></script>
+
+<!--more-->
+
+<p><em>Part of speech Tagging</em> 完之後可得出這些單字, 就可以根據這些單字的 <em>Tag</em> 來決定要怎麼分組, 如果要找名詞片語, 可以把相鄰的 <em>DT</em> , <em>JJ</em> 和 <em>NN</em> 分到名詞片語 <em>NP</em> 的組別中 , 如下</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{bmatrix}
+
+ &\text{The} &\text{little} &\text{yellow} &\text{dog} \\
+
+ &\text{DT} &\text{JJ} &\text{JJ} &\text{NN} \\
+
+ &\mathbf{NP}
+
+\end{bmatrix}\mspace{10mu}
+
+\begin{array}{c}
+
+ &\text{barked} &\text{at} \\
+
+ &\text{VBD} &\text{IN} \\
+
+ &
+
+\end{array}\mspace{20mu}
+
+\begin{bmatrix}
+
+ &\text{the} &\text{cat} \\
+
+ &\text{DT} &\text{NN} \\
+
+ &\mathbf{NP}
+
+\end{bmatrix}
+
+ %]]></script>
+
+<p>根據以上結果得出, 名詞片語有 <em>The little yellow dog</em> 和 <em>the cat</em></p>
+
+<p><em>Chunking</em> 的演算法, 主要有兩種, 一種是 <em>Rule-Based</em>, 另一種是 <em>Machine-Learning-Based</em> , 本文的重點放在前者</p>
+
+<h2 id="rule-based-chunking">Rule-Based Chunking</h2>
+
+<p><em>Rule-Based Chunking</em> 是根據事先定好的 <em>Rule</em> 來進行 <em>Chunking</em>, 例如以上例子, 定義好名詞片語的成份有哪些, 來尋找句子中哪些單字可以組成名詞片語</p>
+
+<p>在 <em>python nltk</em> 裡, 可以用 <code>RegexpParser</code> 以 <em>regular expression</em> 來定義這些 <em>rule</em></p>
+
+<p>首先, 載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">RegexpParser</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以及例句</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">sentence</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;DT&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s">&quot;little&quot;</span><span class="p">,</span> <span class="s">&quot;JJ&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s">&quot;yellow&quot;</span><span class="p">,</span> <span class="s">&quot;JJ&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s">&quot;dog&quot;</span><span class="p">,</span> <span class="s">&quot;NN&quot;</span><span class="p">)</span> \
+</span><span class="line"><span class="o">...</span>            <span class="p">,(</span><span class="s">&quot;barked&quot;</span><span class="p">,</span> <span class="s">&quot;VBD&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s">&quot;at&quot;</span><span class="p">,</span> <span class="s">&quot;IN&quot;</span><span class="p">),</span>  <span class="p">(</span><span class="s">&quot;the&quot;</span><span class="p">,</span> <span class="s">&quot;DT&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s">&quot;cat&quot;</span><span class="p">,</span> <span class="s">&quot;NN&quot;</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用 <em>Regular Expression</em> 定義好 <em>NP</em> 的 <em>Rule</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">grammar</span> <span class="o">=</span> <span class="s">&quot;NP: {&lt;DT&gt;?&lt;JJ&gt;*&lt;NN&gt;}&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上的 <em>rule</em> 表示, <em>NP</em> 是由 <em>0~1</em> 個 <em>DT</em> , <em>0</em> 個以上的 <em>JJ</em> 和 一個 <em>NN</em> 所組成的 </p>
+
+<p>再來用 <code>RegexpParser</code> 進行 <em>Chunking</em>, 得出以下結果</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">RegexpParser</span><span class="p">(</span><span class="n">grammar</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">result</span>
+</span><span class="line"><span class="p">(</span><span class="n">S</span>
+</span><span class="line">  <span class="p">(</span><span class="n">NP</span> <span class="n">the</span><span class="o">/</span><span class="n">DT</span> <span class="n">little</span><span class="o">/</span><span class="n">JJ</span> <span class="n">yellow</span><span class="o">/</span><span class="n">JJ</span> <span class="n">dog</span><span class="o">/</span><span class="n">NN</span><span class="p">)</span>
+</span><span class="line">  <span class="n">barked</span><span class="o">/</span><span class="n">VBD</span>
+</span><span class="line">  <span class="n">at</span><span class="o">/</span><span class="n">IN</span>
+</span><span class="line">  <span class="p">(</span><span class="n">NP</span> <span class="n">the</span><span class="o">/</span><span class="n">DT</span> <span class="n">cat</span><span class="o">/</span><span class="n">NN</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以把結果畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+
+<p>如上圖顯示, <em>Chunking</em> 的結果, 把屬於 <em>NP</em> 的元素都歸到 <em>NP</em> 底下了</p>
+
+<h2 id="chinking">Chinking</h2>
+
+<p>前文所提到的 <em>Chunking</em> 是先定義好, 哪個類別 <em>有</em> 哪些元素</p>
+
+<p>但有時候, 想要的取得的類別, 要一一列舉其中的元素, 列舉不完, 如果要用消去法的概念, 來定義哪些元素不包含在這個類別裡面, 就方便多了</p>
+
+<p>而 <em>Chinking</em> 的概念是用消去法, 定義哪個類別 <strong>沒有</strong> 哪些元素, 把那些沒有的元素排除, 而剩下來的就被分到該類別</p>
+
+<p>例如可以定義, <em>NP</em> 沒有 <em>VBD</em> 或 <em>IN</em> 這兩者, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">grammar2</span> <span class="o">=</span> <span class="s">r&quot;&quot;&quot;</span>
+</span><span class="line"><span class="s">...   NP:</span>
+</span><span class="line"><span class="s">...     {&lt;.*&gt;+}          # Chunk everything</span>
+</span><span class="line"><span class="s">...     }&lt;VBD|IN&gt;+{      # Chink sequences of VBD and IN</span>
+</span><span class="line"><span class="s">...   &quot;&quot;&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>{&lt;.*&gt;+}</code> 是先把所有東西都包含進去, 再來的 <code>}&lt;VBD|IN&gt;+{ </code> 是用 <em>Chinking</em> 把 <em>VBD</em> 和 <em>IN</em> 這兩者排除, 執行結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">RegexpParser</span><span class="p">(</span><span class="n">grammar2</span><span class="p">)</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">result</span>
+</span><span class="line"><span class="p">(</span><span class="n">S</span>
+</span><span class="line">  <span class="p">(</span><span class="n">NP</span> <span class="n">the</span><span class="o">/</span><span class="n">DT</span> <span class="n">little</span><span class="o">/</span><span class="n">JJ</span> <span class="n">yellow</span><span class="o">/</span><span class="n">JJ</span> <span class="n">dog</span><span class="o">/</span><span class="n">NN</span><span class="p">)</span>
+</span><span class="line">  <span class="n">barked</span><span class="o">/</span><span class="n">VBD</span>
+</span><span class="line">  <span class="n">at</span><span class="o">/</span><span class="n">IN</span>
+</span><span class="line">  <span class="p">(</span><span class="n">NP</span> <span class="n">the</span><span class="o">/</span><span class="n">DT</span> <span class="n">cat</span><span class="o">/</span><span class="n">NN</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>把結果畫出來</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+
+<p>得出結果和前文的 <em>Chunking</em> 相同</p>
+
+<h1 id="further-reading">Further Reading</h1>
+
+<p>本文是對 <em>Rule-Based Chunking</em> 很簡單的介紹</p>
+
+<p>想要更深入了解, 請看</p>
+
+<p>Python nltk Documentation Chunking</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch07.html#fig-chunk-segmentation</p>
+
+<p>Python nltk HOWTO chunk</p>
+
+<p>http://www.nltk.org/howto/chunk.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-05-06T14:46:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:46 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/chunking/'>chunking</a>, <a class='category' href='/blog/categories/information-extraction/'>information_extraction</a>, <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/05/03/python-nltk-dependency-grammar/" title="Previous Post: Python nltk -- Dependency Grammar">&laquo; Python nltk -- Dependency Grammar</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/05/08/python-standard-library-logging/" title="Next Post: Python Standard Library -- logging">Python Standard Library -- logging &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

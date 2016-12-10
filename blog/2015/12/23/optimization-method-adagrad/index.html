@@ -1,0 +1,620 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Optimization Method -- Gradient Descent & AdaGrad - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在機器學習的過程中，常需要將 Cost Function 的值減小，需由最佳化的方法來達成。本文介紹 Gradient Descent 和 AdaGrad 兩種常用的最佳化方法。 Gradient Descent Gradient Descent 的公式如下： 其中， 為 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Optimization Method -- Gradient Descent & AdaGrad</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-12-23T17:14:00+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>5:14 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在機器學習的過程中，常需要將 <em>Cost Function</em> 的值減小，需由最佳化的方法來達成。本文介紹 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 兩種常用的最佳化方法。</p>
+
+<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex">\textbf{x} </script> 為最佳化時要調整的參數， <script type="math/tex">\textbf{g}</script> 為最佳化目標函數對 <script type="math/tex">\textbf{x}</script> 的梯度。 <script type="math/tex">\textbf{x}_{t}</script> 為調整之前的 <script type="math/tex">\textbf{x} </script> ，<script type="math/tex">\textbf{x}_{t+1}</script> 為調整之後的 <script type="math/tex">\textbf{x} </script> 。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，紅色的點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<!--more-->
+
+<p>可藉由改變 <script type="math/tex">(x,y)</script> 來讓 <script type="math/tex">f(x,y)</script> 的值減小。 <em>Gradient Descent</em> 所走的方向為梯度最陡的方向，若 <script type="math/tex">eta=0.3</script> 則 ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \dfrac{\partial f(x,y)}{\partial x}  \\
+
+&  y \leftarrow  y - \eta  \dfrac{\partial f(x,y)}{\partial y} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>求出微分後得：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \times (-2x)  \\
+
+&  y \leftarrow  y - \eta  \times 2y \\
+
+\end{align}
+
+ %]]></script>
+
+<p>代入數值，得：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 - 0.3 \times (-2) \times 0.001 = 0.0016 \\
+
+& y = 4 - 0.3 \times 2 \times 4 = 1.6 \\
+
+\end{align}
+
+ %]]></script>
+
+<p>更新完後的結果如下：</p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>從上圖可看出，紅點移動到比較低的地方，即 <script type="math/tex">f(x,y)</script> 變小了。</p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，紅點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00118.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00119.gif" alt="" /></p>
+
+<p>從上圖可發現，紅色的點會卡在 <script type="math/tex">(0,0)</script> 附近（也就是Saddle Point），過了一陣子後才會繼續往下滾。</p>
+
+<h2 id="adagrad">AdaGrad</h2>
+
+<p><em>Gradient Descent</em> 的缺點有：</p>
+
+<p>(1) <em>Learning Rate</em> 不會隨著時間而減少</p>
+
+<p>(2) <em>Learning Rate</em> 在每個方向是固定的</p>
+
+<p>以上的(1)會使得在越接近近目標函數最小值時，越容易走過頭，(2)則會容易卡在目標函數的Saddle Point。</p>
+
+<p>因為 <em>Gradient Descent</em> 只考慮目前的 <em>Gradient</em> ，如果可以利用過去時間在各個方向的 <em>Gradient</em> ，來調整現在時間點在各個方向的 <em>Learning Rate</em> ，則可避免以上兩種情型發生。</p>
+
+<p><em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>其中，<script type="math/tex"> \textbf{G}_{t} </script> 為過去到現在所有時間點所有的 <script type="math/tex">\textbf{g}</script> 的平方和。由於  <script type="math/tex">\textbf{x}</script> ， <script type="math/tex">\textbf{g}</script>和 <script type="math/tex">\textbf{G}</script> 皆為向量，設 <script type="math/tex">x_{i}</script> ， <script type="math/tex">g_{i}</script> 和 <script type="math/tex">G_{i}</script> 各為其元素，則公式可寫成：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& G_{i,t} = \sum_{n=0}^{t} g_{i,n}^{2} \\
+
+& x_{i,t+1} \leftarrow x_{i,t} - \frac{\eta}{\sqrt{G_{i,t}}} g_{i,t} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>這公式可修正以上兩個 <em>Gradient Descent</em> 的缺點：</p>
+
+<p>1.若時間越久，則 <em>Gradient</em> 平方和越大，使得 <em>Learning Rate</em> 越小，這樣就可以讓 <em>Learning Rate</em> 隨著時間減少，而在接近目標函數的最小值時，比較不會走過頭。</p>
+
+<p>2.若某方向從過去到現在時間點 <em>Gradient</em> 平方和越小，則 <em>Learning Rate</em> 要越大。（直覺上來講，過去時間點 <em>Gradient</em> 越小的方向，在未來可能越重要，這種概念有點類似<a href="/blog/2014/04/14/natural-language-processing-tf-idf">tf-idf</a>，在越少文檔中出現的詞，可能越重要。）由於各方向的 <em>Learning Rate</em> 不同，比較不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>前述例子，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，藍點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p>用 <em>AdaGrad</em> 來更新 <script type="math/tex">(x,y)</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial x_{n}} )^{2} }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial x_{t}}  \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial y_{n}} )^{2}  }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial y_{t}} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>化簡後得：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( -2x_{n} )^{2} }} 
+
+( -2x_{t} ) \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( 2y_{n} )^{2} }} 
+
+( 2y_{t} ) \\
+
+\end{align}
+
+ %]]></script>
+
+<p>由於 <em>AdaGrad</em> 的 <em>Learning Rate</em> 會隨時間減小，所以初始化時可以給它較大的值，此例中，設 <script type="math/tex">\eta = 1.0</script></p>
+
+<p>代入 <script type="math/tex">(x,y)</script> 的數值，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  }} \times (-2) \times 0.001 = 1.001 \\
+
+& x = 4 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2  }} \times 2 \times 4 = 3 \\
+
+\end{align}
+
+ %]]></script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p>再往下走一步， <script type="math/tex">(x,y)</script> 的值如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& x = 1.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  + ( (-2) \times 1.001 )^2 }} \times (-2) \times 1.001 = 2.001 \\
+
+& x = 3 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2 +  ( 2 \times 3 )^2  }} \times 2 \times 3 = 2.4 \\
+
+\end{align}
+
+ %]]></script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，藍點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00123.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00124.gif" alt="" /></p>
+
+<p>由此可以發現， <em>AdaGrad</em> 不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>將 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 畫在同一張圖上，比較兩者差異：</p>
+
+<p><img src="/images/pic/pic_00125.gif" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分：</p>
+
+<p>首先,開啟新的檔案 adagrad.py 並貼上以下程式碼</p>
+
+<figure class="code"><figcaption><span>adagrad.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">(</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">func_grad</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">  <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="o">*</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="n">c</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">):</span>
+</span><span class="line">  <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">  <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">gca</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="s">&#39;3d&#39;</span><span class="p">,</span>
+</span><span class="line">        <span class="n">elev</span><span class="o">=</span><span class="mf">35.</span><span class="p">,</span> <span class="n">azim</span><span class="o">=-</span><span class="mi">30</span><span class="p">)</span>
+</span><span class="line">  <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mf">0.25</span><span class="p">))</span>
+</span><span class="line">  <span class="n">Z</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">)</span>
+</span><span class="line">  <span class="n">surf</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+</span><span class="line">    <span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">coolwarm</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">set_zlim</span><span class="p">(</span><span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">,</span> <span class="n">func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">),</span><span class="n">c</span><span class="o">=</span><span class="n">c</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span> <span class="p">)</span>
+</span><span class="line">  <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">&quot;x=</span><span class="si">%.5f</span><span class="s">, y=</span><span class="si">%.5f</span><span class="s">, f(x,y)=</span><span class="si">%.5f</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="n">func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">)))</span>
+</span><span class="line">  <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">  <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_grad</span><span class="p">():</span>
+</span><span class="line">  <span class="n">xt</span> <span class="o">=</span> <span class="mf">0.001</span>
+</span><span class="line">  <span class="n">yt</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span class="line">  <span class="n">eta</span> <span class="o">=</span> <span class="mf">0.3</span>
+</span><span class="line">  <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+</span><span class="line">    <span class="n">gx</span><span class="p">,</span> <span class="n">gy</span> <span class="o">=</span> <span class="n">func_grad</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">)</span>
+</span><span class="line">    <span class="n">xt</span> <span class="o">=</span> <span class="n">xt</span> <span class="o">-</span> <span class="n">eta</span><span class="o">*</span><span class="n">gx</span>
+</span><span class="line">    <span class="n">yt</span> <span class="o">=</span> <span class="n">yt</span> <span class="o">-</span> <span class="n">eta</span><span class="o">*</span><span class="n">gy</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">xt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">xt</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+</span><span class="line">      <span class="k">break</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;r&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">run_adagrad</span><span class="p">():</span>
+</span><span class="line">  <span class="n">xt</span> <span class="o">=</span> <span class="mf">0.001</span>
+</span><span class="line">  <span class="n">yt</span> <span class="o">=</span> <span class="mi">4</span>
+</span><span class="line">  <span class="n">eta</span> <span class="o">=</span> <span class="mf">1.0</span>
+</span><span class="line">  <span class="n">Gxt</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line">  <span class="n">Gyt</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line">  <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+</span><span class="line">    <span class="n">gxt</span><span class="p">,</span><span class="n">gyt</span> <span class="o">=</span> <span class="n">func_grad</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span> <span class="n">yt</span><span class="p">)</span>
+</span><span class="line">    <span class="n">Gxt</span> <span class="o">+=</span> <span class="n">gxt</span><span class="o">**</span><span class="mi">2</span>
+</span><span class="line">    <span class="n">Gyt</span> <span class="o">+=</span> <span class="n">gyt</span><span class="o">**</span><span class="mi">2</span>
+</span><span class="line">    <span class="n">xt</span> <span class="o">=</span> <span class="n">xt</span> <span class="o">-</span> <span class="n">eta</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">Gxt</span><span class="o">**</span><span class="mf">0.5</span><span class="p">))</span><span class="o">*</span><span class="n">gxt</span>
+</span><span class="line">    <span class="n">yt</span> <span class="o">=</span> <span class="n">yt</span> <span class="o">-</span> <span class="n">eta</span><span class="o">*</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="p">(</span><span class="n">Gyt</span><span class="o">**</span><span class="mf">0.5</span><span class="p">))</span><span class="o">*</span><span class="n">gyt</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">xt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mi">5</span> <span class="ow">or</span> <span class="n">xt</span> <span class="o">&gt;</span> <span class="mi">5</span> <span class="ow">or</span> <span class="n">yt</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+</span><span class="line">      <span class="k">break</span>
+</span><span class="line">    <span class="n">plot_func</span><span class="p">(</span><span class="n">xt</span><span class="p">,</span><span class="n">yt</span><span class="p">,</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>func(x,y)</code> 為目標函數，<code>func_grad(x,y)</code> 為目標函數的 <em>gradient</em> ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_grad()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_adagrad()</code> 用來執行 <em>AdaGrad</em> 。 <code>xt</code> 和 <code>yt</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈，而 <code>if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5</code> 表示，如果 <code>xt</code> 和 <code>yt</code> 超出邊界，則會先結束迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; import adagrad
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; adagrad.run_grad<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Adagrad</em> ，指令如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; adagrad.run_adagrad<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<h4 id="notes-on-adagrad">Notes on AdaGrad</h4>
+
+<p>http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf</p>
+
+<h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
+
+<p>http://imgur.com/a/Hqolp</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-12-23T17:14:00+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>5:14 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/adagrad/'>adagrad</a>, <a class='category' href='/blog/categories/optimization/'>optimization</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/" title="Previous Post: Convex Optimization -- Duality & KKT Conditions">&laquo; Convex Optimization -- Duality & KKT Conditions</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/01/16/optimization-method-momentum/" title="Next Post: Optimization Method -- Gradient Descent with Momentum">Optimization Method -- Gradient Descent with Momentum &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,916 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>類神經網路 -- Backward Propagation 詳細推導過程 - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在做 Logistic Regression的時候，可以用 gradient descent 來做訓練，而類神經網路本身即是很多層的 Logistic Regression 所構成，也可以用同樣方法來做訓練。 但類神經網路在訓練過程時，需要分為兩個步驟，為： &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">類神經網路 -- Backward Propagation 詳細推導過程</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T07:47:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:47 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在做 <a href="/blog/2014/03/15/logisti-regression-model">Logistic Regression</a>的時候，可以用 <em>gradient descent</em> 來做訓練，而類神經網路本身即是很多層的 <em>Logistic Regression</em> 所構成，也可以用同樣方法來做訓練。</p>
+
+<p>但類神經網路在訓練過程時，需要分為兩個步驟，為： <em>Forward Phase</em> 與 <em>Backward Phase</em> 。 也就是要先從 <em>input</em> 把值傳到 <em>output</em>，再從 <em>output</em> 往回傳遞 <em>error</em> 到每一層的神經元，去更新層與層之間權重的參數。</p>
+
+<h2 id="forward-phase">Forward Phase</h2>
+
+<p>在 <em>Forward Phase</em> 時，先從 <em>input</em> 將值一層層傳遞到 <em>output</em>。</p>
+
+<p>對於一個簡單的神經元 <script type="math/tex">n</script> ，如下圖 <a name="pic1">＜圖一＞</a>：</p>
+
+<p><img src="/images/pic/pic_00086.png" alt="" /></p>
+
+<p>將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 和 <em>bias</em> <script type="math/tex">b</script> 輸入到神經元 <script type="math/tex">n</script> 到輸出的過程，分成兩步，分別為 <script type="math/tex">n_{in}</script>， <script type="math/tex">n_{out}</script> ，過程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& n_{in} = w_{1} x_{1}+w_{2}  x_{2}+w_{b} \\
+
+& n_{out} = \frac{1} {1+e^{-n_{in} } }
+
+\end{align}
+
+ %]]></script>
+
+<!--more-->
+
+<p>在輸入神經元時， <script type="math/tex">n_{in}</script> 先將 <em>input</em> 值和其權重作乘積。</p>
+
+<p>在輸出神經元時， <script type="math/tex">n_{out}</script> 將 <script type="math/tex">n_{in}</script> 的值用 <em>sigmoid function</em> 轉成值範圍從 <em>0</em> 到 <em>1</em> 的函數。</p>
+
+<p>傳遞到 <script type="math/tex">n_{out}</script> 後，可與訓練資料的答案 <script type="math/tex">y</script> 用 <em>cost function</em> 來計算其差值，並用 <em>backward propagation</em> 修正權重 <script type="math/tex">w_{1}</script> 、 <script type="math/tex">w_{2}</script> 和 <script type="math/tex">w_{b}</script> 。</p>
+
+<p>對於一個簡單的類神經網路，共有兩層，四個神經元，如下圖<a name="pic2">＜圖二＞</a>：</p>
+
+<p><img src="/images/pic/pic_00087.png" alt="" /></p>
+
+<p>其值傳遞的過程如下：</p>
+
+<p>1.把 <script type="math/tex">x</script> 和 <script type="math/tex">y</script> 和 <em>bias</em> <script type="math/tex">b</script> 傳入到第一層神經元 <script type="math/tex">n_{11}</script> 及 <script type="math/tex">n_{12}</script> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& n_{11(in)} = w_{11,x} x+w_{11,y} y+w_{11,b} \\
+
+& n_{12(in)} = w_{12,x} x+w_{12,y} y+w_{12,b} \\
+
+& n_{11(out)} = \frac{1} {1+e^{-n_{11(in)} } } \\
+
+& n_{12(out)} = \frac{1} {1+e^{-n_{12(in)} } } \\
+
+\end{align}
+
+ %]]></script>
+
+<p>其中，<script type="math/tex">n_{11(in)}</script> 表示傳入神經元 <script type="math/tex">n_{11}</script> 的值，而 <script type="math/tex">n_{11(out)}</script> 表示傳出神經元 <script type="math/tex">n_{11}</script> 的值，而 <script type="math/tex">w_{11,x}</script> 表示值從 <script type="math/tex">x</script> 傳入 <script type="math/tex">n_{11}</script> 時，所乘上的權重</p>
+
+<p>2.第一層神經元將其輸出值 <script type="math/tex"> n_{11(out)}</script> 和 <script type="math/tex">n_{12(out)}</script> 傳到第二層神經元 <script type="math/tex"> n_{21}</script> 和 <script type="math/tex"> n_{22}</script>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& n_{21(in)} = w_{21,11} n_{11(out)} + w_{21,12} n_{12(out)}+w_{21,b} \\
+
+& n_{22(in)} = w_{22,11} n_{11(out)} + w_{22,12} n_{12(out)}+w_{22,b} \\
+
+& n_{21(out)} = \frac{1} {1+e^{-n_{21(in)} } } \\
+
+& n_{22(out)} = \frac{1} {1+e^{-n_{22(in)} } } \\
+
+\end{align}
+
+ %]]></script>
+
+<p>傳遞完後，可與訓練資料的答案 <script type="math/tex">z_{1}</script> 和 <script type="math/tex">z_{2}</script> 用 <em>cost function</em> 來計算其差值，並用 <em>backward propagation</em> 修正權重。</p>
+
+<h2 id="derivation-of-gradient-descent">Derivation of Gradient Descent</h2>
+
+<p>在講解 <em>backward Phase</em> 之前，先推導類神經網路的 <em>gradient descent</em> 公式和 <em>backward propagation</em> 的原理：</p>
+
+<p>對於<a href="#pic1">＜圖一＞</a>中的一個簡單的神經元 <script type="math/tex">n</script>，將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 傳遞到 <script type="math/tex">n_{out}</script> 所得出的值和 <script type="math/tex">y</script> 的值做比較，我們可用以下的 <em>cost function</em> 來計算：</p>
+
+<script type="math/tex; mode=display">
+
+J =- y\times log(n_{out}) - (1-y)\times log (1 -n_{out} ) 
+
+</script>
+
+<p>從以上 <em>cost function</em> 可得知，如果 <script type="math/tex">n_{out}</script> 和 <script type="math/tex">y</script> 都等於 <em>0</em> ，或者都等於 <em>1</em> ，則 <em>cost</em> 會是 <em>0</em> ，若 <script type="math/tex">n_{out}</script> 和 <script type="math/tex">y</script> 其中有一個是 <em>1</em> ，而另一個是 <em>0</em> ，則 <em>cost</em> 會趨近於無限大。</p>
+
+<p>用 <em>gradient Descent</em> 調整 <script type="math/tex">w_{1}</script> 、 <script type="math/tex">w_{2} </script> 和 <script type="math/tex">w_{b}</script> 來做訓練時，可用以下公式<a name="eq1">＜公式一＞</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{1} \leftarrow w_{1} - \eta \dfrac{\partial J}{\partial w_{1}} \\
+
+& w_{2} \leftarrow w_{2} - \eta \dfrac{\partial J}{\partial w_{2}} \\
+
+& w_{b} \leftarrow w_{b} - \eta \dfrac{\partial J}{\partial w_{b}} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>learning rate</em> ，用來控制訓練的速度。</p>
+
+<p>接著要推導這個公式怎麼算，首先，將 <script type="math/tex">\dfrac{\partial J}{\partial w_{1}}</script> 的微分用 <em>chain rule</em> 展開，如下 <a name="eq2">＜公式二＞</a>：</p>
+
+<script type="math/tex; mode=display">
+
+\dfrac{\partial J}{\partial w_{1}}
+
+= \dfrac{\partial J}{\partial n_{out}} 
+
+ \dfrac{\partial n_{out}}{\partial n_{in}}
+
+ \dfrac{\partial n_{in}}{\partial w_{1}}
+
+</script>
+
+<p>以上公式，總共有 <script type="math/tex">\dfrac{\partial J}{\partial n_{out}} </script> 、 <script type="math/tex">\dfrac{\partial n_{out}}{\partial n_{in}}</script> 與 <script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{1}}</script> 三個部份的微分要算。</p>
+
+<p>1.<script type="math/tex">\dfrac{\partial J}{\partial n_{out}} </script>：</p>
+
+<script type="math/tex; mode=display">
+
+ \dfrac{\partial J}{\partial n_{out}} 
+
+ = -y \dfrac{\partial log(n_{out})}{\partial n_{out}}- (1-y) \dfrac{\partial log (1 -n_{out} )}{\partial n_{out}} \\
+
+ = -\frac{y}{n_{out}}+\frac{1-y}{1-n_{out}}
+
+</script>
+
+<p>2.<script type="math/tex">\dfrac{\partial n_{out}}{\partial n_{in}}</script>：</p>
+
+<script type="math/tex; mode=display">
+
+\dfrac{\partial n_{out}}{\partial n_{in}} = \dfrac{\partial}{\partial n_{in}}(\frac{1}{1+e^{-n_{in}}})
+
+=\frac{e^{-n_{in}}}{(1+e^{-n_{in}})^{2}} 
+
+= \frac{1}{1+e^{-n_{in}}}  \frac{e^{-n_{in}}}{1+e^{-n_{in}}} \\
+
+= n_{out}(1- n_{out})
+
+
+</script>
+
+<p>3.<script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{1}}</script>：</p>
+
+<script type="math/tex; mode=display">
+
+\dfrac{\partial n_{in}}{\partial w_{1}} = \dfrac{\partial}{\partial w_{1}} (w_{1} x_{1}+w_{2} x_{2}+w_{b}) \\
+
+= x_{1}
+
+</script>
+
+<p>代入以上三個結果到<a href="#eq2">＜公式二＞</a>，可得出 <script type="math/tex">\dfrac{\partial J}{\partial w_{1}}</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\dfrac{\partial J}{\partial w_{1}} 
+
+= \dfrac{\partial J}{\partial n_{out}} 
+
+ \dfrac{\partial n_{out}}{\partial n_{in}}
+
+ \dfrac{\partial n_{in}}{\partial w_{1}} \\
+
+ = (-\frac{y}{n_{out}}+\frac{1-y}{1-n_{out}})  n_{out}(1- n_{out})  x_{1} \\
+
+ = (n_{out}-y) x_{1}
+
+</script>
+
+<p>同理可得出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{2}} </script> 與 <script type="math/tex">\dfrac{\partial J}{\partial w_{b}} </script> 的值，分別為：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \dfrac{\partial J}{\partial w_{2}} 
+
+= \dfrac{\partial J}{\partial n_{out}} 
+
+ \dfrac{\partial n_{out}}{\partial n_{in}}
+
+ \dfrac{\partial n_{in}}{\partial w_{2}}
+
+=(n_{out}-y) x_{2} \\
+
+& \dfrac{\partial J}{\partial w_{b}} 
+
+= \dfrac{\partial J}{\partial n_{out}} 
+
+ \dfrac{\partial n_{out}}{\partial n_{in}}
+
+ \dfrac{\partial n_{in}}{\partial w_{b}}
+
+= (n_{out}-y)
+
+\end{align}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{b}}</script> 的結果為：</p>
+
+<script type="math/tex; mode=display">
+
+\dfrac{\partial n_{in}}{\partial w_{b}} = \dfrac{\partial}{\partial w_{b}} (w_{1} x_{1}+w_{2} x_{2}+w_{b}) = 1
+
+
+</script>
+
+<p>將 <script type="math/tex"> \dfrac{\partial J}{\partial w_{1}}</script> 、 <script type="math/tex"> \dfrac{\partial J}{\partial w_{2}} </script> 和 <script type="math/tex"> \dfrac{\partial J}{\partial w_{b}} </script> 的結果代入<a href="#eq1">＜公式一＞</a>，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{1} \leftarrow w_{1} - \eta (n_{out}-y) x_{1} \\
+
+& w_{2} \leftarrow w_{2} - \eta (n_{out}-y) x_{2}  \\
+
+& w_{b} \leftarrow w_{b} - \eta (n_{out}-y) \\
+
+\end{align}
+
+ %]]></script>
+
+<h2 id="derivation-of-backward-propagation">Derivation of Backward Propagation</h2>
+
+<p>若要推導超過一層的類神經網路的 <em>gradient descent</em> 公式，就要用到 <em>backward propagation</em> 。</p>
+
+<p>對於<a href="#pic2">＜圖二＞</a>中的一個簡單的類神經網路，它的 <em>cost function</em> 如下：</p>
+
+<script type="math/tex; mode=display">
+
+J =-( z_{1}\times log(n_{21(out)}) + (1-z_{1})\times log (1 -n_{21(out)} ) + z_{2}\times log(n_{22(out)}) + (1-z_{2})\times log (1 -n_{22(out)} ))
+
+</script>
+
+<p>對於最後一層與倒數第二層之間的權重改變，可用 <em>gradient descent</em> ，如下<a name="eq3">＜公式三＞</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{21,11} \leftarrow w_{21,11} - \eta \dfrac{\partial J}{\partial w_{21,11}} \\
+
+& w_{21,12} \leftarrow w_{21,12} - \eta \dfrac{\partial J}{\partial w_{21,12}} \\
+
+& w_{21,b} \leftarrow w_{21,b} - \eta \dfrac{\partial J}{\partial w_{21,b}} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>可用先前推導出單一神經元時的微分結果，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+
+& \dfrac{\partial J}{\partial w_{21,11}} 
+
+= \dfrac{\partial J}{\partial n_{21(out)}} 
+
+ \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
+
+ \dfrac{\partial n_{21(in)}}{\partial w_{21,11}}
+
+= (n_{21(out)}-z_{1}) n_{11(out)} \\
+
+
+& \dfrac{\partial J}{\partial w_{21,12}} 
+
+= \dfrac{\partial J}{\partial n_{21(out)}} 
+
+ \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
+
+ \dfrac{\partial n_{21(in)}}{\partial w_{21,12}}
+
+= (n_{21(out)}-z_{1})n_{12(out)} \\
+
+
+& \dfrac{\partial J}{\partial w_{21,b}} 
+
+= \dfrac{\partial J}{\partial n_{21(out)}} 
+
+ \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
+
+ \dfrac{\partial n_{21(in)}}{\partial w_{21,b}}
+
+= (n_{21(out)}-z_{1})
+
+
+\end{align}
+
+ %]]></script>
+
+<p>同理可求出 <script type="math/tex">w_{22,11}</script> 、 <script type="math/tex">w_{22,12}</script> 和 <script type="math/tex">w_{22,b}</script> 相對應的公式。</p>
+
+<p>在要推導更往前一層的權重變化公式之前，先觀察以上公式，發現它們有共同的部分： <script type="math/tex">n_{21(out)}-z_{1}</script> ，可以用 <script type="math/tex">\delta_{21(in)}</script> 來表示這個值，即：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \delta_{21(in)} = \dfrac{\partial J}{\partial n_{21(out)}} 
+
+ \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
+
+= n_{21(out)}-z_{1} \\
+
+& \dfrac{\partial J}{\partial w_{21,11}} = \delta_{21(in)}  n_{11(out)}\\
+
+& \dfrac{\partial J}{\partial w_{21,12}} = \delta_{21(in)}  n_{12(out)}\\
+
+& \dfrac{\partial J}{\partial w_{21,b}} = \delta_{21(in)}
+
+
+\end{align}
+
+ %]]></script>
+
+<p><script type="math/tex">\delta_{21(in)}</script> 的物理意義如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00088.png" alt="" /></p>
+
+<p>圖中， <script type="math/tex">\delta_{21(out)}</script> 是 <script type="math/tex">J</script> 在神經元 <script type="math/tex">n_{21}</script> 輸出點的微分值，可以把 <script type="math/tex">\delta_{21(in)}</script> 看成是 <script type="math/tex">\delta_{21(out)}</script> <strong>從神經元</strong> <script type="math/tex">n_{21}</script> <strong>的輸出點往回傳到輸入點</strong>，即乘上 <script type="math/tex">\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}</script> 。因此，這過程又稱為 <em>backward propagation</em> 。</p>
+
+<p>將 <script type="math/tex">\delta_{21(in)}</script> 置換到<a href="#eq3">＜公式三＞</a>，得出這一層推導的最後結果：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{21,11} \leftarrow w_{21,11} - \eta  \delta_{21(in)}  n_{11(out)} \\
+
+& w_{21,12} \leftarrow w_{21,12} - \eta  \delta_{21(in)}  n_{12(out)} \\
+
+& w_{21,b} \leftarrow w_{21,b} - \eta  \delta_{21(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>同理， <script type="math/tex">w_{22,11},w_{22,12}, w_{22,b} </script> 的 <em>gradient descent</em> 公式，也可用相同方法推導出來：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{22,11} \leftarrow w_{22,11} - \eta  \delta_{22(in)}  n_{11(out)} \\
+
+& w_{22,12} \leftarrow w_{22,12} - \eta  \delta_{22(in)}  n_{12(out)} \\
+
+& w_{22,b} \leftarrow w_{22,b} - \eta  \delta_{22(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>再來，要推導更往前一層的權重變化公式，要用 <em>gradient descent</em> <a name="eq4">＜公式四＞</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{11,x} \leftarrow w_{11,x} - \eta \dfrac{\partial J}{\partial w_{11,x}} \\
+
+& w_{11,y} \leftarrow w_{11,y} - \eta \dfrac{\partial J}{\partial w_{11,y}} \\
+
+& w_{11,b} \leftarrow w_{11,b} - \eta \dfrac{\partial J}{\partial w_{11,b}} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>舉 <script type="math/tex">w_{11,x}</script> 為例，用 <em>chain rule</em> 求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,x}}</script> 的值，如下<a name="eq5">＜公式五＞</a>：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\dfrac{\partial J}{\partial w_{11,x}}
+
+=\dfrac{\partial J}{\partial n_{21(out)}}  \dfrac{\partial n_{21(out)}}{\partial w_{11,x}}
+
++ \dfrac{\partial J}{\partial n_{22(out)}}  \dfrac{\partial n_{22(out)}}{\partial w_{11,x}}
+
+\\
+
+&= \dfrac{\partial J}{\partial n_{21(out)}} 
+
+\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} 
+
+\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
+
+\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
+
+\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} 
+
++ \dfrac{\partial J_{2}}{\partial n_{22(out)}} 
+
+\dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} 
+
+\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
+
+\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
+
+\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} \\
+
+
+& = (
+
+\dfrac{\partial J}{\partial n_{21(out)}} 
+
+\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} 
+
+\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
+
++ \dfrac{\partial J}{\partial n_{22(out)}} 
+
+\dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} 
+
+\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
+
+)  
+
+\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
+
+\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} 
+
+\end{align}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} </script> 、 <script type="math/tex">\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} </script> 、 <script type="math/tex">\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} </script> 和 <script type="math/tex">\dfrac{\partial n_{11(in)}}{\partial w_{11,x}}</script> 這四項的值分別為：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
+
+= \dfrac{\partial }{\partial n_{11(out)}}( w_{21,11}n_{11(out)} + w_{21,12}n_{12(out)}+w_{21,b} )
+
+= w_{21,11} \\
+
+&\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
+
+= \dfrac{\partial }{\partial n_{11(out)}}( w_{22,11} n_{11(out)} + w_{22,12} n_{12(out)}+w_{22,b} )
+
+= w_{22,11} \\
+
+& \dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
+
+= \dfrac{\partial} {\partial n_{11(in)}}( \frac{1} {1+e^{-n_{11(in)} } } )
+
+= n_{11(out)}(1-n_{11(out)}) \\
+
+& \dfrac{\partial n_{11(in)}}{\partial w_{11,x}}
+
+= \dfrac{\partial}{\partial w_{11,x}} (w_{11,x} x+w_{11,y} y+w_{11,b} ) 
+
+= x \\
+
+\end{align}
+
+ %]]></script>
+
+<p>再代入這些值與之前推導出的 <script type="math/tex">\dfrac{\partial J}{\partial n_{21(out)}} \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} </script> 和 <script type="math/tex">\dfrac{\partial J}{\partial n_{22(out)}} \dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} </script> 的值到<a href="#eq5">＜公式五＞</a>，可求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,x}}</script> 為：</p>
+
+<script type="math/tex; mode=display">
+
+ \dfrac{\partial J}{\partial w_{11,x}}
+
+ = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)})  x
+
+</script>
+
+<p>同理，可求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,y}}</script> 和  <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,b}}</script> 的值分別為：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\dfrac{\partial J}{\partial w_{11,y}} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} ) n_{11(out)}(1-n_{11(out)})  y \\
+
+&\dfrac{\partial J}{\partial w_{11,b}} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)}) \\
+
+\end{align}
+
+ %]]></script>
+
+<p>如同前一層所推導的，以上公式也有相同部分，也可以用 <script type="math/tex">\delta_{11(in)}</script> 來簡化它們，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\delta_{11(in)} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)}) \\
+
+& \dfrac{\partial J}{\partial w_{11,x}} =\delta_{11(in)}  x \\
+
+&\dfrac{\partial J}{\partial w_{11,y}} = \delta_{11(in)}  y \\
+
+&\dfrac{\partial J}{\partial w_{11,b}} =\delta_{11(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>可把 <script type="math/tex">\delta_{11(in)}</script> 用後面層傳回來的的 <script type="math/tex">\delta</script> 來表示，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\delta_{11(out)} = w_{21,11}  \delta_{21(in)} + w_{22,11}  \delta_{22(in)} \\
+
+&\delta_{11(in)} = \delta_{11(out)}  n_{11(out)}(1-n_{11(out)}) = \delta_{11(out)}  \dfrac{\partial n_{11(out)}}{\partial n_{11(in)}}
+
+\end{align}
+
+ %]]></script>
+
+<p>這些 <script type="math/tex">\delta</script> 的物理意義如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00089.png" alt="" /></p>
+
+<p>從圖中可以看到， <script type="math/tex">\delta_{11(out)}</script> 是 <strong>由</strong> <script type="math/tex">\delta_{21(in)}</script> <strong>和</strong> <script type="math/tex">\delta_{22(in)}</script> <strong>往反方向傳遞，再乘上其權重</strong> <script type="math/tex">w_{21,11}</script> <strong>與</strong> <script type="math/tex">w_{22,11}</script> <strong>所得出的</strong> 。 </p>
+
+<p>將 <script type="math/tex">\delta_{11(in)}</script> 置換到<a href="#eq4">＜公式四＞</a>，得出這一層推導的最後結果：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{11,x} \leftarrow w_{11,x} - \eta  \delta_{11(in)}  x \\
+
+& w_{11,y} \leftarrow w_{11,y} - \eta  \delta_{11(in)}  y \\
+
+& w_{11,b} \leftarrow w_{11,b} - \eta  \delta_{11(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>同理， <script type="math/tex">w_{12,x},w_{12,y}, w_{12,b} </script> 的 <em>gradient descent</em> 的公式，也可用相同方法推導出來：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{12,x} \leftarrow w_{12,x} - \eta  \delta_{12(in)}  x \\
+
+& w_{12,y} \leftarrow w_{12,y} - \eta  \delta_{12(in)}  y \\
+
+& w_{12,b} \leftarrow w_{12,b} - \eta  \delta_{12(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<h2 id="backward-phase">Backward Phase</h2>
+
+<p><em>backward phase</em> 要做的即是 <em>backward propagation</em> ，也就是從 <em>output</em> 把 <script type="math/tex">\delta</script> 算出來，並更新權重 <script type="math/tex">w</script> ，再把 <script type="math/tex">\delta</script> 往回傳一層，再更新那層的權重 <script type="math/tex">w</script>，這樣一直傳下去直到 <em>input</em> 。</p>
+
+<p>首先，把 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 算出來：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \delta_{21(in)} = n_{21(out)} - z_{1} \\
+
+& \delta_{22(in)} = n_{22(out)} - z_{2} \\
+
+\end{align}
+
+ %]]></script>
+
+<p><img src="/images/pic/pic_00090.png" alt="" /></p>
+
+<p>再來，用 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 更新以下權重的值：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{21,11} \leftarrow w_{21,11} - \eta  \delta_{21(in)}  n_{11(out)} \\
+
+& w_{21,12} \leftarrow w_{21,12} - \eta  \delta_{21(in)}  n_{12(out)} \\
+
+& w_{21,b} \leftarrow w_{21,b} - \eta  \delta_{21(in)} \\
+
+& w_{22,11} \leftarrow w_{22,11} - \eta  \delta_{22(in)}  n_{11(out)} \\
+
+& w_{22,12} \leftarrow w_{22,12} - \eta  \delta_{22(in)}  n_{12(out)} \\
+
+& w_{22,b} \leftarrow w_{22,b} - \eta  \delta_{22(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p><img src="/images/pic/pic_00091.png" alt="" /></p>
+
+<p>再來，把 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 乘上權重，算出 <script type="math/tex">\delta_{11(in)}</script> 和 <script type="math/tex">\delta_{12(in)}</script>的值：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\delta_{11(in)} = ( w_{21,11}  \delta_{21(in)} + w_{22,11}  \delta_{22(in)})  n_{11(out)}(1-n_{11(out)}) \\
+
+&\delta_{12(in)} = ( w_{21,12}  \delta_{21(in)} + w_{22,12}  \delta_{22(in)})  n_{12(out)}(1-n_{12(out)}) \\
+
+\end{align}
+
+ %]]></script>
+
+<p><img src="/images/pic/pic_00092.png" alt="" /></p>
+
+<p>最後，用 <script type="math/tex">\delta_{11(in)}</script> 和 <script type="math/tex">\delta_{12(in)}</script> 更新以下權重的值：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& w_{11,x} \leftarrow w_{11,x} - \eta  \delta_{11(in)}  x \\
+
+& w_{11,y} \leftarrow w_{11,y} - \eta  \delta_{11(in)}  y \\
+
+& w_{11,b} \leftarrow w_{11,b} - \eta  \delta_{11(in)} \\
+
+& w_{12,x} \leftarrow w_{12,x} - \eta  \delta_{12(in)}  x \\
+
+& w_{12,y} \leftarrow w_{12,y} - \eta  \delta_{12(in)}  y \\
+
+& w_{12,b} \leftarrow w_{12,b} - \eta  \delta_{12(in)} \\
+
+\end{align}
+
+ %]]></script>
+
+<p><img src="/images/pic/pic_00093.png" alt="" /></p>
+
+<p>更新完後，即結束了在資料 <script type="math/tex">x,y</script> 上的這一輪訓練。</p>
+
+<p>以下為整個過程的動畫版：</p>
+
+<p><img src="/images/pic/pic_00094.gif" alt="" /></p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考 coursera 課程 Andrew Ng. Machine Learning</p>
+
+<p>https://www.coursera.org/course/ml</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T07:47:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:47 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/back-propagation/'>back_propagation</a>, <a class='category' href='/blog/categories/neural-network/'>neural_network</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/" title="Previous Post: 類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)">&laquo; 類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/06/06/neural-network-recurrent-neural-network/" title="Next Post: 類神經網路 -- Recurrent Neural Network">類神經網路 -- Recurrent Neural Network &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

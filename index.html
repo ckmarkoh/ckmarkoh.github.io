@@ -5,12 +5,11 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>My Octopress Blog</title>
-  <meta name="author" content="Your Name">
+  <title>Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="
-">
+  <meta name="description" content="Introduction 本文接續 word2vec (part2) ，介紹如何根據推導出來的 backward propagation 公式，從頭到尾實作一個簡易版的 word2vec 。 本例的 input layer 採用 skip-gram ， output layer 採用 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -22,7 +21,7 @@
   <link rel="canonical" href="http://ckmarkoh.github.io/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
-  <link href="/atom.xml" rel="alternate" title="My Octopress Blog" type="application/atom+xml">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
   <script src="/javascripts/modernizr-2.0.js"></script>
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
@@ -31,15 +30,31 @@
 <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
 
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
   
 
 </head>
 
 <body   >
   <header role="banner"><hgroup>
-  <h1><a href="/">My Octopress Blog</a></h1>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
   
-    <h2>A blogging framework for hackers.</h2>
+    <h2>Machine Learning, Deep Learning and Python</h2>
   
 </hgroup>
 
@@ -72,7 +87,7 @@
       
   <header>
     
-      <h1 class="entry-title"><a href="/blog/2016/11/29/hello-world/">Hello World</a></h1>
+      <h1 class="entry-title"><a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a></h1>
     
     
       <p class="meta">
@@ -81,22 +96,624 @@
 
 
 
-<time class='entry-date' datetime='2016-11-29T23:36:10+08:00'><span class='date'><span class='date-month'>Nov</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>11:36 pm</span></time>
+<time class='entry-date' datetime='2016-08-29T11:17:00+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>29</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>11:17 am</span></time>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content">
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>本文接續 <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation">word2vec (part2)</a> ，介紹如何根據推導出來的 <em>backward propagation</em> 公式，從頭到尾實作一個簡易版的 <em>word2vec</em> 。</p>
+
+<p>本例的 input layer 採用 <em>skip-gram</em> ， output layer 採用 <em>negative sampling</em></p>
+
+<p>本例用唐詩語料庫：https://github.com/ckmarkoh/coscup_nndl/blob/master/poem.txt</p>
+
+<p>首先，載入所需的模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">json</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span><span class="p">,</span> <span class="n">OrderedDict</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">random</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">math</span>
+</span></code></pre></td></tr></table></div></figure>
+
 </div>
   
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:21:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:21 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>本文接續 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> ，介紹 <em>word2vec</em> 訓練過程的 <em>backward propagation</em> 公式推導。</p>
+
+<p><em>word2vec</em> 的訓練過程中，輸出的結果，跟上下文有關的字，在 <em>output layer</em> 輸出為 1 ，跟上下文無關的字，在 <em>output layer</em> 輸出為 0。 在此，把跟上下文有關的，稱為 <em>positive example</em> ，而跟上下文無關的，稱為 <em>negative example</em> 。</p>
+
+<p>根據 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> 中提到的例子， <em>cat</em> 的向量為 <script type="math/tex">\textbf{v}_2</script> ， <em>run</em> 的向量為 <script type="math/tex">\textbf{w}_3</script> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{w}_4</script> ，由於 <em>cat</em> 的上下文有 <em>run</em> ，所以 <em>run</em> 為 <em>positive example</em> ，而 <em>cat</em> 的上下文沒有 <em>fly</em> ，所以 <em>fly</em> 為 <em>negative example</em> ，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00187.png" alt="" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-12T09:19:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>12</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>9:19 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>文字的語意可以用向量來表示，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，如果把每種字當成一個維度，假設總共有一萬總字，那向量就會有一萬個維度。有兩種方法可降低維度，分別是 <em>singular value decomposition</em> 和 <em>word2vec</em> 。</p>
+
+<p>本文講解 <em>word2vec</em> 的原理。 <em>word2vec</em> 流程，總結如下：</p>
+
+<p><img src="/images/pic/pic_00191.png" alt="" /></p>
+
+<p>首先，將文字做 <em>one-hot encoding</em> ，然後再用 <em>word2vec</em> 類神經網路計算，求出壓縮後（維度降低後）的語意向量。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-10T14:06:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
+
+<blockquote>
+  <p>The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird sleep.</p>
+</blockquote>
+
+<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
+
+<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c|c c c c c c c c c }
+
+     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
+
+ dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
+
+ cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
+
+ bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
+
+\end{array}
+
+ %]]></script>
+
+<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/10/nlp-vector-space-semantics/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-09T08:36:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:36 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Gibbs Sampling</em> 是一種類似於 <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 的抽樣方式，也是根據機率分佈來建立 <em>Markov Chain</em> ，並在 <em>Markov Chain</em> 上行走，抽樣出機率分佈。</p>
+
+<p>設一 <em>Markov Chain</em> ， 有 <em>a</em> 和 <em>b</em> 兩個 <em>state</em> ，它們的值分別為 <script type="math/tex">p(a)</script> 和 <script type="math/tex">p(b)</script> ，而它們之間的轉移機率，分別為 <script type="math/tex">q_1(a,b)</script> 和 <script type="math/tex">q_2(a,b)</script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00179.png" alt="" /></p>
+
+<p>達平衡時，會滿足以下條件：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+1-q_1(a,b) & q_2(a,b) \\
+
+q_1(a,b) & 1-q_2(a,b)
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+p(a)(1-q_1(a,b) +p(b)q_2(a,b) = p(a)  \\
+
+p(a)q_1(a,b) + p(b)(1-q_2(a,b)) = p(b) 
+
+\end{cases}\\
+
+& \Rightarrow p(a)q_1(a,b) = p(b)q_2(a,b)
+
+\end{align}
+
+
+ %]]></script>
+
+<p>因此，達到平衡時，得出 <a name="eq1">（公式一）</a> ：</p>
+
+<script type="math/tex; mode=display">
+
+ p(a)q_1(a,b) = p(b)q_2(a,b)
+
+</script>
+
+<p>在  <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 這篇有提到，可以利用 <em>Markov Chain</em> 最終會達到平衡的特性，來為某機率分佈 <script type="math/tex">p(x)</script> 抽樣。</p>
+
+<p>但是 <em>Metropolis Hasting</em> 抽樣時，需要先用 <em>proposed distribution</em> 計算出下一個時間點可能的值，然後 <em>acceptance probability</em> 來拒絕它，因為計算出來的值會被拒絕，所以造成計算上的浪費。</p>
+
+<p>而對於一高維度的機率分佈 <script type="math/tex">p(x_1,x_2,...,x_n)</script> ，可以用另一種方式來建立 <em>Markov Chain</em> ，則不會有這個問題。這種方法為 <em>Gibbs Sampling</em> 。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/09/pgm-gibbs-sampling/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/07/pgm-metropolis-hasting/">機率圖模型 -- Metropolis Hasting</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-07T17:21:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>5:21 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>對一個 <em>Markov Chain</em> 而言，不論起始狀態為多少，最後會達到一個穩定平衡的狀態。</p>
+
+<p>舉個例子，以下為一 <em>Markov Chain</em></p>
+
+<p><img src="/images/pic/pic_00172.png" alt="" /></p>
+
+<p>則此 <em>Markov Chain</em> 達平衡狀態時， <script type="math/tex">A,B</script> 的比率為<script type="math/tex"> 5:6 </script>，也就是說：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+0.4 & 0.5 \\
+
+0.6 & 0.5 
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+4A+5B = 10A \\
+
+6A+5B = 10B 
+
+\end{cases}\\
+
+& \Rightarrow 6A = 5B
+
+\end{align}
+
+ %]]></script>
+
+<p>不管此 <em>Markov Chain</em> 的起始狀態如何，最後達平衡狀態時， <script type="math/tex">A,B</script> 的比率一定為<script type="math/tex"> 5:6 </script>。因此，如果在這 <em>Markov Chain</em> 的  <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 任一一個點開始走，假設走的次數夠多的話，走到 <script type="math/tex">A</script> 和走到 <script type="math/tex">B</script> 的比例。會是 <script type="math/tex">5 : 6</script> 。因此，可利用 <em>Markov Chain</em> 最後會收斂到一穩定狀態的特性，來進行抽樣。</p>
+
+<p><em>Metropolis Sampler</em> 即是給定一機率分佈函數，從這機率函數建立 <em>Markov Chain</em> ，然後再用建立出來的 <em>Markov Chain</em> 來進行抽樣。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/07/pgm-metropolis-hasting/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/06/20/pgm-variational-inference/">機率圖模型 -- Variational Inference</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-06-20T02:42:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:42 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>若某個有 <script type="math/tex">m</script> 個維度的 data <script type="math/tex">\textbf{x} = \{x_1,x_2,...,x_m\}</script> 的產生，是跟某個有 <script type="math/tex">n</script>個維度的 hidden variable <script type="math/tex">\textbf{z} = \{z_1,z_2,...,z_n\} </script> 有關，在機率圖模型，表示成：  </p>
+
+<p><img src="/images/pic/pic_00171.png" alt="" /></p>
+
+<p>從這機率圖形，可得出 hidden variable <script type="math/tex">\textbf{z}</script> 和 <script type="math/tex">\textbf{x}</script> 的聯合分佈機率：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x},\textbf{z})  = p(\textbf{z})p(\textbf{x}|\textbf{z})
+
+</script>
+
+<p>若是給定 hidden variable <script type="math/tex">\textbf{z}</script> 的值，則可產生 data <script type="math/tex">\textbf{x}</script> ，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x}|\textbf{z}) 
+
+</script>
+
+<p>但如果給定 data <script type="math/tex">\textbf{x}</script> 的值，這組 data 所對應到的 hidden variable 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\frac{p(\textbf{x} | \textbf{z}) p(\textbf{z}) }{\int p(\textbf{x} | \textbf{z})p(\textbf{z}) \text{d}\textbf{z}} 
+
+
+</script>
+
+<p>其中，分母 <script type="math/tex">\int p(\textbf{x} \mid  \textbf{z})p(\textbf{z}) \text{d}\textbf{z}</script> 積分如果無法算出來的時候，就無法直接算出 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值，則要用估計的方法來計算 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值。</p>
+
+<p>Variational Inference 用來估計 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值 。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/06/20/pgm-variational-inference/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/02/08/optimization-method-adadelta/">Optimization Method -- AdaDelta</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-02-08T16:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="adagrad">AdaGrad</h2>
+
+<p>本文接續 <a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad </a>。所提到的 <em>AdaGrad</em> ，及改良它的方法 – <em>AdaDelta</em> 。</p>
+
+<p>在機器學習最佳化過程中，用 <em>AdaGrad</em> 可以隨著時間來縮小 <em>Learning Rage</em> ，以達到較好的收斂效果。<em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} = \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>不過， <em>AdaGrad</em> 有個缺點，由於 <script type="math/tex">\textbf{g}_{n}^{2}</script> 恆為正，故 <script type="math/tex">\textbf{G}_{t} </script> 只會隨著時間增加而遞增，所以 <script type="math/tex">\frac{\eta}{\sqrt{\textbf{G}_{t}}} </script> 只會隨著時間增加而一直遞減，如果 <em>Learning Rate</em> <script type="math/tex">\eta</script>的值太小，則 <em>AdaGrad</em> 會較慢才收斂。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始點為 <script type="math/tex">(x,y) = (0.001,4)</script> ， <em>Learning Rate</em> <script type="math/tex">\eta=0.5</script> ，則整個最佳化的過程如下圖，曲面為目標函數，紅色的點為 <script type="math/tex">(x,y)</script> ：</p>
+
+<p><img src="/images/pic/pic_00157.png" alt="" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/02/08/optimization-method-adadelta/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/01/25/optimization-method-newton/">Optimization Method -- Newton's Method for Optimization</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-25T16:56:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>機器學習中，用 <em>Gradient Descent</em> 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ，在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時， <em>Gradient Descent</em>  走的方向為  <script type="math/tex">  -\nabla f(\textbf{x})</script> 。也就是，用泰勒展開式展開後，用一次微分 <script type="math/tex">f(\textbf{x})</script> 來趨近的方向，如下圖：</p>
+
+<p><img src="/images/pic/pic_00144.png" alt="" /></p>
+
+<p>註：考慮到 <script type="math/tex">\textbf{x}</script> 為向量的情形，故一次微分寫成  <script type="math/tex">\nabla f(\textbf{x})</script> 。 </p>
+
+<p>其中， <script type="math/tex">f(\textbf{x})</script> 為原本的 <em>Cost function</em> ，而 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為泰勒展開式取一次微分逼近的。 而 <em>Gradient Descent</em> 走的方向為 <script type="math/tex"> - \nabla f(\textbf{x}) </script> ，為沿著 <script type="math/tex">\tilde{f}(\textbf{x})</script> 的方向。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/01/25/optimization-method-newton/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/01/16/optimization-method-momentum/">Optimization Method -- Gradient Descent With Momentum</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-16T08:01:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:01 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>在機器學習的過程中，常需要將 Cost Function 的值減小，通常用 Gradient Descent 來做最佳化的方法來達成。但是用 Gradient Descent 有其缺點，例如，很容易卡在 Local Minimum。</p>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>關於Gradient Descent的公式解說，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<h2 id="getting-stuck-in-local-minimum">Getting Stuck in Local Minimum</h2>
+
+<p>舉個例子，如果 Cost Function 為 <script type="math/tex">0.3y^{3}+y^{2}+0.3x^{3}+x^{2}</script> ，有 Local Minimum <script type="math/tex">(x=0,y=0)</script> ，畫出來的圖形如下：</p>
+
+<p><img src="/images/pic/pic_00131.png" alt="" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/01/16/optimization-method-momentum/">Read on &rarr;</a>
+    </footer>
   
 
 
     </article>
   
   <div class="pagination">
+    
+      <a class="prev" href="/posts/2">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
     
@@ -109,7 +726,23 @@
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2016/11/29/hello-world/">Hello World</a>
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
       </li>
     
   </ul>
@@ -125,7 +758,7 @@
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - Your Name -
+  Copyright &copy; 2016 - Mark Chang -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

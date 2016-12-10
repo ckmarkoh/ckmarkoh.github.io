@@ -1,0 +1,564 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機率圖模型 -- Gibbs Sampling - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction Gibbs Sampling 是一種類似於 Metropolis Hasting 的抽樣方式，也是根據機率分佈來建立 Markov Chain ，並在 Markov Chain 上行走，抽樣出機率分佈。 設一 Markov Chain ， 有 a 和 b 兩個 state &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機率圖模型 -- Gibbs Sampling</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-09T08:36:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:36 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Gibbs Sampling</em> 是一種類似於 <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 的抽樣方式，也是根據機率分佈來建立 <em>Markov Chain</em> ，並在 <em>Markov Chain</em> 上行走，抽樣出機率分佈。</p>
+
+<p>設一 <em>Markov Chain</em> ， 有 <em>a</em> 和 <em>b</em> 兩個 <em>state</em> ，它們的值分別為 <script type="math/tex">p(a)</script> 和 <script type="math/tex">p(b)</script> ，而它們之間的轉移機率，分別為 <script type="math/tex">q_1(a,b)</script> 和 <script type="math/tex">q_2(a,b)</script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00179.png" alt="" /></p>
+
+<p>達平衡時，會滿足以下條件：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+1-q_1(a,b) & q_2(a,b) \\
+
+q_1(a,b) & 1-q_2(a,b)
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+p(a)(1-q_1(a,b) +p(b)q_2(a,b) = p(a)  \\
+
+p(a)q_1(a,b) + p(b)(1-q_2(a,b)) = p(b) 
+
+\end{cases}\\
+
+& \Rightarrow p(a)q_1(a,b) = p(b)q_2(a,b)
+
+\end{align}
+
+
+ %]]></script>
+
+<p>因此，達到平衡時，得出 <a name="eq1">（公式一）</a> ：</p>
+
+<script type="math/tex; mode=display">
+
+ p(a)q_1(a,b) = p(b)q_2(a,b)
+
+</script>
+
+<p>在  <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 這篇有提到，可以利用 <em>Markov Chain</em> 最終會達到平衡的特性，來為某機率分佈 <script type="math/tex">p(x)</script> 抽樣。</p>
+
+<p>但是 <em>Metropolis Hasting</em> 抽樣時，需要先用 <em>proposed distribution</em> 計算出下一個時間點可能的值，然後 <em>acceptance probability</em> 來拒絕它，因為計算出來的值會被拒絕，所以造成計算上的浪費。</p>
+
+<p>而對於一高維度的機率分佈 <script type="math/tex">p(x_1,x_2,...,x_n)</script> ，可以用另一種方式來建立 <em>Markov Chain</em> ，則不會有這個問題。這種方法為 <em>Gibbs Sampling</em> 。</p>
+
+<!--more-->
+
+<h2 id="gibbs-sampling">Gibbs Sampling</h2>
+
+<p>首先，先考慮二維的空間，設一機率分佈 <script type="math/tex">p(X,Y)</script> ，若此機率分佈的 <em>Random Variable</em> 有四個值，分別為 <script type="math/tex">A(x_1,y_1)</script> ， <script type="math/tex">B(x_2,y_1)</script> ， <script type="math/tex">C(x_1,y_2)</script> 和 <script type="math/tex">D(x_2,y_2)</script> 。</p>
+
+<p><img src="/images/pic/pic_00180.png" alt="" /></p>
+
+<p>首先，看看如何在  <em>A</em> 和 <em>B</em> 建立 <em>Markov Chain</em> 。由於 <em>A</em> 和 <em>B</em> 只有在 <script type="math/tex">x</script> 維度上的值不一樣，則：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& p(x_1,y_1)p(x_2|y_1)=p(y_1)p(x_1|y_1)p(x_2|y_1) \\
+
+& p(x_2,y_1)p(x_1|y_1)=p(y_1)p(x_2|y_1)p(x_1|y_1)
+
+\end{align}
+
+ %]]></script>
+
+<p>由於兩式的等號右邊一樣，則可得出：</p>
+
+<script type="math/tex; mode=display">
+
+\begin{align}
+
+p(x_1,y_1)p(x_2|y_1)=p(x_2,y_1)p(x_1|y_1)
+
+\end{align}
+
+</script>
+
+<p>此結果符合 <a href="#eq1">（公式一）</a> 的 <em>Markov Chain</em> 平衡狀態。根據此結果，建立以下的 <em>Markov Chain</em> ：</p>
+
+<p><img src="/images/pic/pic_00181.png" alt="" /></p>
+
+<p>其中， <script type="math/tex">p(x_1\mid y_1)+p(x_2\mid y_1) = 1</script> 。</p>
+
+<p>若在此 <em>Markov Chain</em> 上行走，如果走得夠多次的話，走到 <em>A</em> 和走到 <em>B</em> 的次數比，會是 <script type="math/tex">p(x_1,y_1) : p(x_2,y_1)</script> 。因此，用此 <em>Markov Chain</em> 得出的次數比，就相當於從機率分佈 <script type="math/tex">p(X,Y)</script> 抽樣後，  <em>A</em> 和 <em>B</em>  所抽出的次數比。</p>
+
+<p>也可用同樣方法，在 <em>A</em> 和 <em>C</em> 之間建立 <em>Markov Chain</em>：</p>
+
+<p><img src="/images/pic/pic_00182.png" alt="" /></p>
+
+<p>同理，<em>D</em> 和 <em>B</em> 或 <em>C</em> 之間，只有一個維度是不一樣的值，也可建立這樣的 <em>Markov Chain</em> 。</p>
+
+<p>結合以上 <em>Markov Chain</em> ，若要對 <script type="math/tex">p(X,Y)</script> 進行抽樣，則可先固定 <script type="math/tex">y</script> 的值，先在 <script type="math/tex">x</script> 軸上抽樣， 再固定 <script type="math/tex">x</script> 的值，在  <script type="math/tex">y</script> 軸上抽樣，如此交替進行，即為 <em>Gibbs Sampling</em> 的方法。</p>
+
+<p>舉個例子，假設有一聯合分佈 <script type="math/tex">p(X,Y)</script> ，其機率值如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c | c c}
+
+p(X,Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & 0.5 & 0.2 \\
+
+X=1  & 0.1 & 0.2 \\
+
+\end{array}
+
+ %]]></script>
+
+<p>這些點在座標上的位置如下圖：</p>
+
+<p><img src="/images/pic/pic_00183.png" alt="" /></p>
+
+<p>先把 <script type="math/tex">p(X\mid Y)</script> 和 <script type="math/tex">p(Y\mid X)</script> 計算出來，以便之後使用。</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{array}{c | c c}
+
+p(X|Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & \frac{5}{6} & \frac{1}{2} \\
+
+X=1  & \frac{1}{6} & \frac{1}{2} \\
+
+\end{array} 
+
+&
+
+\begin{array}{c | c c}
+
+p(Y|X) & Y=0  & Y=1  \\ \hline
+
+X=0  & \frac{5}{7} & \frac{2}{7} \\
+
+X=1  & \frac{1}{3} & \frac{2}{3} \\
+
+\end{array}
+
+\end{align}
+
+ %]]></script>
+
+<p>然後，進行 <em>gibbs sampling</em> ，首先，從 (0,0) 開始，固定 y 軸，在 x 軸上抽樣，用 <script type="math/tex">p(X\mid Y=0)</script> 的值，建立從 (0,0) 在 x 軸上轉移的 <em>Markov Chain</em> ，如下： </p>
+
+<p><img src="/images/pic/pic_00184.png" alt="" /></p>
+
+<p>根據此 <em>Marokv Chain</em> ， 從 <script type="math/tex">p(X\mid  Y=0)</script> 中，抽出 <script type="math/tex">X</script> ， 假設抽出的 <script type="math/tex">X</script> 值為 1，則抽出來的點為 (1,0) ，下一步則是要固定 x 軸，在 y 軸上抽樣。用 <script type="math/tex">p(Y\mid Y=1)</script> 的值，建立從 (1,0) 在 y 軸上轉移的 <em>Markov Chain</em> ，如下：</p>
+
+<p><img src="/images/pic/pic_00185.png" alt="" /></p>
+
+<p>根據此 <em>Marokv Chain</em> ， 從 <script type="math/tex">p(Y\mid  X=1)</script> 中，抽出 <script type="math/tex">Y</script>， 假設抽出的 <script type="math/tex">Y</script> 值為 1，則抽出來的點為 (1,1)，到目前為止，抽出來的樣本序列為這樣：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>1,0<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後再固定 y 軸，在 x 軸上抽樣，這樣持續抽樣下去，抽到最後，得出以下序列：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>1,0<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>0,1<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>1,0<span class="o">)</span>
+</span><span class="line"><span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>1,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span>
+</span><span class="line"><span class="o">(</span>0,1<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>1,1<span class="o">)</span> <span class="o">(</span>0,1<span class="o">)</span> <span class="o">(</span>0,1<span class="o">)</span> <span class="o">(</span>0,1<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> <span class="o">(</span>0,0<span class="o">)</span> ...
+</span></code></pre></td></tr></table></div></figure>
+
+<p>最後，統計抽樣序列中各個點的出現次數， (0,0) (1,0) (1,1) (0,1) 這四個點的次數比會接近 0.5 : 0.1 : 0.2 : 0.2</p>
+
+<p><em>Gibbs Sampling</em> 也可用在高維度的機率分佈 <script type="math/tex">p(x_1,x_2,...,x_n)</script> 。抽樣時，先從第一個維度上抽樣，固定其他維度，用 <script type="math/tex">p(x_1\mid x_2,...,x_{n})</script> 抽出下一個樣本，然後再從第二個維度抽樣，固定其他維度，用 <script type="math/tex">p(x_2\mid x_1,x_3,...,x_{n})</script> 抽出下一個樣本，如此一直循環下去。</p>
+
+<p>整個抽樣過程的 pseudo code 如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+1 & \text{set }t = 0 \\
+
+2 & \text{generate an initial state } \textbf{x}_0 \in \text{domain of }p(x_1,x_2,...,x_n) \\
+
+3 & \text{repeat until }t = M \\
+
+4 & \mspace{30mu}\text{for each dimension }i = 1...n \\
+
+5 & \mspace{60mu}\text{draw } \textbf{x}_t \text{ from } p(x_i|x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n) \\
+
+6 & \mspace{60mu}\text{set }t = t+1
+
+\end{align}
+
+ %]]></script>
+
+<p>此處流程大致上和 <em>Metropolis Hasting</em> 類似， 而 <script type="math/tex">p(x_i\mid x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n)</script> 就相當於是  <em>Metropolis Hasting</em> 中的 <em>proposed distribution</em> ，但在 <em>Gibbs Sampling</em> 中 ， <script type="math/tex">p(x_i\mid x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n)</script> 得出的值，就直接是抽樣結果了，不需要再算一個 <em>acceptance probability</em> 來判斷是否要接受或拒絕它。因此，不會造成計算上的浪費。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>此例實作先前提到的  <script type="math/tex">p(X,Y)</script> 抽樣：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c | c c}
+
+p(X,Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & 0.5 & 0.2 \\
+
+X=1  & 0.1 & 0.2 \\
+
+\end{array}
+
+ %]]></script>
+
+<p>程式碼如下：</p>
+
+<figure class="code"><figcaption><span>gibbssamp.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">Counter</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">gibbssamp</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+</span><span class="line">    <span class="n">P</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matrix</span><span class="p">([[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">]])</span>
+</span><span class="line">    <span class="n">condi</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)),</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">P</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">]</span>
+</span><span class="line">    <span class="n">x</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+</span><span class="line">    <span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+</span><span class="line">        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+</span><span class="line">            <span class="n">one_prob</span> <span class="o">=</span> <span class="n">condi</span><span class="p">[</span><span class="n">j</span><span class="p">][</span><span class="mi">1</span><span class="p">,</span> <span class="n">x</span><span class="p">[(</span><span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]]</span>
+</span><span class="line">            <span class="n">x</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">one_prob</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span class="line">            <span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">samples</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">count</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+</span><span class="line">    <span class="n">c</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+</span><span class="line">        <span class="n">c</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="s">&quot;(</span><span class="si">%s</span><span class="s">,</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">])])</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+</span><span class="line">        <span class="k">print</span> <span class="n">k</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中，程式碼中的 <code>P</code> 為機率分佈 <script type="math/tex">p(X,Y)</script> ， <code>condi[0]</code> 為 <script type="math/tex">p(X\mid Y)</script> ， <code>condi[1]</code> 為 <script type="math/tex">p(Y\mid X)</script> 。 <code>gibbssamp</code> 為執行 <em>Gibbs Sampling</em> 的主要函數。</p>
+
+<p>執行 <code>gibbssamp</code> 抽出 1000 * 2 個樣本，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; <span class="nv">X</span> <span class="o">=</span> gibbssamp<span class="o">(</span>1000<span class="o">)</span>
+</span><span class="line">&gt;&gt;&gt; print X
+</span><span class="line"><span class="o">[[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>1, 0<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>,
+</span><span class="line"><span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>,
+</span><span class="line"><span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>1, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>1, 0<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>,
+</span><span class="line"><span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>,
+</span><span class="line"><span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>1, 0<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>1, 1<span class="o">]</span>, <span class="o">[</span>1, 0<span class="o">]</span>, <span class="o">[</span>0, 0<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span>, <span class="o">[</span>0, 1<span class="o">]</span> ...
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用 <code>count</code> 用來統計抽樣結果：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">&gt;&gt;&gt; count<span class="o">(</span>X<span class="o">)</span>
+</span><span class="line"><span class="o">(</span>0,0<span class="o">)</span> 1043
+</span><span class="line"><span class="o">(</span>1,0<span class="o">)</span> 172
+</span><span class="line"><span class="o">(</span>0,1<span class="o">)</span> 387
+</span><span class="line"><span class="o">(</span>1,1<span class="o">)</span> 398
+</span></code></pre></td></tr></table></div></figure>
+
+<p>統計結果顯示， (0,0) (1,0) (0,1) (1,1) 的比率會接近 0.5 : 0.1 : 0.2 : 0.2</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>The Gibbs Sampler</p>
+
+<p>https://theclevermachine.wordpress.com/2012/11/05/mcmc-the-gibbs-sampler/</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(1)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling1</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(2)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling2</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-07-09T08:36:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>8:36 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/07/07/pgm-metropolis-hasting/" title="Previous Post: 機率圖模型 -- Metropolis Hasting">&laquo; 機率圖模型 -- Metropolis Hasting</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2016/07/10/nlp-vector-space-semantics/" title="Next Post: 自然語言處理 -- Vector Space of Semantics">自然語言處理 -- Vector Space of Semantics &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

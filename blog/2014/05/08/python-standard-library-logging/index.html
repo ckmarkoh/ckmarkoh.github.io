@@ -1,0 +1,444 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Standard Library -- Logging - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1. Introduction 在 python 程式中想要印出東西, 通常會用 print , 要 print 東西的時機很多, 例如, Debug 時要 print , 有 Error 時也要 print , 正常執行情況下也可能要 print 一些資訊 但是當程式寫好後, 原本用 print &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/05/08/python-standard-library-logging/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Standard Library -- Logging</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-05-08T07:44:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:44 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p>在 <em>python</em> 程式中想要印出東西, 通常會用 <em>print</em> , 要 <em>print</em> 東西的時機很多, 例如, <em>Debug</em> 時要 <em>print</em> , 有 <em>Error</em> 時也要 <em>print</em> , 正常執行情況下也可能要 <em>print</em> 一些資訊</p>
+
+<p>但是當程式寫好後, 原本用 <em>print</em> 出來的 <em>debug message</em> 就需要手動移除, 諸如此類的問題, 單純用 <em>pring</em> 就不方便</p>
+
+<p>如果是用 <em>logging</em> , 可以設各種不同的層次, 例如在 <em>debug</em> 的時候, 印出 <em>debug message</em> , <em>debug</em> 結束後就不要印 <em>debug message</em>  , 這樣只要調整一個參數即可, 不需要把所有用印出 <em>debug</em>  的程式碼都砍掉</p>
+
+<p><em>python</em> 的 <em>logging</em> 分成以下五個等級</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>等級</th>
+      <th>使用時機</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DEBUG</td>
+      <td>程式執行時的詳細資訊, 可以找出BUG在哪</td>
+    </tr>
+    <tr>
+      <td>INFO</td>
+      <td>程式執行時的基本資訊, 用來顯示程式正常執行時的狀況</td>
+    </tr>
+    <tr>
+      <td>WARNING</td>
+      <td>程式執行時遇到某些狀況超乎預期, 或未來可能遇到問題, 但程式目前仍可以繼續執行</td>
+    </tr>
+    <tr>
+      <td>ERROR</td>
+      <td>程式執行時發生問題, 可能導致結果產生錯誤</td>
+    </tr>
+    <tr>
+      <td>CRITICAL</td>
+      <td>程式執行時遇到嚴重問題, 程式必須馬上停止</td>
+    </tr>
+  </tbody>
+</table>
+
+<!--more-->
+
+<p>如果把 <em>logging</em> 等級設定在 <em>debug</em> , 則 <em>debug</em> , <em>info</em> 和其他三種等級的訊息都會印出來, 如果等級設定在 <em>warning</em> , 則不會印出 <em>debug</em> 和 <em>info</em> , 以此類推, 因此不需要 <em>debug message</em> 時, 只需要把等級設定在 <em>info</em> 以及更高等級即可, 因此就不需要砍掉所有印出印出 <em>debug</em>  的程式碼</p>
+
+<h2 id="implementation">2. Implementation</h2>
+
+<p>接著是實作部份, 把以下程式碼複製到 <em>log_debug.py</em> 這個檔案</p>
+
+<figure class="code"><figcaption><span>log_debug.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;debug message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;info message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;warning message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;error message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;critical message&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>level=logging.DEBUG</code> 把 <em>level</em> 設定在 <em>debug</em></p>
+
+<p>執行這個檔案, <em>logging</em> 可以印出下五個等級</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_debug.py
+</span><span class="line">DEBUG:root:debug message
+</span><span class="line">INFO:root:info message
+</span><span class="line">WARNING:root:warning message
+</span><span class="line">ERROR:root:error message
+</span><span class="line">CRITICAL:root:critical message
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來, 把 <em>log_debug.py</em> 中的 <code>level=logging.DEBUG</code> 改成 <code>level=logging.WARNING</code> </p>
+
+<p>另存新檔為 <em>log_warning.py</em> </p>
+
+<figure class="code"><figcaption><span>log_warning.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;debug message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;info message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;warning message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;error message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">critical</span><span class="p">(</span><span class="s">&#39;critical message&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>因為把 <em>level</em> 設定在 <em>warning</em> , 所以不會印出 <em>info</em> 和 <em>debug</em> 的 <em>message</em></p>
+
+<p>執行結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_warning.py
+</span><span class="line">WARNING:root:warning message
+</span><span class="line">ERROR:root:error message
+</span><span class="line">CRITICAL:root:critical message
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="config-setting">3. Config Setting</h2>
+
+<h4 id="logging-to-a-file">3.1 Logging to a file</h4>
+
+<p>前文中提到, 可以從 <code>basicConfig</code> 設定 <em>logging</em> 的 <em>level</em> , 其實 <code>basicConfig</code> 也可以做其他設定, 例如把 <em>log</em> 輸出到某個檔案, 如下 </p>
+
+<figure class="code"><figcaption><span>log_file.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">&#39;log_file.log&#39;</span><span class="p">,</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;debug message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;info message&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>filename='log_file.log'</code> 是設定, 要把 <em>log</em> 存到哪</p>
+
+<p>到<em>terminal</em> 執行完後, <em>log</em> 不會直接印出, </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_file.py
+</span></code></pre></td></tr></table></div></figure>
+
+<p>而是存到 <em>log_file.log</em> 檔案裡面</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>cat log_file.log
+</span><span class="line">DEBUG:root:debug message
+</span><span class="line">INFO:root:info message
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再執行一次看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_file.py
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第二次執行的 <em>log</em> , 不會蓋掉第一次的 <em>log</em> , 而是附加在後面</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>cat log_file.log
+</span><span class="line">DEBUG:root:debug message
+</span><span class="line">INFO:root:info message
+</span><span class="line">DEBUG:root:debug message
+</span><span class="line">INFO:root:info message
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果希望不要附加在後面, 而是直接覆寫原本的檔案, 可以加上參數 <code>filemode='w'</code> , 如下</p>
+
+<figure class="code"><figcaption><span>log_file.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s">&#39;log_file.log&#39;</span><span class="p">,</span><span class="n">filemode</span><span class="o">=</span><span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h4 id="changing-the-format-of-displayed-messages">3.2 Changing the format of displayed messages</h4>
+
+<p>也可以藉由更改 <code>basicConfig</code> 設定, 來更改 <em>logging</em> 輸出的格式</p>
+
+<p>例如我們可以把格式改成 <em>levelname – message</em> 的格式, 如下</p>
+
+<figure class="code"><figcaption><span>log_format.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%(levelname)s</span><span class="s"> -- </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;debug message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;info message&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_format.py
+</span><span class="line">DEBUG -- debug message
+</span><span class="line">INFO -- info message
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以改成印出時間, 如下</p>
+
+<figure class="code"><figcaption><span>log_time.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">logging</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">format</span><span class="o">=</span><span class="s">&#39;</span><span class="si">%(asctime)s</span><span class="s"> : </span><span class="si">%(levelname)s</span><span class="s"> : </span><span class="si">%(message)s</span><span class="s">&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;debug message&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;info message&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="bash"><span class="line"><span class="nv">$ </span>python log_time.py
+</span><span class="line">2014-05-08 19:11:45,700 : DEBUG : debug message
+</span><span class="line">2014-05-08 19:11:45,701 : INFO : info message
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="reference">4. Reference</h2>
+
+<p>Python Documentation Logging HOWTO</p>
+
+<p>https://docs.python.org/2/howto/logging.html</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-05-08T07:44:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:44 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/05/08/python-standard-library-logging/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/05/08/python-standard-library-logging/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/05/06/python-nltk-rule-based-chunking/" title="Previous Post: Python nltk -- Rule-Based Chunking">&laquo; Python nltk -- Rule-Based Chunking</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/08/23/r-createdatapartition/" title="Next Post: R -- Data Splitting">R -- Data Splitting &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

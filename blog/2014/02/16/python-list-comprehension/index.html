@@ -1,0 +1,339 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python -- List Comprehension - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。 可以將很多行的for迴圈縮在短短一行之內，很方便！ 1. 假如我們現在有一個list–l1 1
+l1=[2,5,3,8,4,9] 若我們想要建立一個新表單l2,是把l1中的每一個元素加上二, &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/02/16/python-list-comprehension/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python -- List Comprehension</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-02-16T04:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:13 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。</p>
+
+<p>可以將很多行的for迴圈縮在短短一行之內，很方便！</p>
+
+<h2 id="section">1.</h2>
+
+<p>假如我們現在有一個list–l1</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l1</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>若我們想要建立一個新表單l2,是把l1中的每一個元素加上二,最先想到的寫法是：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">:</span>
+</span><span class="line">   <span class="n">l2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>知道怎麼用List comprehension的話，我們可以用列表示: </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這樣看起來就簡潔多了！</p>
+
+<!--more-->
+
+<h2 id="section-1">2.</h2>
+
+<p>我們也可以把if條件判斷也寫進去。</p>
+
+<p>例如，想要把l1中可以被3整除的數抓出來,存到l2</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">:</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">l</span><span class="o">%</span><span class="mi">3</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+</span><span class="line">      <span class="n">l2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用List comprehension來簡化，可以變成：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[</span><span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span> <span class="k">if</span> <span class="n">l</span><span class="o">%</span><span class="mi">3</span><span class="o">==</span><span class="mi">0</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="section-2">3.</h2>
+
+<p>超過一個以上的list也可以使用List comprehension，例如，兩個list</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">x</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span>
+</span><span class="line"><span class="n">y</span><span class="o">=</span><span class="p">[</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">6</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果我們要產生一個新的list–z是以每個x和每個y的元素的值為座標。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">z</span><span class="o">=</span><span class="p">[]</span>
+</span><span class="line"><span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+</span><span class="line">   <span class="k">for</span> <span class="n">yi</span> <span class="ow">in</span> <span class="n">y</span><span class="p">:</span>
+</span><span class="line">      <span class="n">z</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">xi</span><span class="p">,</span><span class="n">yi</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這可以簡化成：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">z</span><span class="o">=</span><span class="p">[(</span><span class="n">xi</span><span class="p">,</span><span class="n">yi</span><span class="p">)</span> <span class="k">for</span> <span class="n">xi</span> <span class="ow">in</span> <span class="n">x</span> <span class="k">for</span> <span class="n">yi</span> <span class="ow">in</span> <span class="n">y</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="section-3">4.</h2>
+
+<p>其實List comprehension不只可以用在list,也可以用在dictionary上。</p>
+
+<p>有一個list–z1如下。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">z1</span><span class="o">=</span><span class="p">[(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">),(</span><span class="mi">3</span><span class="p">,</span><span class="mi">6</span><span class="p">)]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>例如我們想把z1改成dictionary–z2，像這樣：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">z2</span><span class="o">=</span><span class="p">{}</span>
+</span><span class="line"><span class="k">for</span> <span class="n">zi</span><span class="p">,</span><span class="n">zj</span> <span class="ow">in</span> <span class="n">z1</span><span class="p">:</span>
+</span><span class="line">   <span class="n">z2</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">zi</span><span class="p">:</span><span class="n">zj</span><span class="p">})</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>可以簡化成：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">z2</span><span class="o">=</span><span class="p">{</span><span class="n">zi</span><span class="p">:</span><span class="n">zj</span> <span class="k">for</span> <span class="n">zi</span><span class="p">,</span><span class="n">zj</span> <span class="ow">in</span> <span class="n">z1</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="section-4">結語：</h2>
+
+<p>總之List comprehension可以大幅減少程式碼的行數。</p>
+
+<p>其實，還有其他種方法，也可以讓程式碼更簡潔，例如map,filter和reduce，下一回我會提到。</p>
+
+<p>想要看看更多有關於List comprehension可以到：</p>
+
+<p>http://docs.python.org/2/tutorial/datastructures.html#list-comprehensions</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-02-16T04:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:13 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/list-comprehension/'>list_comprehension</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/02/16/python-list-comprehension/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/02/16/python-list-comprehension/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/02/15/hello-world/" title="Previous Post: Hello World">&laquo; Hello World</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/02/28/python-nltk-tree/" title="Next Post: Python nltk -- Tree">Python nltk -- Tree &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

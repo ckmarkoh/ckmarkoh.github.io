@@ -1,0 +1,330 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器翻譯 -- Statistical Machine Translation - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction Statistical Machine Translation （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 parallel corpus（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。 平行語料庫中包含大量句子， &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器翻譯 -- Statistical Machine Translation</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-10-27T16:49:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:49 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Statistical Machine Translation</em> （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 <em>parallel corpus</em>（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。</p>
+
+<p>平行語料庫中包含大量句子，這些句子意思一樣，但分別用兩種語言寫成，例如：</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">這是一個蘋果。
+</span><span class="line">This is an apple.
+</span><span class="line">
+</span><span class="line">桌上有一本書。
+</span><span class="line">There is a book on the table．
+</span><span class="line">
+</span><span class="line">...... 
+</span></code></pre></td></tr></table></div></figure>
+
+<p>藉由這種平行語料庫，就可以用統計的方式，讓機器學會如何將一種語言，翻譯成另一種語言。</p>
+
+<h2 id="noisy-channel-model">Noisy Channel Model</h2>
+
+<p><em>Noicy Channel Model</em> 是一種常用的統計機器翻譯的模型。</p>
+
+<!--more-->
+
+<p>如果，要把中文翻譯成英文，則可用計算某個中文句子翻譯成英文句子的機率，來找出哪個翻譯結果，是比較好的翻譯。給定中文句子 <em>c</em> ，它翻譯成某個英文句子 <em>e</em> 的機率，為 <script type="math/tex">p(e \mid c)</script> ，即為，在中文句子為 <em>c</em> 的條件下，出現英文句子 <em>e</em> 的條件機率。</p>
+
+<p>在 <em>Noicy Channel Model</em> 中，有兩個成分：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& p(e)  & \text{The Language Model}   \\
+
+& p(c \mid e)  & \text{The Translation Model}  
+
+\end{align}
+
+ %]]></script>
+
+<p>其中， <em>Language Model</em> 表示英文句子 <em>e</em> 在語料庫中的機率。要建立此模型，用單一一種語言的語料庫做訓練即可。</p>
+
+<p>而 <em>Translation Model</em> 表示給定英文句子 <em>e</em> ，在此條件下，翻譯成中文句子 <em>c</em> 的機率。要建立此模型，需要用平行語料庫做訓練。</p>
+
+<p>用貝氏定理，得出某個中文句子 <em>c</em> 翻譯成某個英文句子 <em>e</em> 的機率，為：</p>
+
+<script type="math/tex; mode=display">
+
+p(e \mid c) = \frac{p(e,c)}{p(c)} = \frac{p(e)\times p(c \mid e)}{\sum_{e} p(e)\times p(c \mid e)}
+
+</script>
+
+<p>若要得出翻譯最佳的英文句子，則可以求機率最大者，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{e}  p(e \mid c) = \mathop{\arg\,\max}\limits_{e} p(e)\times p(c \mid e)
+
+</script>
+
+<h2 id="example">Example</h2>
+
+<p>舉個例子，若要將中文句 <em>「我肚子餓了」</em> 翻譯成英文。假設已經先從從語料庫中，計算出可能翻譯出的英文句子，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c | c c}
+
+English & p(c \mid e) & p (e) \\ \hline
+
+\text{I am hungry} & 0.00019 & 0.0084\\
+
+\text{My belly hungry} & 0.00031 & 0.0000031\\
+
+\text{I starve} &  0.00045 & 0.0000012\\
+
+\end{array}
+
+ %]]></script>
+
+<p>則這句中文最有可能的翻譯為 <em>“I am hungry”</em> ：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \mathop{\arg\,\max}\limits_{e}  p(e \mid c) \\
+
+& = \mathop{\arg\,\max}\limits_{e} p(e)\times p(c \mid e) \\
+
+& = p(e = \text{"I am hungry"} )\times p(c \mid e = \text{"I am hungry"} ) \\
+
+& =  0.00019 \times 0.0084 = 0.000001596 
+
+\end{align}
+
+ %]]></script>
+
+<p>註：本例子已先假設 <em>Language Model</em> <script type="math/tex">p(e)</script> 和 <em>Translation Model</em> <script type="math/tex">p(c \mid e)</script> 都已經先計算好。若要從頭計算 <em>Language Model</em> 可以用 <em>n-gram</em> ，但計算 <em>Translation Model</em> 則需要更複雜的模型，例如 <em>IBM Model</em> 或 <em>Phrase-based Model</em> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlangp</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-10-27T16:49:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:49 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/10/25/natural-language-processing-brown-clustering/" title="Previous Post: 自然語言處理 -- Brown Clustering">&laquo; 自然語言處理 -- Brown Clustering</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/" title="Next Post: 資訊檢索 -- Boolean Retrieval">資訊檢索 -- Boolean Retrieval &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

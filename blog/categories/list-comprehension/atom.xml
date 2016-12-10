@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: List_comprehension | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/list-comprehension/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python -- List Comprehension]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/02/16/python-list-comprehension/"/>
+    <updated>2014-02-16T04:13:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/02/16/python-list-comprehension</id>
+    <content type="html"><![CDATA[<p>List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。</p>
+
+<p>可以將很多行的for迴圈縮在短短一行之內，很方便！</p>
+
+<h2 id="section">1.</h2>
+
+<p>假如我們現在有一個list–l1</p>
+
+<p>```python
+l1=[2,5,3,8,4,9]</p>
+
+<p>```</p>
+
+<p>若我們想要建立一個新表單l2,是把l1中的每一個元素加上二,最先想到的寫法是：</p>
+
+<p>```python
+l2=[]
+for l in l1: 
+   l2.append(l+2) </p>
+
+<p>```</p>
+
+<p>知道怎麼用List comprehension的話，我們可以用列表示: </p>
+
+<p>```python
+l2=[l+2 for l in l1] </p>
+
+<p>```</p>
+
+<p>這樣看起來就簡潔多了！</p>
+
+<!--more-->
+
+<h2 id="section-1">2.</h2>
+
+<p>我們也可以把if條件判斷也寫進去。</p>
+
+<p>例如，想要把l1中可以被3整除的數抓出來,存到l2</p>
+
+<p>```python
+l2=[]
+for l in l1: 
+   if l%3==0:
+      l2.append(l)</p>
+
+<p>```</p>
+
+<p>用List comprehension來簡化，可以變成：</p>
+
+<p>```python
+l2=[l for l in l1 if l%3==0]</p>
+
+<p>```</p>
+
+<h2 id="section-2">3.</h2>
+
+<p>超過一個以上的list也可以使用List comprehension，例如，兩個list</p>
+
+<p>```python
+x=[1,2,3]
+y=[3,5,6]</p>
+
+<p>```</p>
+
+<p>如果我們要產生一個新的list–z是以每個x和每個y的元素的值為座標。</p>
+
+<p>```python
+z=[]
+for xi in x:
+   for yi in y:
+      z.append((xi,yi))</p>
+
+<p>```</p>
+
+<p>這可以簡化成：</p>
+
+<p>```python
+z=[(xi,yi) for xi in x for yi in y] </p>
+
+<p>```</p>
+
+<h2 id="section-3">4.</h2>
+
+<p>其實List comprehension不只可以用在list,也可以用在dictionary上。</p>
+
+<p>有一個list–z1如下。</p>
+
+<p>```python
+z1=[(1,3),(2,5),(3,6)]</p>
+
+<p>```</p>
+
+<p>例如我們想把z1改成dictionary–z2，像這樣：</p>
+
+<p>```python
+z2={}
+for zi,zj in z1:
+   z2.update({zi:zj})</p>
+
+<p>```</p>
+
+<p>可以簡化成：</p>
+
+<p>```python
+z2={zi:zj for zi,zj in z1} </p>
+
+<p>```</p>
+
+<h2 id="section-4">結語：</h2>
+
+<p>總之List comprehension可以大幅減少程式碼的行數。</p>
+
+<p>其實，還有其他種方法，也可以讓程式碼更簡潔，例如map,filter和reduce，下一回我會提到。</p>
+
+<p>想要看看更多有關於List comprehension可以到：</p>
+
+<p>http://docs.python.org/2/tutorial/datastructures.html#list-comprehensions</p>
+
+]]></content>
+  </entry>
+  
+</feed>

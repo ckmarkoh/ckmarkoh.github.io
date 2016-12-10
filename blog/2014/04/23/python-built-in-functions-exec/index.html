@@ -1,0 +1,662 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Built-in Functions -- Eval and Execute - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 如果要把 string 的內容, 當成程式碼來執行, 可以用到 eval 或 exec 例如有個 string , 為 s1="3+5" 我們想要算它執行的結果, 可用 1
+2
+3
+&gt;&gt;&gt; s1=&quot;3+5&quot;
+&gt;&gt;&gt &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Built-in Functions -- Eval and Execute</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-23T01:59:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>1:59 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>如果要把 <em>string</em> 的內容, 當成程式碼來執行, 可以用到 <em>eval</em> 或 <em>exec</em></p>
+
+<p>例如有個 <em>string</em> , 為 <code>s1="3+5"</code> 我們想要算它執行的結果, 可用</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">s1</span><span class="o">=</span><span class="s">&quot;3+5&quot;</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+</span><span class="line"><span class="mi">8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>來看一下怎麼用 <em>eval</em> 或 <em>exec</em> </p>
+
+<h2 id="eval">2. eval</h2>
+
+<p><code>eval</code> 是當我們要計算某一個字串中的運算, 並且 <strong>會回傳計算結果</strong> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;3+1&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<!--more-->
+
+<p>除了用於數字, 也可用於其他 <em>type</em> , 例如 <em>list</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;[3,4,5]+[2]&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>或是我們要呼叫 <em>object</em> 的 <em>method</em> 也可以</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;&quot;234232&quot;.replace(&quot;2&quot;,&quot;@&quot;)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="s">&#39;@34@3@&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="eval-with-variable-and-function">2.1. eval with variable and function</h3>
+
+<p><em>eval</em> 可以用於自訂變數</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;x+2&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">5</span>
+</span></code></pre></td></tr></table></div></figure>
+<p>`</p>
+
+<p>或是自訂的 <em>function</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">def</span> <span class="nf">myfun</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">return</span> <span class="n">y</span><span class="o">+</span><span class="mi">4</span>
+</span><span class="line"><span class="o">...</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;myfun(x)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">7</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可用於自訂變數的 <em>method</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">a</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;a.reverse()&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">a</span>
+</span><span class="line"><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="eval-with-builtins">2.2. eval with builtins</h3>
+
+<p>當然, <em>eval</em> 也可用於 <em>built-in function</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;abs(-3)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以限制 <em>built-in function</em> 的使用</p>
+
+<p>例如在 <em>eval</em> 的第二個 <em>argument</em> 輸入 <code>{"__builtins__" : None }</code> , 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;abs(-3)&#39;</span><span class="p">,{</span><span class="s">&quot;__builtins__&quot;</span> <span class="p">:</span> <span class="bp">None</span> <span class="p">})</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line"><span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s">&#39;abs&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="eval-with-restricted-variable">2.3. eval with restricted variable</h3>
+
+<p>為了避免 <em>eval</em> 不小心變更到程式裡面的某些 <em>variable</em> 的值, 我們可以用以下方法, 限制 <em>eval</em> 可以使用的 <em>variable</em> </p>
+
+<p>例如, 有三個 <em>variable</em> , 分別為 <code>pb1</code> , <code>pb2</code> 與 <code>pr1</code> , 其中, 我們只希望 <em>eval</em> 可以使用 <code>pb1</code> 和 <code>pb2</code> 兩個 <em>variable</em> , 則可以建立一個 <code>dict</code> 來限制, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pb1</span> <span class="o">=</span> <span class="mi">123</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pb2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pr1</span> <span class="o">=</span> <span class="mi">456</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pblist</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pb1&#39;</span><span class="p">,</span><span class="s">&#39;pb2&#39;</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pbdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">pblist</span> <span class="p">])</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pbdict</span>
+</span><span class="line"><span class="p">{</span><span class="s">&#39;pb1&#39;</span><span class="p">:</span> <span class="mi">123</span><span class="p">,</span> <span class="s">&#39;pb2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中, <code>pbdict</code> 限制了 <em>eval</em> 可以使用哪些 <em>variable</em> , 把 <code>pbdict</code> 放在 <em>eval</em> 的第三個 <em>argument</em> , 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;pb1+2&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="mi">125</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;pb2[2]+3&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="mi">17</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果顯示, 有在 <code>pbdict</code> 裡面的 <em>variable</em> 可以使用, 但沒在 <code>pbdict</code> 裡面的 <em>variable</em> 就不可以使用了, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&quot;pr1+3&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line"><span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s">&#39;pr1&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="restriction-on-eval">2.4. restriction on eval</h3>
+
+<p>並不是所有的<em>expression</em> 都可以用 <em>eval</em> , 例如, <em>assignment</em> 就不能用於 <em>eval</em> , 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;a=3&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span>
+</span><span class="line">    <span class="n">a</span><span class="o">=</span><span class="mi">3</span>
+</span><span class="line">     <span class="o">^</span>
+</span><span class="line"><span class="ne">SyntaxError</span><span class="p">:</span> <span class="n">invalid</span> <span class="n">syntax</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>或是其他跟 <em>assignment</em> 有關的 <em>operator</em> 也不行</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">a</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">eval</span><span class="p">(</span><span class="s">&#39;a+=[3]&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span>
+</span><span class="line">    <span class="n">a</span><span class="o">+=</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+</span><span class="line">      <span class="o">^</span>
+</span><span class="line"><span class="ne">SyntaxError</span><span class="p">:</span> <span class="n">invalid</span> <span class="n">syntax</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這時就需要用到 <em>exec</em> 了</p>
+
+<h2 id="exec">3. exec</h2>
+
+<p><em>exec</em> 是把字串當成程式碼來執行, 但是 <strong>不會回傳結果</strong> , 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;3+5&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果要印出結果, 則要加個 <em>print</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;print 3+5&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="exec-with-variable">3.1. exec with variable</h3>
+
+<p><em>exec</em> 也可以用於 <em>variable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">3</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;x+3&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x</span>
+</span><span class="line"><span class="mi">3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可用於自訂的 <em>function</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">def</span> <span class="nf">myfun</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line"><span class="o">...</span>     <span class="k">return</span> <span class="n">y</span><span class="o">+</span><span class="mi">4</span>
+</span><span class="line"><span class="o">...</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;myfun(x)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x</span>
+</span><span class="line"><span class="mi">3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>和 <em>eval</em> 不同的是, <em>exec</em> 可以用於 <em>assignment</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;z = 5&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">z</span>
+</span><span class="line"><span class="mi">5</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以及其他和 <em>assignment</em> 相關的 <em>operator</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&#39;x += 1&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x</span>
+</span><span class="line"><span class="mi">4</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="exec-with-builtins">3.2. exec with builtins</h3>
+
+<p><em>exec</em> 可以用於 <em>built-in function</em> </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;print abs(-3)&quot;</span><span class="p">)</span>
+</span><span class="line"><span class="mi">3</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以用 <code>{"__builtins__" : None }</code> 限制 <em>built-in function</em> 的使用</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;print abs(-3)&quot;</span><span class="p">,{</span><span class="s">&quot;__builtins__&quot;</span> <span class="p">:</span> <span class="bp">None</span> <span class="p">})</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line"><span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s">&#39;abs&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="exec-with-restricted-variable">3.3. exec with restricted variable</h3>
+
+<p>和 <em>eval</em> 一樣, <em>exec</em> 也可以用 <em>dict</em> 來限制可以使用的 <em>variable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pb1</span> <span class="o">=</span> <span class="mi">123</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pb2</span> <span class="o">=</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span><span class="mi">13</span><span class="p">,</span><span class="mi">14</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pr1</span> <span class="o">=</span> <span class="mi">456</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pblist</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pb1&#39;</span><span class="p">,</span><span class="s">&#39;pb2&#39;</span><span class="p">]</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pbdict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">pblist</span> <span class="p">])</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pbdict</span>
+</span><span class="line"><span class="p">{</span><span class="s">&#39;pb1&#39;</span><span class="p">:</span> <span class="mi">123</span><span class="p">,</span> <span class="s">&#39;pb2&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>同時, <em>exec</em> 又可以使用 <em>assignment</em>, 但是要注意了, 此 <em>assignment</em> 只會修改到 <em>dict</em> 中的值, 例如我們 <em>assign</em> 一個新的值給 <code>pb1</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;pb1=pb1+2&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;print pb1&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="mi">125</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但是, <em>exec</em> 不會更改到原本的 <em>variable</em> 的值, 原本的 <code>pb1</code> 還是不便</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pb1</span>
+</span><span class="line"><span class="mi">123</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>改變的只有在 <code>pdict</code> 中的 <code>pb1</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pbdict</span><span class="p">[</span><span class="s">&#39;pb1&#39;</span><span class="p">]</span>
+</span><span class="line"><span class="mi">125</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>但如果是針對 <em>object</em> 就不一樣了, 因為在 <em>dict</em> 中的是 <em>reference</em> 而不是 <em>value</em> , 所以會修改到原本 <em>variable</em> 的 <em>value</em>, 例如 <em>assign</em> 新的值給 <code>pb2</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;pb2[2]=pb2[2]+3&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pb2</span>
+</span><span class="line"><span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pbdict</span><span class="p">[</span><span class="s">&#39;pb2&#39;</span><span class="p">]</span>
+</span><span class="line"><span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">17</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>不論是原本的 <code>pb2</code> 還是 <code>pbdict</code> 中的 <code>pb2</code> 都改變了</p>
+
+<p>當然, 跟 <em>eval</em> 一樣的是, 如果 <em>variable</em> 沒在 <em>dict</em> 中, 就不可以使用了</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;print pr1+3&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict</span><span class="p">)</span>
+</span><span class="line"><span class="n">Traceback</span> <span class="p">(</span><span class="n">most</span> <span class="n">recent</span> <span class="n">call</span> <span class="n">last</span><span class="p">):</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;stdin&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line">  <span class="n">File</span> <span class="s">&quot;&lt;string&gt;&quot;</span><span class="p">,</span> <span class="n">line</span> <span class="mi">1</span><span class="p">,</span> <span class="ow">in</span> <span class="o">&lt;</span><span class="n">module</span><span class="o">&gt;</span>
+</span><span class="line"><span class="ne">NameError</span><span class="p">:</span> <span class="n">name</span> <span class="s">&#39;pr1&#39;</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">defined</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="exec-with-exec-defined-variable">3.4. exec with exec-defined variable</h3>
+
+<p>承上, <em>exec</em> 由於有 <em>assignment</em> 的功能, 所以可以自己加 <em>variable</em> 到 <em>dict</em> 裏面, 如下, 我們限制 <em>exec</em> 從一個空的 <em>dict</em>  <code>pbdict2={}</code> 開始 </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pbdict2</span><span class="o">=</span><span class="p">{}</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;x=5&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict2</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;y=3&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>做完以上 <em>assignment</em> 之後 , 我們再把 <code>pbdict</code> 印出來看看, 發現多了兩個新的 <em>variable</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">pbdict2</span>
+</span><span class="line"><span class="p">{</span><span class="s">&#39;y&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>當然, <em>exec</em> 可以用這兩個 <em>variable</em> 做運算</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="s">&quot;print x+y&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">pbdict2</span><span class="p">)</span>
+</span><span class="line"><span class="mi">8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h3 id="exec-lines-of-codes">3.5. exec lines of codes</h3>
+
+<p><em>exec</em> 可以執行多行字串中的程式碼, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">codes</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+</span><span class="line"><span class="s">... x=5</span>
+</span><span class="line"><span class="s">... for i in range(3):</span>
+</span><span class="line"><span class="s">...     x+=i</span>
+</span><span class="line"><span class="s">...     print i,x</span>
+</span><span class="line"><span class="s">... &quot;&quot;&quot;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">exec</span><span class="p">(</span><span class="n">codes</span><span class="p">)</span>
+</span><span class="line"><span class="mi">0</span> <span class="mi">5</span>
+</span><span class="line"><span class="mi">1</span> <span class="mi">6</span>
+</span><span class="line"><span class="mi">2</span> <span class="mi">8</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="reference">4. Reference</h2>
+
+<h3 id="eval-1">eval</h3>
+
+<p>https://docs.python.org/2/library/functions.html#eval</p>
+
+<h3 id="exec-1">exec</h3>
+
+<p>https://docs.python.org/2/reference/simple_stmts.html#exec</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-23T01:59:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>1:59 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/eval/'>eval</a>, <a class='category' href='/blog/categories/exec/'>exec</a>, <a class='category' href='/blog/categories/python/'>python</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/17/machine-learning-model-selection/" title="Previous Post: 機器學習 -- Model Selection">&laquo; 機器學習 -- Model Selection</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/" title="Next Post: 自然語言處理 -- Pointwise Mutual Information">自然語言處理 -- Pointwise Mutual Information &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

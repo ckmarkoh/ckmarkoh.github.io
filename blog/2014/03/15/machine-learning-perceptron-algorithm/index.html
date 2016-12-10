@@ -1,0 +1,764 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>機器學習 -- Perceptron Algorithm - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 這次來講一下機器學習(Machine Learning) 簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何 現在,來看看一種簡單的Machine Learning演算法 叫作Perceotron Algorithm &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/15/machine-learning-perceptron-algorithm/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">機器學習 -- Perceptron Algorithm</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-15T11:28:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:28 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>這次來講一下機器學習(Machine Learning)</p>
+
+<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
+
+<p>現在,來看看一種簡單的Machine Learning演算法</p>
+
+<p>叫作Perceotron Algorithm</p>
+
+<p>Peceptron Algorithm要做的事</p>
+
+<p>就是要讓電腦學習,怎樣畫一條線,把兩群不同的資料分開</p>
+
+<!--more-->
+
+<h2 id="load-data">2.Load Data</h2>
+
+<p>接著來看看要怎麼實作Perceptron Algorithm</p>
+
+<p>首先,開啟新的檔案 <em>perceptron.py</em> 並載入模組</p>
+
+<figure class="code"><figcaption><span>perceptron.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+</span><span class="line"><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>給定一筆資料</p>
+
+<figure class="code"><figcaption><span>perceptron.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">X1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">0.62231486</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.96251306</span><span class="p">,</span>  <span class="mf">0.42269922</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.452746</span>  <span class="p">,</span> <span class="o">-</span><span class="mf">0.66915783</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">0.35716016</span><span class="p">,</span>  <span class="mf">0.49505163</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.8117848</span> <span class="p">,</span>  <span class="mf">0.53376487</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.86923838</span><span class="p">,</span>
+</span><span class="line">                <span class="mf">0.71434306</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.4055084</span> <span class="p">,</span>  <span class="mf">0.82887254</span><span class="p">,</span>  <span class="mf">0.81221287</span><span class="p">,</span>  <span class="mf">1.44280951</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">0.45599278</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.16715888</span><span class="p">,</span>  <span class="mf">1.08913131</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.61470741</span><span class="p">,</span>  <span class="mf">1.61113001</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">1.4532688</span> <span class="p">,</span>  <span class="mf">1.04872588</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.52312195</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.62831727</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.25191539</span><span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="n">X2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mf">1.67427011</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.81046748</span><span class="p">,</span>  <span class="mf">1.20384694</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.41572751</span><span class="p">,</span>  <span class="mf">0.66851908</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">1.75435288</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.57532207</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.22329618</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.84375819</span><span class="p">,</span>  <span class="mf">0.52873296</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">1.10837773</span><span class="p">,</span>  <span class="mf">0.04612922</span><span class="p">,</span>  <span class="mf">0.67696196</span><span class="p">,</span>  <span class="mf">0.84618152</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.77362548</span><span class="p">,</span>
+</span><span class="line">                <span class="mf">0.99153072</span><span class="p">,</span>  <span class="mf">1.7896494</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.38343121</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.21337742</span><span class="p">,</span>  <span class="mf">0.64754817</span><span class="p">,</span>
+</span><span class="line">                <span class="mf">0.36719101</span><span class="p">,</span>  <span class="mf">0.23132427</span><span class="p">,</span>  <span class="mf">1.07029963</span><span class="p">,</span>  <span class="mf">1.62919909</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.53920827</span><span class="p">])</span>
+</span><span class="line">
+</span><span class="line"><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>  <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>
+</span><span class="line">                <span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>
+</span><span class="line">                <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>
+</span><span class="line">               <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>  <span class="o">-</span><span class="mf">1.</span><span class="p">,</span>   <span class="mf">1.</span><span class="p">])</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>X1</code> 是資料的X座標, <code>X2</code> 是資料的Y座標, <code>Y</code>是資料的分類的結果, <strong>不是Y座標</strong></p>
+
+<p>然後寫個function 把data畫出來   </p>
+
+<figure class="code"><figcaption><span>perceptron.py  </span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_data</span><span class="p">(</span><span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;data0&#39;</span><span class="p">):</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;o&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span> <span class="o">&lt;</span>  <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span>  <span class="o">&lt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;^&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xl1</span><span class="p">,</span> <span class="n">xl2</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">yl1</span><span class="p">,</span> <span class="n">yl2</span><span class="p">)</span>
+</span><span class="line">    <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>到interactive mode執行</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">perceptron</span> <span class="kn">as</span> <span class="nn">pct</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">plot_data</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="http://lh3.googleusercontent.com/-OOCOyCqpkZk/UyVNYCrnbXI/AAAAAAAAAk4/OUhvS3dnKjM/s480-no/data0.png" /></p>
+
+<p>這個圖把藍色( <script type="math/tex">y = 1</script> ),和紅色( <script type="math/tex">y = -1</script> )兩群資料呈現出來</p>
+
+<h2 id="draw-line">3.Draw Line</h2>
+
+<p>再來,看看怎麼畫一條線</p>
+
+<p>先在 <em>perceptron.py</em> 檔案新增一個畫線的function</p>
+
+<p>我們要畫的這條線有兩個參數,分別是 <script type="math/tex">w1,w2</script></p>
+
+<p>這條線的直線方程式是: </p>
+
+<script type="math/tex; mode=display">
+
+w_{1}x_{1}+w_{2}x_{2}=0
+
+</script>
+
+<p>藉由改變 <script type="math/tex">w1,w2</script> 的數值,我們可以控制這條線的斜率</p>
+
+<p>*註:</p>
+
+<p>事實上若只有<script type="math/tex">w1,w2</script>只可以改變線的斜率,必須再另外再加個常數相才可改變線的位置</p>
+
+<p>本文提到的是較簡化的模型,故省略常數項*</p>
+
+<figure class="code"><figcaption><span>perceptron.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">plot_data_and_line</span><span class="p">(</span><span class="n">w0</span><span class="p">,</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">):</span>
+</span><span class="line">    <span class="n">w1</span><span class="p">,</span><span class="n">w2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">w1</span><span class="p">),</span><span class="nb">float</span><span class="p">(</span><span class="n">w2</span><span class="p">)</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">w2</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">:</span>
+</span><span class="line">        <span class="n">y1</span><span class="p">,</span><span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">w1</span><span class="o">*</span><span class="p">(</span><span class="n">xl1</span><span class="p">))</span><span class="o">/</span><span class="n">w2</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="n">w1</span><span class="o">*</span><span class="p">(</span><span class="n">xl2</span><span class="p">))</span><span class="o">/</span><span class="n">w2</span>
+</span><span class="line">        <span class="n">vx1</span><span class="p">,</span><span class="n">vy1</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">y1</span><span class="p">]</span>
+</span><span class="line">        <span class="n">vx2</span><span class="p">,</span><span class="n">vy2</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">y1</span><span class="p">]</span>
+</span><span class="line">    <span class="k">elif</span> <span class="n">w1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">        <span class="n">vx1</span><span class="p">,</span><span class="n">vy1</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">],</span> <span class="p">[</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl1</span><span class="p">]</span>
+</span><span class="line">        <span class="n">vx2</span><span class="p">,</span><span class="n">vy2</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl1</span><span class="p">]</span>
+</span><span class="line">    <span class="k">else</span><span class="p">:</span>
+</span><span class="line">        <span class="k">print</span> <span class="s">&quot;ERROR, Invalid w1 and w2.&quot;</span>
+</span><span class="line">        <span class="k">return</span><span class="p">;</span>
+</span><span class="line">    <span class="k">if</span>  <span class="n">w2</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span> <span class="n">w2</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">w1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+</span><span class="line">        <span class="n">c1</span><span class="p">,</span><span class="n">c2</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span><span class="p">,</span><span class="s">&#39;r&#39;</span>
+</span><span class="line">    <span class="k">else</span><span class="p">:</span>
+</span><span class="line">        <span class="n">c1</span><span class="p">,</span><span class="n">c2</span> <span class="o">=</span> <span class="s">&#39;r&#39;</span><span class="p">,</span><span class="s">&#39;b&#39;</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;o&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;^&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vx1</span><span class="p">,</span> <span class="n">vy1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vx2</span><span class="p">,</span> <span class="n">vy2</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">((</span><span class="s">&quot;w1 = </span><span class="si">%s</span><span class="s">, w2 = </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">)</span><span class="o">%</span><span class="p">(</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">))</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xl1</span><span class="p">,</span> <span class="n">xl2</span><span class="p">)</span>
+</span><span class="line">    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">yl1</span><span class="p">,</span> <span class="n">yl2</span><span class="p">)</span>
+</span><span class="line">    <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>程式碼有點多,但其實是為了處理某些special case,例如 ` w2 != 0 :` 是用來判斷斜率是否為無限大</p>
+
+<p>到interactive mode載入模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">pct</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;perceptron&#39;</span> <span class="kn">from</span> <span class="s">&#39;perceptron.py&#39;</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著你可以試著輸入不同的參數,讓電腦畫出不同的線,例如：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">plot_data_and_line</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">plot_data_and_line</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">plot_data_and_line</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mf">0.5</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">plot_data_and_line</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="https://lh5.googleusercontent.com/-BrKFzf5Qb3U/UyVN_fa8lxI/AAAAAAAAAlc/zZgKHlAfcqY/s480-no/line1.png" /></p>
+
+<p><img src="https://lh6.googleusercontent.com/-7EGWFYaEYHI/UyVN_YyzCVI/AAAAAAAAAlY/kb7lkv_7tTI/s480-no/line2.png" /></p>
+
+<p><img src="https://lh5.googleusercontent.com/-d3FrWKfweuU/UyVN_FAVP1I/AAAAAAAAAlQ/FLkYmbRlqo0/s480-no/line3.png" /></p>
+
+<p><img src="https://lh3.googleusercontent.com/-uAA0pRCn7A4/UyVN_vNFk6I/AAAAAAAAAlg/4VsP_MW_QVY/s480-no/line4.png" /></p>
+
+<p>這樣就可以畫出不一樣的線了</p>
+
+<p>改變數字大小,可控制斜率</p>
+
+<p>改變正負號,可以把紅色或藍色的區域反轉過來</p>
+
+<h2 id="perceptron-algorithm">4. Perceptron Algorithm</h2>
+
+<p>接下來,我們要讓電腦自己去學習,該怎麼樣畫一條線把資料分開</p>
+
+<p>Peceptron Algorithm 的概念是這樣</p>
+
+<p>先隨便給一條線,然後再根據這條線分類錯誤做修正</p>
+
+<p>我們先給定<script type="math/tex">w1=1,w2=1</script>畫出一條線,如下圖</p>
+
+<p><img src="https://lh5.googleusercontent.com/-BrKFzf5Qb3U/UyVN_fa8lxI/AAAAAAAAAlc/zZgKHlAfcqY/s480-no/line1.png" /></p>
+
+<p>從上圖中分類錯誤的點中,任意挑一個點 <script type="math/tex">x</script> , </p>
+
+<p>用<script type="math/tex">x</script> 到原點的向量 <script type="math/tex">X</script> ,來修正直線的法向量 <script type="math/tex">W</script></p>
+
+<p>要怎麼修正呢？要看 <script type="math/tex">x</script> 的類別 <script type="math/tex">y</script> 來決定, 調整 <script type="math/tex">W</script>的方向</p>
+
+<p>公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+W\rightarrow W+y\cdot X
+
+</script>
+
+<p>用這個方法就可以改變直線的斜率,把分類錯誤的點 <script type="math/tex">x</script> ,歸到正確的一類,</p>
+
+<p>舉例：</p>
+
+<h4 id="y--1-">1.藍色( <script type="math/tex">y = 1</script> )分類錯誤</h4>
+
+<p><img src="https://lh5.googleusercontent.com/-Jd3-UGYnBb8/UyVggqQjbaI/AAAAAAAAAl8/2vVq2f86GmM/s480-no/pct1_blue_0.png" /></p>
+
+<p>修正後如下</p>
+
+<p><img src="https://lh4.googleusercontent.com/-at-hDPDZwcw/UyVgglyyCrI/AAAAAAAAAmI/x8LDeM-5YB8/s480-no/pct1_blue_1.png" /></p>
+
+<h4 id="y---1-">2.紅色( <script type="math/tex">y = -1</script> )分類錯誤</h4>
+
+<p><img src="https://lh4.googleusercontent.com/-xvvwhbXXjHQ/UyVgjop2GdI/AAAAAAAAAm8/2xH3SYZRlbU/s480-no/pct1_red_0.png" /></p>
+
+<p>修正後如下</p>
+
+<p><img src="https://lh4.googleusercontent.com/-zkoQhjr47aQ/UyVghZHlAgI/AAAAAAAAAmQ/pQSK0S388zk/s480-no/pct1_red_1.png" /></p>
+
+<p>以上結果顯示,<script type="math/tex">W</script> 修正過後, <em>有可能會把原本分類正確的點,分類到錯的一類</em> </p>
+
+<p>所以可能要重複修正好幾次,直到把所有的點都分類正確為止</p>
+
+<p>所以Perceptron的演算法如下：</p>
+
+<p><em>(1) 任選一條線</em> </p>
+
+<p><em>(2) 從這條線中選一個分類錯誤的點x</em></p>
+
+<p><em>(3) 由點x修正線的斜率</em></p>
+
+<p><em>(4) 重複(2)直到所有的點都分類正確</em></p>
+
+<p>我們把這個演算法寫到 <em>perceptron.py</em> 裡</p>
+
+<figure class="code"><figcaption><span>perceptron.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">learn_perceptron</span><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="mi">1000</span><span class="p">):</span>
+</span><span class="line">    <span class="n">w1</span><span class="p">,</span><span class="n">w2</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="mi">1</span>
+</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+</span><span class="line">        <span class="n">ERR</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span><span class="o">*</span><span class="n">X1</span><span class="o">+</span><span class="n">w2</span><span class="o">*</span><span class="n">X2</span><span class="p">)</span> <span class="o">*</span> <span class="n">Y</span> <span class="o">&lt;</span> <span class="mi">0</span>
+</span><span class="line">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span><span class="n">ERR</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">           <span class="n">err_x1</span><span class="p">,</span><span class="n">err_x2</span><span class="p">,</span><span class="n">err_y</span> <span class="o">=</span> <span class="n">X1</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">X2</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">Y</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+</span><span class="line">           <span class="n">w1</span><span class="p">,</span><span class="n">w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x1</span><span class="p">),(</span><span class="n">w2</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x2</span><span class="p">)</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">           <span class="k">print</span> <span class="s">&quot;Complete!&quot;</span>
+</span><span class="line">           <span class="k">break</span><span class="p">;</span>
+</span><span class="line">    <span class="n">plot_data_and_line</span><span class="p">(</span><span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>寫好之後,到interactive mode載入模組後,</p>
+
+<p>其中times是迴圈的最大重複次數,</p>
+
+<p>如果超過這個次數後還沒有完全分類正確,則演算法停止</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">pct</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;perceptron&#39;</span> <span class="kn">from</span> <span class="s">&#39;perceptron.py&#39;</span><span class="o">&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">learn_perceptron</span><span class="p">()</span>
+</span><span class="line"><span class="n">Iteration</span><span class="p">:</span><span class="mi">1</span>
+</span><span class="line"><span class="n">Iteration</span><span class="p">:</span><span class="mi">2</span>
+</span><span class="line"><span class="n">Iteration</span><span class="p">:</span><span class="mi">3</span>
+</span><span class="line"><span class="n">Iteration</span><span class="p">:</span><span class="mi">4</span>
+</span><span class="line"><span class="n">Iteration</span><span class="p">:</span><span class="mi">5</span>
+</span><span class="line"><span class="n">Complete</span><span class="err">!</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>總共執行了五次迴圈,所有的分類就都正確了</p>
+
+<p>執行結果如下：</p>
+
+<p><img src="http://lh4.googleusercontent.com/-LX6ouAzk-wE/UyVggokMcpI/AAAAAAAAAmA/4gNrnGYwlpM/s480-no/learn_1000.png" /></p>
+
+<p>如果想要看看每一次迴圈中修正 <script type="math/tex">W</script> 的情形</p>
+
+<p>以下提供更詳盡過程分解</p>
+
+<p>但程式碼有點長</p>
+
+<figure class="code"><figcaption><span>perceptron.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+<span class="line-number">41</span>
+<span class="line-number">42</span>
+<span class="line-number">43</span>
+<span class="line-number">44</span>
+<span class="line-number">45</span>
+<span class="line-number">46</span>
+<span class="line-number">47</span>
+<span class="line-number">48</span>
+<span class="line-number">49</span>
+<span class="line-number">50</span>
+<span class="line-number">51</span>
+<span class="line-number">52</span>
+<span class="line-number">53</span>
+<span class="line-number">54</span>
+<span class="line-number">55</span>
+<span class="line-number">56</span>
+<span class="line-number">57</span>
+<span class="line-number">58</span>
+<span class="line-number">59</span>
+<span class="line-number">60</span>
+<span class="line-number">61</span>
+<span class="line-number">62</span>
+<span class="line-number">63</span>
+<span class="line-number">64</span>
+<span class="line-number">65</span>
+<span class="line-number">66</span>
+<span class="line-number">67</span>
+<span class="line-number">68</span>
+<span class="line-number">69</span>
+<span class="line-number">70</span>
+<span class="line-number">71</span>
+<span class="line-number">72</span>
+<span class="line-number">73</span>
+<span class="line-number">74</span>
+<span class="line-number">75</span>
+<span class="line-number">76</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="k">def</span> <span class="nf">learn_and_plot</span><span class="p">():</span>
+</span><span class="line">    <span class="n">w1</span><span class="p">,</span><span class="n">w2</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span><span class="mf">1.</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">ion</span><span class="p">()</span>
+</span><span class="line">    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+</span><span class="line">    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">    <span class="n">complete</span><span class="o">=</span><span class="bp">False</span>
+</span><span class="line">    <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+</span><span class="line">    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">clf</span><span class="p">()</span>
+</span><span class="line">        <span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+</span><span class="line">        <span class="n">ERR</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span><span class="o">*</span><span class="n">X1</span><span class="o">+</span><span class="n">w2</span><span class="o">*</span><span class="n">X2</span><span class="p">)</span> <span class="o">*</span> <span class="n">Y</span> <span class="o">&lt;</span> <span class="mi">0</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">complete</span><span class="p">):</span>
+</span><span class="line">            <span class="n">pwa1</span><span class="p">,</span><span class="n">pwa2</span> <span class="o">=</span> <span class="n">pw1</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x1</span><span class="p">,</span><span class="n">pw2</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x2</span>
+</span><span class="line">            <span class="k">if</span> <span class="n">err_y</span> <span class="o">&gt;=</span><span class="mi">0</span><span class="p">:</span>
+</span><span class="line">                <span class="n">eva1</span><span class="p">,</span><span class="n">eva2</span><span class="o">=</span><span class="p">[</span><span class="n">err_x1</span><span class="p">,</span><span class="n">pwa1</span><span class="p">],</span> <span class="p">[</span><span class="n">err_x2</span><span class="p">,</span><span class="n">pwa2</span><span class="p">]</span>
+</span><span class="line">                <span class="n">ac</span><span class="o">=</span><span class="s">&#39;b&#39;</span>
+</span><span class="line">            <span class="k">else</span><span class="p">:</span>
+</span><span class="line">                <span class="n">eva1</span><span class="p">,</span><span class="n">eva2</span><span class="o">=</span><span class="p">[</span><span class="n">err_x1</span><span class="p">,</span><span class="n">pw1</span><span class="p">],</span> <span class="p">[</span><span class="n">err_x2</span><span class="p">,</span><span class="n">pw2</span><span class="p">]</span>
+</span><span class="line">                <span class="n">ac</span><span class="o">=</span><span class="s">&#39;r&#39;</span>
+</span><span class="line">            <span class="n">evb1</span><span class="p">,</span><span class="n">evb2</span><span class="o">=</span><span class="p">[</span><span class="n">pwa1</span><span class="p">,</span><span class="n">pw1</span><span class="p">],</span> <span class="p">[</span><span class="n">pwa2</span><span class="p">,</span><span class="n">pw2</span><span class="p">]</span>
+</span><span class="line">            <span class="n">ax</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">err_x1</span><span class="p">,</span> <span class="n">err_x2</span><span class="p">,</span> <span class="n">head_width</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="n">ac</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="n">ac</span> <span class="p">)</span>
+</span><span class="line">            <span class="n">ax</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pw1</span><span class="p">,</span> <span class="n">pw2</span><span class="p">,</span> <span class="n">head_width</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">ax</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">pwa1</span><span class="p">,</span> <span class="n">pwa2</span><span class="p">,</span> <span class="n">head_width</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">err_x1</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">err_x2</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="s">&#39;X&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">pw1</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">pw2</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="s">&#39;W&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">pwa1</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">pwa2</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span><span class="s">&#39;W+yX&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">eva1</span><span class="p">,</span> <span class="n">eva2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">evb1</span><span class="p">,</span> <span class="n">evb2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl2</span><span class="p">],[</span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">],</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;b&#39;</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">pvx1</span><span class="p">,</span> <span class="n">pvy1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">pvx2</span><span class="p">,</span> <span class="n">pvy2</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span>
+</span><span class="line">        <span class="k">if</span> <span class="n">w2</span> <span class="o">!=</span> <span class="mi">0</span> <span class="p">:</span>
+</span><span class="line">            <span class="n">y1</span><span class="p">,</span><span class="n">y2</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">w1</span><span class="o">*</span><span class="p">(</span><span class="n">xl1</span><span class="p">))</span><span class="o">/</span><span class="n">w2</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="n">w1</span><span class="o">*</span><span class="p">(</span><span class="n">xl2</span><span class="p">))</span><span class="o">/</span><span class="n">w2</span>
+</span><span class="line">            <span class="n">vx1</span><span class="p">,</span><span class="n">vy1</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">y1</span><span class="p">]</span>
+</span><span class="line">            <span class="n">vx2</span><span class="p">,</span><span class="n">vy2</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">y1</span><span class="p">,</span><span class="n">y2</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">y1</span><span class="p">]</span>
+</span><span class="line">        <span class="k">elif</span> <span class="n">w1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">            <span class="n">vx1</span><span class="p">,</span><span class="n">vy1</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl2</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">xl2</span><span class="p">,</span><span class="n">xl2</span><span class="p">],</span> <span class="p">[</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl1</span><span class="p">]</span>
+</span><span class="line">            <span class="n">vx2</span><span class="p">,</span><span class="n">vy2</span> <span class="o">=</span> <span class="p">[</span><span class="n">xl1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">xl1</span><span class="p">,</span><span class="n">xl1</span><span class="p">],</span> <span class="p">[</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl1</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl2</span><span class="p">,</span><span class="n">yl1</span><span class="p">]</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">            <span class="k">print</span> <span class="s">&quot;ERROR, Invalid w1 and w2.&quot;</span>
+</span><span class="line">            <span class="k">return</span><span class="p">;</span>
+</span><span class="line">        <span class="k">if</span>  <span class="n">w2</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">w2</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">w1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+</span><span class="line">            <span class="n">c1</span><span class="p">,</span><span class="n">c2</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span><span class="p">,</span><span class="s">&#39;r&#39;</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">            <span class="n">c1</span><span class="p">,</span><span class="n">c2</span> <span class="o">=</span> <span class="s">&#39;r&#39;</span><span class="p">,</span><span class="s">&#39;b&#39;</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;b&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;o&quot;</span><span class="p">)</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">X1</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">X2</span><span class="p">[</span><span class="n">Y</span><span class="o">&lt;=</span> <span class="mi">0</span><span class="p">],</span> <span class="n">s</span> <span class="o">=</span> <span class="mi">80</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">marker</span> <span class="o">=</span> <span class="s">&quot;^&quot;</span><span class="p">)</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span> <span class="p">(</span><span class="s">&quot;Iteration:</span><span class="si">%s</span><span class="s">, w1 = </span><span class="si">%.5f</span><span class="s">, w2 = </span><span class="si">%.5f</span><span class="s">&quot;</span><span class="p">)</span><span class="o">%</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">)</span> <span class="p">)</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">xl1</span><span class="p">,</span> <span class="n">xl2</span><span class="p">)</span>
+</span><span class="line">        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">yl1</span><span class="p">,</span> <span class="n">yl2</span><span class="p">)</span>
+</span><span class="line">        <span class="k">if</span> <span class="ow">not</span> <span class="n">complete</span><span class="p">:</span>
+</span><span class="line">            <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">            <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">            <span class="nb">raw_input</span><span class="p">(</span><span class="s">&quot;Please press ENTER to update the result of iteration.&quot;</span><span class="p">)</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vx1</span><span class="p">,</span> <span class="n">vy1</span><span class="p">,</span> <span class="n">c1</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">)</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">vx2</span><span class="p">,</span> <span class="n">vy2</span><span class="p">,</span> <span class="n">c2</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">)</span>
+</span><span class="line">        <span class="n">pw1</span><span class="p">,</span><span class="n">pw2</span><span class="p">,</span><span class="n">pvx1</span><span class="p">,</span><span class="n">pvy1</span><span class="p">,</span><span class="n">pvx2</span><span class="p">,</span><span class="n">pvy2</span> <span class="o">=</span> <span class="n">w1</span><span class="p">,</span><span class="n">w2</span><span class="p">,</span><span class="n">vx1</span><span class="p">,</span><span class="n">vy1</span><span class="p">,</span><span class="n">vx2</span><span class="p">,</span><span class="n">vy2</span>
+</span><span class="line">        <span class="c">#----Perceptron Algorithm-------# </span>
+</span><span class="line">        <span class="n">ERR</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span><span class="o">*</span><span class="n">X1</span><span class="o">+</span><span class="n">w2</span><span class="o">*</span><span class="n">X2</span><span class="p">)</span> <span class="o">*</span> <span class="n">Y</span> <span class="o">&lt;</span> <span class="mi">0</span>
+</span><span class="line">        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span><span class="n">ERR</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class="line">           <span class="n">err_x1</span><span class="p">,</span><span class="n">err_x2</span><span class="p">,</span><span class="n">err_y</span> <span class="o">=</span> <span class="n">X1</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">X2</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span><span class="n">Y</span><span class="p">[</span><span class="n">ERR</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+</span><span class="line">           <span class="n">w1</span><span class="p">,</span><span class="n">w2</span> <span class="o">=</span> <span class="p">(</span><span class="n">w1</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x1</span><span class="p">),(</span><span class="n">w2</span><span class="o">+</span><span class="n">err_y</span><span class="o">*</span><span class="n">err_x2</span><span class="p">)</span>
+</span><span class="line">        <span class="k">else</span><span class="p">:</span>
+</span><span class="line">           <span class="k">if</span> <span class="n">complete</span><span class="p">:</span>
+</span><span class="line">               <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">((</span><span class="s">&quot;Complete! Iteration:</span><span class="si">%s</span><span class="s">, w1 = </span><span class="si">%.5f</span><span class="s">, w2 = </span><span class="si">%.5f</span><span class="s">&quot;</span><span class="p">)</span><span class="o">%</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">))</span>
+</span><span class="line">               <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">               <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">               <span class="k">print</span> <span class="s">&quot;Complete!&quot;</span>
+</span><span class="line">               <span class="k">break</span>
+</span><span class="line">           <span class="k">else</span><span class="p">:</span>
+</span><span class="line">              <span class="n">complete</span><span class="o">=</span><span class="bp">True</span>
+</span><span class="line">        <span class="c">#-----------------------#</span>
+</span><span class="line">        <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</span><span class="line">        <span class="n">fig</span><span class="o">.</span><span class="n">set_size_inches</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+</span><span class="line">        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+</span><span class="line">        <span class="nb">raw_input</span><span class="p">(</span><span class="s">&quot;Please press ENTER to start the next iteration.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後,到interactive mode跑看看這個function</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">reload</span><span class="p">(</span><span class="n">pct</span><span class="p">)</span>
+</span><span class="line"><span class="o">&lt;</span><span class="n">module</span> <span class="s">&#39;perceptron&#39;</span> <span class="kn">from</span> <span class="s">&#39;perceptron.py&#39;</span><span class="o">&gt;</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pct</span><span class="o">.</span><span class="n">learn_and_plot</span><span class="p">()</span>
+</span><span class="line"><span class="n">Please</span> <span class="n">press</span> <span class="n">ENTER</span> <span class="n">to</span> <span class="n">update</span> <span class="n">the</span> <span class="n">result</span> <span class="n">of</span> <span class="n">iteration</span><span class="o">.</span>
+</span><span class="line"><span class="n">Please</span> <span class="n">press</span> <span class="n">ENTER</span> <span class="n">to</span> <span class="n">start</span> <span class="n">the</span> <span class="nb">next</span> <span class="n">iteration</span><span class="o">.</span>
+</span><span class="line"><span class="o">....</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>進行完每次計算時,程式會把圖畫出來</p>
+
+<p>然後程式會暫停,要按下ENTER才能繼續進行下一步</p>
+
+<p>執行結果如下：</p>
+
+<p><img src="https://lh5.googleusercontent.com/-0pliSS4phQs/UyVmQGxv6DI/AAAAAAAAAp8/-OdPv9EsFAM/s480-no/pct_motion_1.gif" /></p>
+
+<h2 id="further-reading">5. Further Reading</h2>
+
+<p>以上是Perceptron Algorithm很簡單的介紹</p>
+
+<p>但其實Perceptron Algorithm有其他變化形式</p>
+
+<p>例如,如果有noise存在的時候,本篇介紹的演算法就無法求得最佳解</p>
+
+<p>就要用其他的變化形式來處理</p>
+
+<p>想要看更多相關介紹,請到coursera上線上課程</p>
+
+<h4 id="andrew-ng-machine-learning">1.Andrew Ng. Machine Learning</h4>
+
+<p>https://www.coursera.org/course/ml</p>
+
+<h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
+
+<p>https://www.coursera.org/course/ntumlone</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-15T11:28:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:28 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/machine-learning/'>machine_learning</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/15/machine-learning-perceptron-algorithm/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/15/machine-learning-perceptron-algorithm/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/15/logisti-regression-model/" title="Previous Post: 機器學習 -- Logistic Regression Model (3D)">&laquo; 機器學習 -- Logistic Regression Model (3D)</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/18/python-functional-programming-style-1/" title="Next Post: Python -- Functional Programming Style 1">Python -- Functional Programming Style 1 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

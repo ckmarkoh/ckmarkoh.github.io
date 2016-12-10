@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>資訊檢索 -- Boolean Retrieval - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Information Retrieval 所謂的資訊檢索（ Information Retrieval )，就是從大量非結構的資料，例如網頁，根據某些關鍵字，找出具有此關鍵字的文件。例如，搜尋引擎，即是一種資訊檢索的應用。 資訊檢索的演算法，其實跟我們要在某本書中，找尋某個字的方法差不多。 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2015/02/09/-information-retrieval-boolean-retrieval/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">資訊檢索 -- Boolean Retrieval</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-09T00:27:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>12:27 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="information-retrieval">Information Retrieval</h2>
+
+<p>所謂的資訊檢索（ <em>Information Retrieval</em> )，就是從大量非結構的資料，例如網頁，根據某些關鍵字，找出具有此關鍵字的文件。例如，搜尋引擎，即是一種資訊檢索的應用。</p>
+
+<p>資訊檢索的演算法，其實跟我們要在某本書中，找尋某個字的方法差不多。</p>
+
+<p>例如我們想在 <em>Introduction to Information Retrieval</em> 這本教科書中，找到 <em>informational queries</em> 這個詞在哪一頁，如果從第一頁開始，一個字一個字慢慢找，要比對成千上萬個字才能找到。</p>
+
+<p>但如果我們翻到書本後面的 <em>Index</em> （如下） ，即可很快找到 <em>informational queries</em> 這個字是在第 <em>432</em> 頁。</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">...
+</span><span class="line">information gain, 285 
+</span><span class="line">information need, 5, 152 
+</span><span class="line">information retrieval, 1 
+</span><span class="line">informational queries, 432 
+</span><span class="line">inner product, 121 
+</span><span class="line">...
+</span></code></pre></td></tr></table></div></figure>
+
+<p>所以，資訊檢索，最核心的概念就是建立 <em>Index</em> ，這樣就可以快速找到哪些文件中具有某個關鍵字。</p>
+
+<!--more-->
+
+<h2 id="boolean-retrieval">Boolean Retrieval</h2>
+
+<p>最基本的資訊檢索方法，就是 <em>Boolean Retrieval</em> 。它用 <em>boolean logic</em> 的概念，來建立 <em>index</em> 和執行 <em>query</em> 。</p>
+
+<p>舉個例子，假設有三篇文劍，內容分別如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>文件</th>
+      <th>內容</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>D1</td>
+      <td>The way to avoid linearly scanning is to index the documents in advance.</td>
+    </tr>
+    <tr>
+      <td>D2</td>
+      <td>The model views each document as just a set of words.</td>
+    </tr>
+    <tr>
+      <td>D3</td>
+      <td>We will discuss and model these size assumption.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>根據這些文字，我們可以建立 <em>Term-Document Matrix</em> ，記錄哪個字出現在哪篇文章，如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Term</th>
+      <th>D1</th>
+      <th>D2</th>
+      <th>D3</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>way</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>avoid</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>linear</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>scan</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>index</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>document</td>
+      <td>1</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>advance</td>
+      <td>1</td>
+      <td>0</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>model</td>
+      <td>0</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>view</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>set</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>word</td>
+      <td>0</td>
+      <td>1</td>
+      <td>0</td>
+    </tr>
+    <tr>
+      <td>discuss</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>size</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>assumption</td>
+      <td>0</td>
+      <td>0</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>此表格用 <em>boolean</em> 值來表示某個字出現在哪幾篇文章，例如， <em>way</em> 出現在文件 <em>D1</em> ，而沒出現在 <em>D2</em> 和 <em>D3</em> ，所以它的值為 <em>1 0 0</em> 。</p>
+
+<p>為了避免此表格過大，建立過多無意義的 <em>index</em> ，因此運用了以下兩個原則：</p>
+
+<pre><code>1. 忽略 *the* , *a* 這些高頻字（ 這種字稱為 *stop word* ）
+
+2. 將有形態變化的字轉為原型，例如把 *views* 轉為 *view* （ 此過程稱為 *stemming* ） 
+</code></pre>
+
+<p>建立了 <em>Term-Document Matrix</em> 之後，就可以用關鍵字來查詢</p>
+
+<p><strong>1.查詢 <em>way</em> 這個字，可得出 <em>way</em> 的值為：</strong></p>
+
+<script type="math/tex; mode=display">
+
+way = [1,0,0] 
+
+</script>
+
+<p>所以 <em>way</em> 出現在 <em>D1</em> 。</p>
+
+<p><strong>2.查詢沒有 <em>way</em> 這個字的，可用以下的 <em>boolean</em> 運算得出結果：</strong></p>
+
+<script type="math/tex; mode=display">
+
+\neg way = \neg ([1,0,0]) = [0 ,1, 1]
+
+</script>
+
+<p>所以沒有 <em>way</em> 的文件為 <em>D2</em> 、 <em>D3</em> 。</p>
+
+<p><strong>3.查詢包含 <em>document</em> 和 <em>model</em> 這兩個字都有文件：</strong></p>
+
+<script type="math/tex; mode=display">
+
+document \wedge model  = [1,1,0] \wedge [0,1,1] = [0 ,1, 0]
+
+</script>
+
+<p>得出結果為 <em>D2</em> 。</p>
+
+<p><strong>4.查詢有 <em>avoid</em> 或 <em>view</em> 其中一個字的文件：</strong></p>
+
+<script type="math/tex; mode=display">
+
+avoid \vee view  = [1,0,0] \vee [0,1,0] = [1 ,1, 0]
+
+</script>
+
+<p>得出結果為 <em>D1</em> 和 <em>D2</em> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考教科書 <em>Introduction to Information Retrieval</em></p>
+
+<p>http://nlp.stanford.edu/IR-book/</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2015-02-09T00:27:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>12:27 am</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2015/02/09/-information-retrieval-boolean-retrieval/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2015/02/09/-information-retrieval-boolean-retrieval/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/10/27/machine-translation-statistical-machine-translation/" title="Previous Post: 機器翻譯 -- Statistical Machine Translation">&laquo; 機器翻譯 -- Statistical Machine Translation</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2015/02/21/mt-ibm-model-1/" title="Next Post: 機器翻譯 -- IBM Model 1">機器翻譯 -- IBM Model 1 &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,463 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>自然語言處理 -- Pointwise Mutual Information - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息 例如, 在新聞報導中, 有 New , York , 這兩個字一起出現, 可以代表一個地名 New York , 所以當出現了 New &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">自然語言處理 -- Pointwise Mutual Information</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-25T17:58:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:58 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息</p>
+
+<p>例如, 在新聞報導中, 有 <em>New</em> , <em>York</em>  , 這兩個字一起出現, 可以代表一個地名 <em>New York</em>  , 所以當出現了 <em>New</em> 這個字, 則有可能出現 <em>York</em> </p>
+
+<p>這可以用 <em>Pointwise Mutual Information(PMI)</em> 計算</p>
+
+<p><em>Pointwise Mutual Information</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
+
+</script>
+
+<!--more-->
+
+<p>其中, <script type="math/tex">P(x,y)</script> 代表文字 <em>x</em> 和文字 <em>y</em> 一起出現的機率, 而 <script type="math/tex">P(x)</script> 為文字 <em>x</em> 出現的機率 , <script type="math/tex">P(y)</script> 為文字 <em>y</em> 出現的機率</p>
+
+<p>如果某兩個字的出現是獨立事件, 則 <em>PMI</em> 為 <em>0</em></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& P(x,y) = P(x) \times P(y)\\
+
+& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} = log \frac{P(x) \times P(y)}{P(x) \times P(y)} =log1=0
+
+\end{align}
+
+ %]]></script>
+
+<p>若有兩個字出現的機率不是獨立事件, 某個字出現時提昇另一個字的出現的機率, 則 <em>PMI</em> 大於 <em>0</em></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& P(x,y) > P(x) \times P(y)\\
+
+& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} > 0
+
+\end{align}
+
+ %]]></script>
+
+<p>也就是說, 如果這兩個字的出現越不是偶然, 則 <em>Pointwise Mutual Information</em> 算出來的值越高, 越有可能帶有某種訊息</p>
+
+<p>舉個例子, 以下為一個表格, 統計一篇文章中, 某些字是否一起出現</p>
+
+<p>表格中的數字, 代表左方的字和上方的字, 一起出現的次數</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+    \begin{array}{|c|c|}
+
+    \hline            &  \text{computer}  &  \text{data}  & \text{pinch}  & \text{result}  & \text{sugar} \\
+
+\hline \text{aprocot}    &  0        &    0    &   1    &     0   &     1 \\
+
+\hline \text{pineapple}  &  0        &    0    &   1    &     0   &     1 \\
+
+\hline \text{digital}    &  2        &    1    &   0    &     1   &     0 \\
+
+\hline \text{information} &  1       &    6    &   0    &     4   &     0 \\
+
+\hline
+
+	\end{array}
+
+ %]]></script>
+
+<p>如果這篇文章總共只有 <em>19</em> 個字, 來計算 <em>information</em> 和 <em>data</em> 這兩字的 <em>PMI</em> , 得出</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& P(x = information,y=data) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6}{19} 
+
+\mspace{5mu}=\mspace{5mu} 0.32 \\
+
+& P(x = information ) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6+4+1}{19} 
+
+\mspace{5mu}=\mspace{5mu} \frac{11}{19} 
+
+\mspace{5mu}=\mspace{5mu} 0.58 \\
+
+& P(y = data ) 
+
+\mspace{5mu}=\mspace{5mu} \frac{6+1}{19} 
+
+\mspace{5mu}=\mspace{5mu} \frac{7}{19}  
+
+\mspace{5mu}=\mspace{5mu} 0.37 \\[10pt]
+
+& pmi(x = information,y = data)  \\
+
+& \mspace{5mu}=\mspace{5mu} log\frac{P(x =information,y=data)}{P(x=information)\times P(y=data)} \\
+
+&\mspace{5mu}=\mspace{5mu} log1.49 \\
+
+&\mspace{5mu}=\mspace{5mu} 0.57  \\
+
+\end{align}
+
+ %]]></script>
+
+<p>算出來的數字大於 0 , 表示 <em>information</em> 和 <em>data</em> 這兩個字的出現, 不是獨立事件</p>
+
+<h2 id="implementation">2.Implementation</h2>
+
+<p>我們用 <code>python nltk</code> 的 <em>brown corpus</em> 新聞類別文章, 來計算 <em>New</em> , <em>York</em> 的 <em>PMI</em> 和 <em>New</em> , <em>The</em> 的 <em>PMI</em> , 並比較兩者差異</p>
+
+<p>將以下程式碼複製到 <em>pmi.py</em> 這個檔案</p>
+
+<figure class="code"><figcaption><span>pmi.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">import</span> <span class="nn">nltk</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">nltk.corpus</span> <span class="kn">import</span> <span class="n">brown</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">WordNetLemmatizer</span>
+</span><span class="line"><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">log</span>
+</span><span class="line"><span class="n">wnl</span><span class="o">=</span><span class="n">WordNetLemmatizer</span><span class="p">()</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line"><span class="n">_Fdist</span> <span class="o">=</span> <span class="n">nltk</span><span class="o">.</span><span class="n">FreqDist</span><span class="p">([</span><span class="n">wnl</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">w</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">brown</span><span class="o">.</span><span class="n">words</span><span class="p">(</span><span class="n">categories</span><span class="o">=</span><span class="s">&#39;news&#39;</span><span class="p">)])</span>
+</span><span class="line">
+</span><span class="line"><span class="n">_Sents</span> <span class="o">=</span> <span class="p">[[</span><span class="n">wnl</span><span class="o">.</span><span class="n">lemmatize</span><span class="p">(</span><span class="n">j</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">brown</span><span class="o">.</span><span class="n">sents</span><span class="p">(</span><span class="n">categories</span><span class="o">=</span><span class="s">&#39;news&#39;</span><span class="p">)]</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span class="line">       <span class="k">return</span> <span class="n">_Fdist</span><span class="p">[</span><span class="n">x</span><span class="p">]</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_Fdist</span><span class="p">))</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">pxy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">       <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span> <span class="p">:</span>  <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span> <span class="ow">and</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">s</span> <span class="p">,</span><span class="n">_Sents</span><span class="p">))</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_Sents</span><span class="p">)</span> <span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">def</span> <span class="nf">pmi</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+</span><span class="line">       <span class="k">return</span>  <span class="n">log</span><span class="p">(</span><span class="n">pxy</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">p</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">p</span><span class="p">(</span><span class="n">y</span><span class="p">)),</span><span class="mi">2</span><span class="p">)</span>
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <code>_Fdist </code> 是單字出現的頻率 , <code>_Sents</code> 是文章中所有的句子 , <code>p(x)</code> 計算單字 <em>x</em> 出現的機率,  ` pxy(x,y)<code> 計算單字 *x* 和單字 *y* 出現在同一個句子的機率, </code>pmi(x,y)` 計算單字 <em>x</em> 和單字 <em>y</em> 的 <em>Pointwise Mutual Information</em> </p>
+
+<p>到 <em>python</em> 的 <em>interactive mode</em> 載入這個檔案</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">pmi</span> <span class="kn">import</span> <span class="o">*</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>先來計算 <em>new</em> 和 <em>york</em> 各別出現的機率</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="p">(</span><span class="s">&#39;new&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.020265724857046755</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="p">(</span><span class="s">&#39;york&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.004372687521022536</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>計算 <em>new</em> , <em>york</em> 出現在同一句子的機率</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pxy</span><span class="p">(</span><span class="s">&#39;new&#39;</span><span class="p">,</span><span class="s">&#39;york&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.011031797534068787</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>計算 <em>new</em> , <em>york</em> 的 <em>PMI</em></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pmi</span><span class="p">(</span><span class="s">&#39;new&#39;</span><span class="p">,</span><span class="s">&#39;york&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">6.959890136179789</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來看看, <em>new</em> , <em>the</em> 出現在同一句子的機率</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pxy</span><span class="p">(</span><span class="s">&#39;new&#39;</span><span class="p">,</span><span class="s">&#39;the&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.04023361453601557</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>比 <em>new</em> , <em>york</em> 出現在同一句子的機率還高, 但是因為 <em>the</em> 出現次數較多</p>
+
+<p>算一下 <em>the</em> 出現的機率</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">p</span><span class="p">(</span><span class="s">&#39;the&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">0.5369996636394214</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>計算<em>new</em> , <em>the</em> 的 <em>PMI</em> , 還是沒有比 <em>new</em> , <em>york</em> 高</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">pmi</span><span class="p">(</span><span class="s">&#39;new&#39;</span><span class="p">,</span><span class="s">&#39;the&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="mf">1.8863664858873235</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上結果顯示, <em>PMI</em> 可以得出, <em>new</em> 和 <em>york</em> 一起出現的情形, 比較不是偶然的事件, 表示這兩個詞一起出現可能帶有較多訊息</p>
+
+<p>雖然 <em>new</em> 和 <em>the</em> 出現的頻率比較多, 但同時 <em>the</em> 出現的頻率也比較多, 計算結果 <em>PMI</em> 可以把 <em>the</em> 的出現頻率除掉, 得出 <em>new</em> 和 <em>the</em> 的出現, 比較像是獨立事件</p>
+
+<h2 id="reference">3.Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="d-jurafsky-and-c-manning--natural-language-processing">D. Jurafsky, and C. Manning.  Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlp</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-25T17:58:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:58 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/mutual-information/'>mutual_information</a>, <a class='category' href='/blog/categories/natural-language-processing/'>natural_language_processing</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/23/python-built-in-functions-exec/" title="Previous Post: Python Built-in Functions -- eval and execute">&laquo; Python Built-in Functions -- eval and execute</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/26/natural-language-processing-chart-parsing/" title="Next Post: 自然語言處理 -- Chart Parsing">自然語言處理 -- Chart Parsing &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

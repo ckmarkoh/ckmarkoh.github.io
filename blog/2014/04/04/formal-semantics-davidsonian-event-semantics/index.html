@@ -1,0 +1,528 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>形式語意學 -- Davidsonian Event Semantics - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="1.Introduction 所謂的形式語義學( Formal Semantics ), 是在研究, 如何把自然語言用邏輯形式來表達 例如以下句子 傳統上, 用一皆邏輯 First Order Logic 可以把這個句子表示成這樣 其中, butter 這個邏輯式的predicate, 而 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">形式語意學 -- Davidsonian Event Semantics</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-04T17:13:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的形式語義學( <em>Formal Semantics</em> ), 是在研究, 如何把自然語言用邏輯形式來表達</p>
+
+<p>例如以下句子</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\text{John buttered the toast.} &(1.a)
+
+\end{align}
+
+ %]]></script>
+
+<p>傳統上, 用一皆邏輯 <em>First Order Logic</em> 可以把這個句子表示成這樣</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&butter(John,toast) &(1.b)
+
+\end{align}
+
+ %]]></script>
+
+<!--more-->
+
+<p>其中, <em>butter</em> 這個邏輯式的predicate, 而 <em>John</em> 和 <em>toast</em> 分別是argument, 這個邏輯式表示了 <em>John</em> 和 <em>toast</em> 的關係, </p>
+
+<p>當這句話為真的時候, </p>
+
+<script type="math/tex; mode=display">
+
+butter(John,toast) \equiv True
+
+</script>
+
+<p>如果現在句子是這樣, 有個介繫詞片語修飾, 例如：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\text{John butterd the toast with the knife} &(2.a) 
+
+\end{align}
+
+ %]]></script>
+
+<p>則可以把 <script type="math/tex">(1.b)</script> 的一階邏輯式,再加入一個論元 (argument) 擴充成這樣</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&butter(John,toast,knife) &(2.b) 
+
+\end{align}
+
+ %]]></script>
+
+<p>但這方法有個缺點, 就是無法推論 <script type="math/tex">(2.b)</script> 這個邏輯式是否蘊含 <script type="math/tex">(1.b)</script></p>
+
+<script type="math/tex; mode=display">
+
+butter(John,toast,knife) \nrightarrow butter(John,toast)
+
+</script>
+
+<p>而事實上, <script type="math/tex">(2.a)</script> 這句話蘊含 <script type="math/tex">(1.a)</script> , 是成立的</p>
+
+<script type="math/tex; mode=display">
+
+\text{John butterd the toast with the knife} \rightarrow \text{John buttered the toast.}
+
+</script>
+
+<p>照理說, 邏輯式要可以表達這些自然語言中的蘊含關係</p>
+
+<p>因此就要想出一個邏輯表達方法, 也可以讓這些蘊含推論成立</p>
+
+<h2 id="davidsonian-event-semantics">2.Davidsonian event semantics</h2>
+
+<p><em>Davidson</em> 在 1969 年提出了 <em>event</em> 的概念 </p>
+
+<blockquote>
+  <p>what adverbial clauses modify is not verbs but the events that certain verbs introduce.
+Davidson (1969/1980: 167)</p>
+</blockquote>
+
+<p>意思就是, 修飾動詞的修飾語, 其實是在修飾這個動詞引出的事件</p>
+
+<p>例如, 針對句子 <script type="math/tex">(1.a)</script>  , 可以把動詞 <em>butter</em> 引出的事件定為 <script type="math/tex">e</script> , 並加到 <script type="math/tex">(1.b)</script> 中 <em>butter</em>的argument,如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\exists e  (butter(John,toast,e)) &(1.c)
+
+\end{align}
+
+ %]]></script>
+
+<p>其中, 式子前面的 <script type="math/tex">\exists e</script> 表示, 當這個式子成立的時候, 存在 <script type="math/tex">e</script> 這樣一個事件</p>
+
+<p>然後, 句子 <script type="math/tex">(2.a)</script> 的邏輯式也可以用 <em>event</em> 的概念擴充, 可以把修飾語 <em>with a knife</em> 替換成 <script type="math/tex">instr(e,knife)</script>,  表示執行這個 <em>event</em> 的 <em>instrument</em> 為 <em>knife</em> , 如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\exists e  (butter(John,toast,e)\wedge instr(e,knife)) &(2.c)
+
+\end{align}
+
+ %]]></script>
+
+<p>來檢查一下邏輯式 <script type="math/tex">(2.c)</script> 是否蘊含 <script type="math/tex">(1.c)</script></p>
+
+<script type="math/tex; mode=display">
+
+\exists e  (butter(John,toast,e)\wedge instr(e,knife)) \rightarrow \exists e  (butter(John,toast,e))
+
+</script>
+
+<p>以上蘊含成立</p>
+
+<p>除此之外, 一個動詞可能同時被很多個介繫詞片與修飾, 例如以下句子</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+\text{John buttered the toast in the bathroom with the knife at midnight} &(3.a)
+
+\end{align}
+
+ %]]></script>
+
+<p><script type="math/tex">(3.a)</script> 不但蘊含 <script type="math/tex">(2.a)</script> 也蘊含 <script type="math/tex">(1.a)</script></p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\text{John buttered the toast in the bathroom with the knife at midnight} &(3.a) \\
+
+&\rightarrow  
+
+\text{John butterd the toast with the knife} &(2.a)  \\
+
+&\rightarrow 
+
+\text{John buttered the toast.} &(1.a) \\
+
+\end{align}
+
+ %]]></script>
+
+<p>這種句子如果用沒有引入 <em>event</em> 的概念, 用 <script type="math/tex">(2.b)</script> 的傳統邏輯式子, 問題就更大了</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&butter(John,toast,knife,bathroom,midnight) &(3.b) 
+
+\end{align}
+
+ %]]></script>
+
+<p>這樣的話, 我們就要定義 <em>butter</em> 可以接收很多個argument, 且要定好哪個位置是填給哪一種修飾語用的, 當然, <script type="math/tex">(3.b)</script> 蘊含 <script type="math/tex">(2.b)</script> 的推論也不成立</p>
+
+<p>用 <em>event</em> 的概念就簡單很多了, 不用修改到 <em>butter</em> 的argument, 只要把修飾語轉換成修飾 <script type="math/tex">e</script> 的predicate, 並和 <em>butter</em> 做conjunction, 就可以了, 如下</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\exists e  (butter(John,toast,e)\wedge instr(e,knife) \wedge in(e,bathroom) \wedge at(e,midnight) ) &(3.c)
+
+\end{align} 
+
+ %]]></script>
+
+<p>而且 <script type="math/tex">(3.c)</script> 蘊含 <script type="math/tex">(2.c)</script> 也蘊含 <script type="math/tex">(1.c)</script> </p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\exists e  (butter(John,toast,e)\wedge instr(e,knife) \wedge in(e,bathroom) \wedge at(e,midnight) ) &(3.c) \\
+
+&\rightarrow \exists e  (butter(John,toast,e)\wedge instr(e,knife)) &(2.c) \\
+
+&\rightarrow \exists e  (butter(John,toast,e)) &(1.c) \\
+
+\end{align}
+
+ %]]></script>
+
+<h2 id="implementation">3.Implementation</h2>
+
+<p>來載入模組, 實作看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk.sem.logic</span> <span class="kn">as</span> <span class="nn">logic</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">Prover9</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">lgp</span> <span class="o">=</span> <span class="n">logic</span><span class="o">.</span><span class="n">LogicParser</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用前面提到的句子和邏輯式子來做練習</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&\text{John buttered the toast.} &(1.a) \\
+
+&\text{John butterd the toast with the knife} &(2.a)  \\
+
+&\text{John buttered the toast in the bathroom with the knife at midnight} &(3.a) \\
+
+\\
+
+& \exists e  (butter(John,toast,e)) &(1.c) \\
+
+& \exists e  (butter(John,toast,e)\wedge instr(e,knife)) &(2.c) \\
+
+&\exists e  (butter(John,toast,e)\wedge instr(e,knife) \wedge in(e,bathroom) \wedge at(e,midnight) ) &(3.c) \\
+
+\end{align}
+
+ %]]></script>
+
+<p>把 <script type="math/tex">(1.a)</script> , <script type="math/tex">(2.a)</script> , <script type="math/tex">(3.a)</script> , 這三句話的邏輯式  <script type="math/tex">(1.c)</script> , <script type="math/tex">(2.c)</script> , <script type="math/tex">(3.c)</script> 分別輸入到LogicParser, 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">a1</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;exists e ( butter(John,toast,e))&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">a2</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;exists e ( butter(John,toast,e) &amp; instr(e,knife) )&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">a3</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">&#39;exists e (butter(John,toast,e) &amp; instr(e,knife) &amp; in (e,bathroom) &amp; at(e,midnight) )&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>接著來看看句子 <script type="math/tex">(1.a)</script> 和 <script type="math/tex">(2.a)</script> 的蘊含關係</p>
+
+<p>用 <code>Prover9()</code> 來證明, 我們把未知值的句子放在第一個argument ,  已知為真的句子放在第二個argument中</p>
+
+<p>例如, 想要證明當  <script type="math/tex">(2.a)</script> 為真時, <script type="math/tex">(1.a)</script> 是否為真, 輸入方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">Prover9</span><span class="p">()</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="p">[</span><span class="n">a2</span><span class="p">])</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果顯示, 當 <script type="math/tex">(2.a)</script> 為真, <script type="math/tex">(1.a)</script> 必為真, 表示 <script type="math/tex">(2.a)</script>  蘊含 <script type="math/tex">(1.a)</script> </p>
+
+<p>把 <script type="math/tex">(2.a)</script> 和 <script type="math/tex">(1.a)</script> 對調</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">Prover9</span><span class="p">()</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="p">[</span><span class="n">a1</span><span class="p">])</span>
+</span><span class="line"><span class="bp">False</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果顯示, <script type="math/tex">(1.a)</script> 蘊含 <script type="math/tex">(2.a)</script> 不成立</p>
+
+<p>然後來看看 <script type="math/tex">(3.a)</script> 和 <script type="math/tex">(2.a)</script> 以及 <script type="math/tex">(1.a)</script> 的蘊含關係</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">Prover9</span><span class="p">()</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="p">[</span><span class="n">a3</span><span class="p">])</span>
+</span><span class="line"><span class="bp">True</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">Prover9</span><span class="p">()</span><span class="o">.</span><span class="n">prove</span><span class="p">(</span><span class="n">a1</span><span class="p">,</span> <span class="p">[</span><span class="n">a3</span><span class="p">])</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果顯示, <script type="math/tex">(3.a)</script> 蘊含 <script type="math/tex">(2.a)</script> 也蘊含 <script type="math/tex">(1.a)</script></p>
+
+<h2 id="reference">4. Reference</h2>
+
+<p>本文參考至以下這本語意學書籍</p>
+
+<p><a href="http://www.amazon.com/Semantics-International-Handbooks-Linguistics-Communication/dp/3110184702">Semantics: An International Handbook of Natural Language Meaning</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-04-04T17:13:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/logic/'>logic</a>, <a class='category' href='/blog/categories/semantics/'>semantics</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/" title="Previous Post: 自然語言處理 -- Hidden Markov Model">&laquo; 自然語言處理 -- Hidden Markov Model</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/" title="Next Post: 自然語言處理 -- Viterbi Algorithm">自然語言處理 -- Viterbi Algorithm &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

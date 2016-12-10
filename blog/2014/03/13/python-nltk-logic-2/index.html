@@ -1,0 +1,473 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Python Nltk -- Logic 2 : Lambda Calculus - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus 1.introduction 邏輯語意學在語意推導方面,通常會用到 使用就可以把一個句子的語意,從個別單字中推導出來 至於 是什麼呢？ 簡而言之,lambda calculus是一種數學運算,由以下三種元素組成 &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2014/03/13/python-nltk-logic-2/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Python Nltk -- Logic 2 : Lambda Calculus</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-13T14:09:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:09 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus</p>
+
+<h2 id="introduction">1.introduction</h2>
+
+<p>邏輯語意學在語意推導方面,通常會用到 <script type="math/tex">\lambda -calculus</script></p>
+
+<p>使用<script type="math/tex">\lambda -calculus</script>就可以把一個句子的語意,從個別單字中推導出來</p>
+
+<p>至於<script type="math/tex">\lambda -calculus</script> 是什麼呢？</p>
+
+<p>簡而言之,lambda calculus是一種數學運算,由以下三種元素組成</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+
+& v  & (a)\\
+
+& \lambda x.f(x)  & (b)\\
+
+& \lambda x.f(x)(v) & (c)\\
+
+
+\end{align}
+
+ %]]></script>
+
+<p><script type="math/tex">(a)</script> 是 <script type="math/tex">variable</script></p>
+
+<p><script type="math/tex">(b)</script> 是 <script type="math/tex">astraction</script> ,就是把function中的variable拿到前面,加個 <script type="math/tex">\lambda</script></p>
+
+<p><script type="math/tex">(c)</script> 是將另一個 <script type="math/tex">variable</script> 放到 <script type="math/tex">astraction</script> 後面</p>
+
+<p>然後可以進行一種運算,叫做 <script type="math/tex">\beta-reduction</script> ,如下</p>
+
+<script type="math/tex; mode=display">
+
+\lambda x.f(x)(v)
+
+\Rightarrow f(v)
+
+</script>
+
+<p>還有另一種運算叫做 <script type="math/tex">\alpha-conversion</script> ,其實就是更改變數名稱而已</p>
+
+<script type="math/tex; mode=display">
+
+\lambda x.f(x)
+
+\Rightarrow \lambda y.f(y)
+
+</script>
+
+<!--more-->
+
+<p><script type="math/tex">\lambda -calculus</script> 也是計算理論的一種,和Turing Machine等價</p>
+
+<p>實際上以 <script type="math/tex">\lambda -calculus</script> 實現的程式語言有Functional Programming,例如Lisp或Haskell</p>
+
+<h2 id="lambda-expression">2. lambda expression</h2>
+
+<p>接著來實作untyped lambda calculus,</p>
+
+<p>首先,載入模組 <code>nltk.sem.logic</code> 和 <code>LogicParser</code></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">nltk.sem.logic</span> <span class="kn">as</span> <span class="nn">logic</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">lgp</span> <span class="o">=</span> <span class="n">logic</span><span class="o">.</span><span class="n">LogicParser</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再看看 <script type="math/tex">\lambda</script> 要用哪個符號</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">logic</span><span class="o">.</span><span class="n">binding_ops</span><span class="p">()</span>
+</span><span class="line"><span class="n">existential</span>    	<span class="n">exists</span>
+</span><span class="line"><span class="n">universal</span>      	<span class="nb">all</span>
+</span><span class="line"><span class="k">lambda</span>         	\
+</span></code></pre></td></tr></table></div></figure>
+
+<p>要表示lambda <script type="math/tex">\lambda</script> 符號,要用 <code>\</code> 字串</p>
+
+<p>然後,用<code>LogicParser</code>來輸入這個式子：<script type="math/tex">e1=\lambda x.P(x)</script></p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e1</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x.P(x)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e1</span>
+</span><span class="line">\<span class="n">x</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="alpha-conversion">3. alpha conversion</h2>
+
+<p>再來試試看<script type="math/tex">\alpha-conversion</script> : <script type="math/tex">\exists x.P(x) \Rightarrow \exists z.P(z)</script></p>
+
+<p>從以下結果得知,<script type="math/tex">\alpha-conversion</script> 轉換前和轉換後,在邏輯上是相等</p>
+
+<p>因為只是更改變數名稱而已</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e2</span> <span class="o">=</span> <span class="n">e1</span><span class="o">.</span><span class="n">alpha_convert</span><span class="p">(</span><span class="n">logic</span><span class="o">.</span><span class="n">Variable</span><span class="p">(</span><span class="s">&#39;z&#39;</span><span class="p">))</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e2</span>
+</span><span class="line">\<span class="n">z</span><span class="o">.</span><span class="n">P</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e1</span> <span class="o">==</span> <span class="n">e2</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="beta-reduction">4. beta reduction</h2>
+
+<p>接著,來看看 <script type="math/tex">\beta-reduction</script> </p>
+
+<p>舉一個自然語言的例子,例如 <em>Gary walks.</em> 這個句子,用邏輯語意可以表示成</p>
+
+<script type="math/tex; mode=display">
+
+walks(Gary)
+
+</script>
+
+<p>根據Principle of Compositionality,</p>
+
+<p>句子的語意是由單字的語意所組成的(但實際上還是有例外,例如片語)</p>
+
+<p>推導出這個句子的語意,可由單字的語意推導出來,</p>
+
+<p><em>walks</em> 的語意是 <script type="math/tex">\lambda x.walk(x)</script></p>
+
+<p><em>Gary</em> 的語意是 <script type="math/tex">Gary</script></p>
+
+<p>則 <em>Gary walks</em> 的語意是</p>
+
+<script type="math/tex; mode=display">
+
+\lambda x.walks(x) (Gary)\Rightarrow walks(Gary)
+
+</script>
+
+<p>接著來實作看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e3</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x.walks(x)(Gary)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e4</span> <span class="o">=</span> <span class="n">e3</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e4</span>
+</span><span class="line"><span class="n">walks</span><span class="p">(</span><span class="n">Gary</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再舉一個例子,例如 <em>Gary sees Mary.</em> 這個句子, <em>sees</em> 是及物動詞</p>
+
+<p>及物動詞,是表示一個主詞和受詞的關係,</p>
+
+<p>可用 <em>First Order Logic</em> 的 <em>Relation</em> 來表示</p>
+
+<p><em>sees</em> 的語意為 <script type="math/tex">\lambda x \lambda y .see(x,y)</script></p>
+
+<p>而 <em>Gary sees Mary.</em> 的語意是</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \lambda x \lambda y.see(x,y) (Gary) (Mary) \\
+
+& \Rightarrow \lambda y(Gary,y) (Mary) \\
+
+& \Rightarrow see(Gary,Mary)
+
+\end{align}
+
+ %]]></script>
+
+<p>接著,輸入nltk看看</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e5</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x \y.see(x,y)(Gary)(Mary)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e5</span>
+</span><span class="line"><span class="p">((</span>\<span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))(</span><span class="n">Gary</span><span class="p">))(</span><span class="n">Mary</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e5</span><span class="o">.</span><span class="n">simplify</span><span class="p">()</span>
+</span><span class="line"><span class="n">see</span><span class="p">(</span><span class="n">Gary</span><span class="p">,</span><span class="n">Mary</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>還有其他的輸入方式,結果都一樣</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e6</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x \y.see(x,y)(Gary,Mary)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e7</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x y.see(x,y)(Gary,Mary)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e8</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;\x y.see(x,y)(Gary)(Mary)&#39;</span><span class="p">)</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e9</span> <span class="o">=</span> <span class="n">lgp</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s">r&#39;(\x y.see(x,y)(Gary))(Mary)&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e6</span>
+</span><span class="line"><span class="p">((</span>\<span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))(</span><span class="n">Gary</span><span class="p">))(</span><span class="n">Mary</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e7</span>
+</span><span class="line"><span class="p">((</span>\<span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))(</span><span class="n">Gary</span><span class="p">))(</span><span class="n">Mary</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e8</span>
+</span><span class="line"><span class="p">((</span>\<span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))(</span><span class="n">Gary</span><span class="p">))(</span><span class="n">Mary</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">e9</span>
+</span><span class="line"><span class="p">((</span>\<span class="n">x</span> <span class="n">y</span><span class="o">.</span><span class="n">see</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">))(</span><span class="n">Gary</span><span class="p">))(</span><span class="n">Mary</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">e6</span> <span class="o">==</span> <span class="n">e7</span> <span class="o">==</span> <span class="n">e8</span> <span class="o">==</span> <span class="n">e5</span>
+</span><span class="line"><span class="bp">True</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="further-reading">5.further reading</h2>
+
+<p>想要瞭解 <script type="math/tex">\lambda -calculus</script>, 請參考http://en.wikipedia.org/wiki/Lambda_calculus</p>
+
+<p>想要看看 nltk 裡面的 <script type="math/tex">\lambda -calculus</script> , 請至http://www.nltk.org/howto/logic.html</p>
+
+<p>還有關於邏輯語意的研究,可以參考這本書 <em>Blackburn &amp; Bos’  Representation and Inference for Natural Language</em></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2014-03-13T14:09:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:09 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/logic/'>logic</a>, <a class='category' href='/blog/categories/nltk/'>nltk</a>, <a class='category' href='/blog/categories/python/'>python</a>, <a class='category' href='/blog/categories/semantics/'>semantics</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2014/03/13/python-nltk-logic-2/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2014/03/13/python-nltk-logic-2/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2014/03/13/python-nltk-logic-1/" title="Previous Post: Python nltk -- Logic 1 : First Order Logic and Semantics">&laquo; Python nltk -- Logic 1 : First Order Logic and Semantics</a>
+      
+      
+        <a class="basic-alignment right" href="/blog/2014/03/15/logisti-regression-model/" title="Next Post: 機器學習 -- Logistic Regression Model (3D)">機器學習 -- Logistic Regression Model (3D) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">類神經網路 -- Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">類神經網路 -- Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">類神經網路 -- Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">自然語言處理 -- Vector Space of Semantics</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">機率圖模型 -- Gibbs Sampling</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

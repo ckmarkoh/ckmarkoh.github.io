@@ -1,0 +1,550 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Maximum_entropy | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/maximum-entropy/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-10T21:43:24+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[自然語言處理 -- Log-Linear Model]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model/"/>
+    <updated>2014-04-28T11:00:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+
+<p>在機器學習中有一種用於分類的演算法, 叫作 <em>Logistic Regression</em> , 可以把東西分成兩類</p>
+
+<p>而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 <em>Part of speech Tagging</em> 就是把一個字詞分類到名詞, 動詞, 形容詞, 之類的問題</p>
+
+<p>如果二元分類的 <em>Logistic Regression</em> , 推廣到多種類別分類, 就可以處理這種分類問題</p>
+
+<p>首先, 把二元分類的 <em>Logistic Regression</em> 公式, 稍做調整, 如下  </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=true|X) = \frac{1}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\[12pt]
+
+&p(y=false|X) = \frac{e^{-W \cdot X }}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{-W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>針對多類別的  <em>Logistic Regression</em> , 叫作 <em>Multinomial logistic regression</em> , 如果總共有 <script type="math/tex">k</script> 的類別, 每個類別的 <em>label</em> 為 <script type="math/tex">c_{i} , i \in k </script> , 則公式如下</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=c_{1}|X) = \frac{ e^{W_{c_{1}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&p(y=c_{2}|X) = \frac{ e^{W_{c_{2}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&...\\[12pt]
+
+&p(y=c_{k}|X) = \frac{ e^{W_{c_{k}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>在自然語言處理中, 由於 <em>feature value</em> , 也就是 <script type="math/tex">X</script> , 通常不是數字, 例如 <em>前面幾個字的 Tag</em> 之類的, 這時就要用 <em>feature function</em> 把 <em>feature value</em> 轉成數字</p>
+
+<p>所謂的 <em>feature function</em> , 就像是一個檢查器, 去檢查 <em>input data</em> 是否滿足某個 <em>feature</em> , 滿足的話則輸出 <em>1</em> , 不滿足者輸出 <em>0</em> , 以下為一個<em>feature function</em> 的例子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+f_{j}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = VB \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise}
+
+\end{cases}
+
+ %]]&gt;</script>
+
+<p>其中 , <script type="math/tex">tag_{i-1}</script> 是前一個字的 <em>Tag</em> , 而 <script type="math/tex">c</script> 為這個字的類別, 如果這個字的類別是 <script type="math/tex">NN</script> , 且前一個字的 <em>Tag</em> 為 <script type="math/tex">VB</script> , 則 <script type="math/tex">f_{j}=1</script> , 若不滿足這些條件, 則 <script type="math/tex">f_{j}=0</script></p>
+
+<p>加入 <em>feature function</em> 以後 , 原本的 <script type="math/tex">W_{c_{i}} \cdot X</script> 變為  <script type="math/tex">\sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x)</script> ,  <em>Multinomial logistic regression</em> 的公式變為這樣, 也就是所謂的 <em>Log-Linear Model</em></p>
+
+<script type="math/tex; mode=display">
+
+p(y=c_{i}|X) = \frac{ e^{ \sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x) } }{ \sum_{j=1}^{k} e^{\sum_{j=0}^{N}w_{c_{j}}f_{j}(c,x)} } \\[12pt]
+
+</script>
+
+<p>再來, 要怎麼訓練這個 <em>Model</em> 呢？</p>
+
+<p><em>Training</em> 是一個求最佳解的過程, 要找到一組 <em>Weight</em> 可以使得 <script type="math/tex">\sum_{i}p(Y^{(i)} \mid X^{(i)})</script> 為最大值, 公式為</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  
+
+
+</script>
+
+<p>由於有時 <em>feature function</em> 的數量會太多, 容易導致 <em>Overfitting</em> , 為了避免此現象, 所以會減掉 <script type="math/tex">\alpha R(w)</script> 以進行 <em>Regularization</em></p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  -\alpha R(w)
+
+
+</script>
+
+<p>另外, 由於此最佳化後產生的結果, 會有最大的 <em>Entropy</em> , 故 <em>Log-Linear Model</em> 又稱為 <em>Maxmum Entropy Model</em> , 在此做不推導, 欲知詳情請看 <em>Berger et al. (1996). A maximum entropy approach to natural language processing.</em></p>
+
+<h2 id="example">2. Example</h2>
+
+<p>舉個例子, 如何用 <em>feature function</em> 算出 <em>Tagging</em> 的機率值</p>
+
+<p>假設現在要對以下句子進行 <em>Part of Speech Tagging</em> , 現在已經進行到了 <strong><em>race</em></strong> 這個字</p>
+
+<script type="math/tex; mode=display">
+
+\text{Secretariat/}NNP \text{ is/}BEZ \text{ expected/}VBN \text{ to/}TO \text{ race/}\textbf{??} \text{ tomorrow/} 
+
+</script>
+
+<p>總共用了以下六種 <em>feature function</em> </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&f_{1}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{2}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{3}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} suffix(word_{i}) = \text{'ing'} \mspace{15mu}\text{and} \mspace{15mu} c=VBG \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{4}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} isLowerCase(word_{i}) \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{5}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{6}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>現在要求 <strong><em>race</em></strong> 這個字的 <em>Tag</em> 是 <em>NN</em> 還是 <em>VB</em> , 代入以上六個 <em>feature function</em> , 得出結</p>
+
+<p>果於下表</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{|c|c|} 
+
+    \hline
+
+		   &   & f1 & f2 & f3 & f4 & f5 & f6 \\ \hline
+
+    VB & f & 0  & 1  & 0  & 1  & 1  & 0  \\ \hline
+
+    VB & w & 0  & 0.8& 0  &0.01& 0.1& 0  \\ \hline
+
+    NN & f & 1  & 0  & 0  & 0  & 0  & 1  \\ \hline
+
+    NN & w &0.8 & 0  & 0  & 0  & 0  &-1.3  \\ \hline
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>其中 <script type="math/tex">f</script> 是 <em>feature function</em> 算出來的值, <script type="math/tex">w</script> 是 <em>weight</em> , 這個值通常是針對 <em>Training Data</em> 做最佳化得出來的值, <em>weight</em> 越大則表示 <em>feature</em> 所占的比重越重</p>
+
+<p>接著把 <script type="math/tex">w_{i}f_{i}(c,x)</script> 的值帶入公式</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(NN \mid x) = \frac{e^{0.8+(-1.3)}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.2 \\[12pt]
+
+&P(VB \mid x) = \frac{e^{0.8+0.01+0.1}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.8 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>算出結果 <script type="math/tex">0.8>0.2</script> , 所以 <strong><em>race</em></strong> 的 <em>Tag</em> 為 <em>VB</em></p>
+
+<h2 id="implementation">3. Implementation</h2>
+
+<p>接著來實作用 <em>Log-Linear Mode</em> 進行 <em>Part of Speech Tagging</em></p>
+
+<p>這次要用 <em>python nltk</em>  的 <code>MaxentClassifier</code> 來實作</p>
+
+<p>首先, 開一個新的檔案 <em>loglinear.py</em> 貼上以下程式碼</p>
+
+<p>```python loglinear.py
+import nltk
+import operator</p>
+
+<p>class LogLinearTagger(nltk.TaggerI):</p>
+
+<pre><code>def __init__(self,training_corpus):
+    self.classifier = None
+    self.training_corpus = training_corpus
+
+def train(self):
+    self.classifier = nltk.MaxentClassifier.train(
+                reduce(operator.add, 
+                    map(lambda tagged_sent :
+                        self.sent_to_feature(tagged_sent)
+                        ,self.training_corpus)),algorithm='megam' )
+
+def sent_to_feature(self,tagged_sent):
+    return  map(lambda (i, elem) : 
+                    apply( lambda token , tag : 
+                         (self.extract_features(token, i, tag), elem[1])
+                        ,zip(*tagged_sent))
+                    ,enumerate(tagged_sent))
+
+def tag_sentence(self, sentence_tag):
+    if self.classifier == None:
+        self.train()
+    return apply (lambda sentence : 
+                zip(sentence,
+                reduce(lambda x,y:  
+                    apply(operator.add,
+                        [x,[self.classifier.classify(self.extract_features(sentence, y[0], x))]])
+                    , enumerate(sentence), []))
+                ,[map(operator.itemgetter(0),sentence_tag)])
+
+def evaluate(self,test_sents):
+    return apply(lambda result_list : 
+                sum(result_list)/float(len(result_list))
+                , [reduce(operator.add,
+                    map(lambda line:
+                        map(lambda tag : int(tag[0] == tag[1])
+                            , zip(map(operator.itemgetter(1),line),
+                                  map(operator.itemgetter(1),self.tag_sentence(line))))
+                       ,test_sents))])
+
+def extract_features(self, sentence, i, history):
+    features = {}
+    features["this-word"] =  sentence[i]
+    if i == 0:
+        features["prev-tag"] = "&lt;START&gt;"
+    else:
+        features["prev-tag"] = history[i-1]
+    return features     
+</code></pre>
+
+<p>```</p>
+
+<p>其中, <code>extract_features</code> 是用於把 <em>input sentence</em> 的 <em>feature</em> 取出來,  例如這次用到的 <em>feature</em> 有目前這個字是什麼 <code>"this-word"</code> ,和前一個字的 <em>Tag</em> 是什麼 <code>"prev-tag"</code> </p>
+
+<p>取出 <em>feature</em> 後 , <code>MaxentClassifier</code> 會自動根據這些 <em>feature</em> 產生 <em>feature function</em> </p>
+
+<p>接下來到 <em>python</em> 的 <em>interactive mode</em> 載入檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from loglinear import LogLinearTagger</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這次要用 <em>brown corpus</em> 的 <em>category</em> , <code>news</code> 的前 <em>100</em> 句來當作 <em>Tranining Data</em> ,第 <em>100~200</em> 句當作 <em>Test Data</em> , 先輸入以下程式碼</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk.corpus import brown
+brown_tagged_sents = brown.tagged_sents(categories=’news’)
+train_sents = brown_tagged_sents[:100]
+test_sents = brown_tagged_sents[100:200]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用 <em>Training Data</em> 建立一個 <em>LogLinearTagger</em> 的 <em>class</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier = LogLinearTagger(train_sents)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在開始訓練之前, 我們先挑其中的一句, 看一下格式, 是已經 <em>Tag</em> 好的句子 , 我們以 <code>train_sents[31]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>train_sents[31]
+[(‘His’, ‘PP$’), (‘petition’, ‘NN’), (‘charged’, ‘VBD’), (‘mental’, ‘JJ’), \
+(‘cruelty’, ‘NN’), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>看一下這句可以產生出哪些 <em>Feature</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for x in classifier.sent_to_feature(train_sents[31]):
+…     print x
+… 
+({‘prev-tag’: ‘<start>', 'this-word': 'His'}, 'PP$')
+({'prev-tag': 'PP$', 'this-word': 'petition'}, 'NN')
+({'prev-tag': 'NN', 'this-word': 'charged'}, 'VBD')
+({'prev-tag': 'VBD', 'this-word': 'mental'}, 'JJ')
+({'prev-tag': 'JJ', 'this-word': 'cruelty'}, 'NN')
+({'prev-tag': 'NN', 'this-word': '.'}, '.')</start></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>例如第一個字, <code>'His'</code> , 它的 <em>feature</em> 有 <code>'prev-tag': '&lt;START&gt;'</code> 和 <code>'this-word': 'His'</code> , <em>Tag</em> 的結果為 </p>
+
+<p><code>'PP$'</code> , 由於第一個字前面已經沒有字了, 也沒有 <em>Tag</em> 了, 所以我們用 <code>&lt;START&gt;</code> 來表示</p>
+
+<p>再來就是要訓練 <em>classifier</em>, 執行 <code>classifier.train()</code> 就可以開始訓練, 但要花一點時間</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.train()
+Scanning file…2268 train, 0 dev, 0 test, reading…done
+optimizing with lambda = 0
+it 1   dw 5.348e-01 pp 4.19728e+00 er 0.79850
+it 2   dw 3.179e+00 pp 3.32097e+00 er 0.82760
+it 3   dw 1.037e+00 pp 2.92326e+00 er 0.67549
+it 4   dw 9.602e-01 pp 2.72106e+00 er 0.63933
+it 5   dw 1.345e+00 pp 2.41257e+00 er 0.54012
+it 6   dw 1.378e+00 pp 2.16177e+00 er 0.46429
+……</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果出現以下錯誤訊息, 表示你沒安裝 <em>megan</em></p>
+
+<p>```python
+    raise LookupError(‘\n\n%s\n%s\n%s’ % (div, msg, div))
+LookupError: </p>
+
+<p>===========================================================================
+NLTK was unable to find the megam file!
+Use software specific configuration paramaters or set the MEGAM environment variable.</p>
+
+<p>For more information, on megam, see:
+    <a href="http://www.cs.utah.edu/~hal/megam/">http://www.cs.utah.edu/~hal/megam/</a>
+===========================================================================</p>
+
+<p>```</p>
+
+<p>請到 http://www.umiacs.umd.edu/~hal/megam/version0_91/ 下載 <em>megan</em></p>
+
+<p>如果你是 <em>linux</em> 的使用者, 可直接下載執行檔, 放到 <code>/home/xxxxxx/bin/</code> 資料夾 ( 若你是使用 <em>Mac</em> 或 <em>Window$</em> , 則需要下載 <em>source code</em> 自行編譯</p>
+
+<p>或者你可以把 <em>loglinear.py</em> 中的 <code>MaxentClassifier</code> 的 ` algorithm=’megam’ ` 去掉 , 變成這樣</p>
+
+<p>```python loglinear.py
+        self.classifier = nltk.MaxentClassifier.train(
+                    reduce(operator.add, 
+                        map(lambda tagged_sent :
+                            self.sent_to_feature(tagged_sent)
+                            ,self.training_corpus)) )</p>
+
+<p>```</p>
+
+<p>但這會導致訓練速度變得很慢</p>
+
+<p>訓練好之後, 可以用 <em>Test Data</em> 看看結果如何 , 先挑一句, 以 <code>test_sents[10]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>test_sents[10]
+[(‘<code>', '</code>’), (‘You’, ‘PPSS’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘NN’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘NNS’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>把這個句子放到訓練好的 <code>classifier</code> , 用它來 <em>Tag</em> , 比較一下跟原本的 <em>tag</em> 有何不同 </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.tag_sentence(test_sents[10])
+[(‘<code>', '</code>’), (‘You’, ‘VB’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘JJ’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘JJ’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先用肉眼觀察, 我們發現 <code>classifier</code> 所得出的 <em>Tag</em> 有些和原本的一樣, 有些不一樣, 表示 <code>classifier</code> 有些字 <em>Tag</em> 錯了</p>
+
+<p>可以用程式來算準確率, 用 <code>classifier.evaluate</code> ,  但注意的是, <em>input argument</em> 不是 <em>sentence</em> , 而是 <em>list of sentence</em> , 所以 <em>input argument</em> 要用 <code>[test_sents[10]]</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate([test_sents[10]])
+0.75</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>算出來後準確度是 <em>0.75</em> , 也就是說有 <em>75%</em> 的 <em>Tag</em> 是正確的</p>
+
+<p>再來把所有的 <em>Test Data</em> 都做 <em>Evaluation</em> 看看</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate(test_sents)
+0.6910327241818954</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>得的準確率約為 <em>69.1%</em></p>
+
+<p>這樣的準確率不是很理想, 原因是因為 <em>100</em> 句的 <em>Training Data</em> 實在是太少了</p>
+
+<p>有興趣者可以試試看, 取 <em>2000</em> 句的 <em>Training Data</em> , 準確度應該會大幅提昇, 但是要花很久的時間訓練</p>
+
+<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+
+<p>本文參考至這本教科書</p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+
+]]></content>
+  </entry>
+  
+</feed>
