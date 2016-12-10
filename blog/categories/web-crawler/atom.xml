@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Web_crawler | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/web-crawler/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-10T23:54:23+08:00</updated>
+  <updated>2016-12-11T00:46:52+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -111,17 +111,14 @@
     </tbody>
 <table>
 
-<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-</pre></td><td class='code'><pre><code class=''><span class='line'>
-</span><span class='line'>
-</span><span class='line'>可以用這個方法
-</span><span class='line'>
-</span><span class='line'>
-</span></code></pre></td></tr></table></div></figure>javascript
+```
+
+
+可以用這個方法
+
+
+
+```javascript
 
 &gt; $x("//table/tbody/tr/td[last()]/text()")
 [ "16" , "26" ]
