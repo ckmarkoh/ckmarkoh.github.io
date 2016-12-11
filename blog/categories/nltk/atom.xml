@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Nltk | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/nltk/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Rule-Based Chunking]]></title>
+    <title type="html"><![CDATA[NLTK Rule-Based Chunking]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/"/>
     <updated>2014-05-06T14:46:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking</id>
@@ -260,7 +260,7 @@ print result
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Dependency Grammar]]></title>
+    <title type="html"><![CDATA[NLTK Dependency Grammar]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/"/>
     <updated>2014-05-03T15:00:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar</id>
@@ -617,7 +617,7 @@ trees[1].draw()</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Logic 4 : Model and Satisfiability]]></title>
+    <title type="html"><![CDATA[NLTK Logic 4 : Model and Satisfiability]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4/"/>
     <updated>2014-03-29T15:39:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4</id>
@@ -957,7 +957,7 @@ False</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Logic 3 : Discourse Representation Theory]]></title>
+    <title type="html"><![CDATA[NLTK Logic 3 : Discourse Representation Theory]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3/"/>
     <updated>2014-03-21T03:58:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3</id>

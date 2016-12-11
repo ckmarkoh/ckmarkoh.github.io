@@ -1,0 +1,2336 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Python Programming | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/python-programming/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-11T15:32:34+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Python Logging]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/05/08/python-standard-library-logging/"/>
+    <updated>2014-05-08T07:44:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/05/08/python-standard-library-logging</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+
+<p>在 <em>python</em> 程式中想要印出東西, 通常會用 <em>print</em> , 要 <em>print</em> 東西的時機很多, 例如, <em>Debug</em> 時要 <em>print</em> , 有 <em>Error</em> 時也要 <em>print</em> , 正常執行情況下也可能要 <em>print</em> 一些資訊</p>
+
+<p>但是當程式寫好後, 原本用 <em>print</em> 出來的 <em>debug message</em> 就需要手動移除, 諸如此類的問題, 單純用 <em>pring</em> 就不方便</p>
+
+<p>如果是用 <em>logging</em> , 可以設各種不同的層次, 例如在 <em>debug</em> 的時候, 印出 <em>debug message</em> , <em>debug</em> 結束後就不要印 <em>debug message</em>  , 這樣只要調整一個參數即可, 不需要把所有用印出 <em>debug</em>  的程式碼都砍掉</p>
+
+<p><em>python</em> 的 <em>logging</em> 分成以下五個等級</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>等級</th>
+      <th>使用時機</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DEBUG</td>
+      <td>程式執行時的詳細資訊, 可以找出BUG在哪</td>
+    </tr>
+    <tr>
+      <td>INFO</td>
+      <td>程式執行時的基本資訊, 用來顯示程式正常執行時的狀況</td>
+    </tr>
+    <tr>
+      <td>WARNING</td>
+      <td>程式執行時遇到某些狀況超乎預期, 或未來可能遇到問題, 但程式目前仍可以繼續執行</td>
+    </tr>
+    <tr>
+      <td>ERROR</td>
+      <td>程式執行時發生問題, 可能導致結果產生錯誤</td>
+    </tr>
+    <tr>
+      <td>CRITICAL</td>
+      <td>程式執行時遇到嚴重問題, 程式必須馬上停止</td>
+    </tr>
+  </tbody>
+</table>
+
+<!--more-->
+
+<p>如果把 <em>logging</em> 等級設定在 <em>debug</em> , 則 <em>debug</em> , <em>info</em> 和其他三種等級的訊息都會印出來, 如果等級設定在 <em>warning</em> , 則不會印出 <em>debug</em> 和 <em>info</em> , 以此類推, 因此不需要 <em>debug message</em> 時, 只需要把等級設定在 <em>info</em> 以及更高等級即可, 因此就不需要砍掉所有印出印出 <em>debug</em>  的程式碼</p>
+
+<h2 id="implementation">2. Implementation</h2>
+
+<p>接著是實作部份, 把以下程式碼複製到 <em>log_debug.py</em> 這個檔案</p>
+
+<p>```python log_debug.py
+import logging
+logging.basicConfig(level=logging.DEBUG)
+logging.debug(‘debug message’)
+logging.info(‘info message’)
+logging.warning(‘warning message’)
+logging.error(‘error message’)
+logging.critical(‘critical message’)</p>
+
+<p>```</p>
+
+<p>其中 <code>level=logging.DEBUG</code> 把 <em>level</em> 設定在 <em>debug</em></p>
+
+<p>執行這個檔案, <em>logging</em> 可以印出下五個等級</p>
+
+<p>```bash
+$ python log_debug.py
+DEBUG:root:debug message
+INFO:root:info message
+WARNING:root:warning message
+ERROR:root:error message
+CRITICAL:root:critical message</p>
+
+<p>```</p>
+
+<p>再來, 把 <em>log_debug.py</em> 中的 <code>level=logging.DEBUG</code> 改成 <code>level=logging.WARNING</code> </p>
+
+<p>另存新檔為 <em>log_warning.py</em> </p>
+
+<p>```python log_warning.py
+import logging
+logging.basicConfig(level=logging.WARNING)
+logging.debug(‘debug message’)
+logging.info(‘info message’)
+logging.warning(‘warning message’)
+logging.error(‘error message’)
+logging.critical(‘critical message’)</p>
+
+<p>```</p>
+
+<p>因為把 <em>level</em> 設定在 <em>warning</em> , 所以不會印出 <em>info</em> 和 <em>debug</em> 的 <em>message</em></p>
+
+<p>執行結果如下</p>
+
+<p>```bash
+$ python log_warning.py 
+WARNING:root:warning message
+ERROR:root:error message
+CRITICAL:root:critical message</p>
+
+<p>```</p>
+
+<h2 id="config-setting">3. Config Setting</h2>
+
+<h4 id="logging-to-a-file">3.1 Logging to a file</h4>
+
+<p>前文中提到, 可以從 <code>basicConfig</code> 設定 <em>logging</em> 的 <em>level</em> , 其實 <code>basicConfig</code> 也可以做其他設定, 例如把 <em>log</em> 輸出到某個檔案, 如下 </p>
+
+<p>```python log_file.py
+import logging
+logging.basicConfig(filename=’log_file.log’,level=logging.DEBUG)
+logging.debug(‘debug message’)
+logging.info(‘info message’)</p>
+
+<p>```</p>
+
+<p>其中, <code>filename='log_file.log'</code> 是設定, 要把 <em>log</em> 存到哪</p>
+
+<p>到<em>terminal</em> 執行完後, <em>log</em> 不會直接印出, </p>
+
+<p>```bash
+$ python log_file.py</p>
+
+<p>```</p>
+
+<p>而是存到 <em>log_file.log</em> 檔案裡面</p>
+
+<p>```bash
+$ cat log_file.log
+DEBUG:root:debug message
+INFO:root:info message</p>
+
+<p>```</p>
+
+<p>再執行一次看看</p>
+
+<p>```bash
+$ python log_file.py</p>
+
+<p>```</p>
+
+<p>第二次執行的 <em>log</em> , 不會蓋掉第一次的 <em>log</em> , 而是附加在後面</p>
+
+<p>```bash
+$ cat log_file.log
+DEBUG:root:debug message
+INFO:root:info message
+DEBUG:root:debug message
+INFO:root:info message</p>
+
+<p>```</p>
+
+<p>如果希望不要附加在後面, 而是直接覆寫原本的檔案, 可以加上參數 <code>filemode='w'</code> , 如下</p>
+
+<p>```python log_file.py
+logging.basicConfig(filename=’log_file.log’,filemode=’w’, level=logging.DEBUG)</p>
+
+<p>```</p>
+
+<h4 id="changing-the-format-of-displayed-messages">3.2 Changing the format of displayed messages</h4>
+
+<p>也可以藉由更改 <code>basicConfig</code> 設定, 來更改 <em>logging</em> 輸出的格式</p>
+
+<p>例如我們可以把格式改成 <em>levelname – message</em> 的格式, 如下</p>
+
+<p>```python log_format.py
+import logging 
+logging.basicConfig(format=’%(levelname)s – %(message)s’, level=logging.DEBUG)
+logging.debug(‘debug message’)
+logging.info(‘info message’)</p>
+
+<p>```</p>
+
+<p>執行結果</p>
+
+<p>```bash
+$ python log_format.py 
+DEBUG – debug message
+INFO – info message</p>
+
+<p>```</p>
+
+<p>也可以改成印出時間, 如下</p>
+
+<p>``` python log_time.py
+import logging
+logging.basicConfig(format=’%(asctime)s : %(levelname)s : %(message)s’, level=logging.DEBUG)
+logging.debug(‘debug message’)
+logging.info(‘info message’)</p>
+
+<p>```</p>
+
+<p>結果如下</p>
+
+<p>```bash
+$ python log_time.py 
+2014-05-08 19:11:45,700 : DEBUG : debug message
+2014-05-08 19:11:45,701 : INFO : info message</p>
+
+<p>```</p>
+
+<h2 id="reference">4. Reference</h2>
+
+<p>Python Documentation Logging HOWTO</p>
+
+<p>https://docs.python.org/2/howto/logging.html</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Eval and Execute]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec/"/>
+    <updated>2014-04-23T01:59:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/23/python-built-in-functions-exec</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>如果要把 <em>string</em> 的內容, 當成程式碼來執行, 可以用到 <em>eval</em> 或 <em>exec</em></p>
+
+<p>例如有個 <em>string</em> , 為 <code>s1="3+5"</code> 我們想要算它執行的結果, 可用</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>s1=”3+5”
+eval(s1)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>來看一下怎麼用 <em>eval</em> 或 <em>exec</em> </p>
+
+<h2 id="eval">2. eval</h2>
+
+<p><code>eval</code> 是當我們要計算某一個字串中的運算, 並且 <strong>會回傳計算結果</strong> ,如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘3+1’)
+4</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<!--more-->
+
+<p>除了用於數字, 也可用於其他 <em>type</em> , 例如 <em>list</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘[3,4,5]+[2]’)
+[3, 4, 5, 2]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>或是我們要呼叫 <em>object</em> 的 <em>method</em> 也可以</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘“234232”.replace(“2”,”@”)’)
+‘@34@3@’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-variable-and-function">2.1. eval with variable and function</h3>
+
+<p><em>eval</em> 可以用於自訂變數</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>x = 3
+eval(‘x+2’)
+5</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>````</p>
+
+<p>或是自訂的 <em>function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>def myfun(y):
+…     return y+4
+… </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘myfun(x)’)
+7</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可用於自訂變數的 <em>method</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a=[1,2]
+eval(‘a.reverse()’)
+print a
+[2, 1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-builtins">2.2. eval with builtins</h3>
+
+<p>當然, <em>eval</em> 也可用於 <em>built-in function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘abs(-3)’)
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以限制 <em>built-in function</em> 的使用</p>
+
+<p>例如在 <em>eval</em> 的第二個 <em>argument</em> 輸入 <code>{"__builtins__" : None }</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘abs(-3)’,{“<strong>builtins</strong>” : None })
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'abs' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="eval-with-restricted-variable">2.3. eval with restricted variable</h3>
+
+<p>為了避免 <em>eval</em> 不小心變更到程式裡面的某些 <em>variable</em> 的值, 我們可以用以下方法, 限制 <em>eval</em> 可以使用的 <em>variable</em> </p>
+
+<p>例如, 有三個 <em>variable</em> , 分別為 <code>pb1</code> , <code>pb2</code> 與 <code>pr1</code> , 其中, 我們只希望 <em>eval</em> 可以使用 <code>pb1</code> 和 <code>pb2</code> 兩個 <em>variable</em> , 則可以建立一個 <code>dict</code> 來限制, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pb1 = 123
+pb2 = [12,13,14]
+pr1 = 456
+pblist = [‘pb1’,’pb2’]
+pbdict = dict([ (k, locals().get(k, None)) for k in pblist ])
+print pbdict
+{‘pb1’: 123, ‘pb2’: [12, 13, 14]}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中, <code>pbdict</code> 限制了 <em>eval</em> 可以使用哪些 <em>variable</em> , 把 <code>pbdict</code> 放在 <em>eval</em> 的第三個 <em>argument</em> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pb1+2”, None, pbdict)
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pb2[2]+3”, None, pbdict)
+17</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>結果顯示, 有在 <code>pbdict</code> 裡面的 <em>variable</em> 可以使用, 但沒在 <code>pbdict</code> 裡面的 <em>variable</em> 就不可以使用了, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(“pr1+3”, None, pbdict)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'pr1' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="restriction-on-eval">2.4. restriction on eval</h3>
+
+<p>並不是所有的<em>expression</em> 都可以用 <em>eval</em> , 例如, <em>assignment</em> 就不能用於 <em>eval</em> , 如下</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>eval(‘a=3’)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1
+    a=3
+     ^
+SyntaxError: invalid syntax</string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>或是其他跟 <em>assignment</em> 有關的 <em>operator</em> 也不行</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a=[1,2]
+eval(‘a+=[3]’)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1
+    a+=[3]
+      ^
+SyntaxError: invalid syntax</string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這時就需要用到 <em>exec</em> 了</p>
+
+<h2 id="exec">3. exec</h2>
+
+<p><em>exec</em> 是把字串當成程式碼來執行, 但是 <strong>不會回傳結果</strong> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘3+5’)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果要印出結果, 則要加個 <em>print</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘print 3+5’)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-variable">3.1. exec with variable</h3>
+
+<p><em>exec</em> 也可以用於 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>x = 3
+exec(‘x+3’)
+print x
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可用於自訂的 <em>function</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>def myfun(y):
+…     return y+4
+… </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘myfun(x)’)
+print x
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>和 <em>eval</em> 不同的是, <em>exec</em> 可以用於 <em>assignment</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘z = 5’)
+print z
+5</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以及其他和 <em>assignment</em> 相關的 <em>operator</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(‘x += 1’)
+print x
+4</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-builtins">3.2. exec with builtins</h3>
+
+<p><em>exec</em> 可以用於 <em>built-in function</em> </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print abs(-3)”)
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以用 <code>{"__builtins__" : None }</code> 限制 <em>built-in function</em> 的使用</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print abs(-3)”,{“<strong>builtins</strong>” : None })
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'abs' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-restricted-variable">3.3. exec with restricted variable</h3>
+
+<p>和 <em>eval</em> 一樣, <em>exec</em> 也可以用 <em>dict</em> 來限制可以使用的 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pb1 = 123
+pb2 = [12,13,14]
+pr1 = 456
+pblist = [‘pb1’,’pb2’]
+pbdict = dict([ (k, locals().get(k, None)) for k in pblist ])
+print pbdict
+{‘pb1’: 123, ‘pb2’: [12, 13, 14]}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>同時, <em>exec</em> 又可以使用 <em>assignment</em>, 但是要注意了, 此 <em>assignment</em> 只會修改到 <em>dict</em> 中的值, 例如我們 <em>assign</em> 一個新的值給 <code>pb1</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“pb1=pb1+2”, None, pbdict)
+exec(“print pb1”, None, pbdict)
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>但是, <em>exec</em> 不會更改到原本的 <em>variable</em> 的值, 原本的 <code>pb1</code> 還是不便</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pb1
+123</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>改變的只有在 <code>pdict</code> 中的 <code>pb1</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict[‘pb1’]
+125</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>但如果是針對 <em>object</em> 就不一樣了, 因為在 <em>dict</em> 中的是 <em>reference</em> 而不是 <em>value</em> , 所以會修改到原本 <em>variable</em> 的 <em>value</em>, 例如 <em>assign</em> 新的值給 <code>pb2</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“pb2[2]=pb2[2]+3”, None, pbdict)
+print pb2
+[12, 13, 17]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict[‘pb2’]
+[12, 13, 17]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>不論是原本的 <code>pb2</code> 還是 <code>pbdict</code> 中的 <code>pb2</code> 都改變了</p>
+
+<p>當然, 跟 <em>eval</em> 一樣的是, 如果 <em>variable</em> 沒在 <em>dict</em> 中, 就不可以使用了</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print pr1+3”, None, pbdict)
+Traceback (most recent call last):
+  File “<stdin>", line 1, in <module>
+  File "<string>", line 1, in <module>
+NameError: name 'pr1' is not defined</module></string></module></stdin></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-with-exec-defined-variable">3.4. exec with exec-defined variable</h3>
+
+<p>承上, <em>exec</em> 由於有 <em>assignment</em> 的功能, 所以可以自己加 <em>variable</em> 到 <em>dict</em> 裏面, 如下, 我們限制 <em>exec</em> 從一個空的 <em>dict</em>  <code>pbdict2={}</code> 開始 </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>pbdict2={}
+exec(“x=5”, None, pbdict2)
+exec(“y=3”, None, pbdict2)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>做完以上 <em>assignment</em> 之後 , 我們再把 <code>pbdict</code> 印出來看看, 發現多了兩個新的 <em>variable</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print pbdict2
+{‘y’: 3, ‘x’: 5}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>當然, <em>exec</em> 可以用這兩個 <em>variable</em> 做運算</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(“print x+y”, None, pbdict2)
+8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h3 id="exec-lines-of-codes">3.5. exec lines of codes</h3>
+
+<p><em>exec</em> 可以執行多行字串中的程式碼, 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>codes=”””
+… x=5
+… for i in range(3):
+…     x+=i
+…     print i,x
+… “””</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>exec(codes)
+0 5
+1 6
+2 8</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="reference">4. Reference</h2>
+
+<h3 id="eval-1">eval</h3>
+
+<p>https://docs.python.org/2/library/functions.html#eval</p>
+
+<h3 id="exec-1">exec</h3>
+
+<p>https://docs.python.org/2/reference/simple_stmts.html#exec</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Copy]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/01/python-standard-library-copy/"/>
+    <updated>2014-04-01T16:23:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/01/python-standard-library-copy</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>在python裡面, <code>=</code> 這個符號,</p>
+
+<p>有可能是 <em>pass by value</em> 或是 <em>pass by reference</em></p>
+
+<p>如果 <code>=</code> 右方的 <em>variable</em> 是 <em>value</em> , 例如 <em>int</em></p>
+
+<p>則 <code>=</code> 是 <em>pass by value</em> ,如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>x1=1
+x2=x1
+x1+=1
+print x1
+2</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print x2
+1</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00001.tiff" alt="p1" /></p>
+
+<!--more-->
+
+<p>我們讓 <code>x2=x1</code> , 但 <code>x1</code> 的值變了, <code>x1</code> 的值不變</p>
+
+<p>但如果  <code>=</code> 右方的 <em>variable</em> 是 <em>object</em> , 例如 <em>list</em></p>
+
+<p>這個時候 <code>=</code> 就只是把 <em>pointer</em> 複製而已</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y1=[]
+y2=y1
+print y2
+[]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00002.tiff" alt="p2" /></p>
+
+<p>如上圖, <code>y2</code> 和 <code>y1</code> 共同指向一個 <em>list</em> , </p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y1+=[1]
+print y1
+[1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y2
+[1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00003.tiff" alt="p3" /></p>
+
+<p>如果 <code>y1</code> 改變, <code>y2</code> 也一起改變</p>
+
+<h2 id="copycopy">2.copy.copy</h2>
+
+<p>先載入 <code>copy</code> 模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import copy</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果要把 <em>variable</em> 所指到的 <em>object</em> 一起複製, </p>
+
+<p>而不是只複製 <em>pointer</em> , 就要用到 <code>copy.copy</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y1=[]
+y2=copy.copy(y1)
+print y2
+[]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00004.tiff" alt="p4" /></p>
+
+<p>如上圖, <code>y1</code> 所指的 <em>list</em> 也被複製了</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y1+=[1]
+print y1
+[1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y2
+[]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00005.tiff" alt="p5" /></p>
+
+<p>所以當 <code>y1</code> 改變的時候, <code>y2</code> 不變</p>
+
+<p>但是如果是多層的 <em>list</em> ,</p>
+
+<p>使用 <code>copy.copy</code> 就可能會出問題了</p>
+
+<p>因為 <code>copy.copy</code> 只會複製一層的 <em>object</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y0=[]
+y1=[y0]
+y2=copy.copy(y1)
+print y2
+[[]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00006.tiff" alt="p6" /></p>
+
+<p>複製超過一層以後,剩下的就只複製 <em>pointer</em>, 如上圖：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y0+=[1]
+print y0
+[1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y1
+[[1]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y2
+[[1]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00007.tiff" alt="p7" /></p>
+
+<p>這個時候 <code>y0</code> 改變了, <code>y1</code> 和 <code>y2</code> 都會變</p>
+
+<h2 id="copydeepcopy">3.copy.deepcopy</h2>
+
+<p>如果要把每一層所有的 <em>object</em> 都複製,</p>
+
+<p>而不要複製 <em>pointer</em></p>
+
+<p>就要用 <code>copy.deepcopy</code></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y0=[]
+y1=[y0]
+y2=copy.deepcopy(y1)
+print y2
+[[]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00008.tiff" alt="p8" /></p>
+
+<p>如上圖, <code>copy.deepcopy</code> 會把每層的 <em>object</em> 都複製</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>y0+=[1]
+print y0
+[1]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y1
+[[1]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print y2
+[[]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><img src="/images/pic/pic_00009.tiff" alt="p9" /></p>
+
+<p>這個時候若 <code>y0</code> 改變了, 只有 <code>y1</code>會變 , 而 <code>y2</code> 不會變</p>
+
+<h2 id="reference">4.Reference</h2>
+
+<p>https://docs.python.org/2/library/copy.html</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Argparse]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse/"/>
+    <updated>2014-03-31T05:31:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/03/31/python-standard-library-argparse</id>
+    <content type="html"><![CDATA[<h2 id="introduction">0.Introduction</h2>
+
+<p>argparse是用來處理command line的argument所使用的</p>
+
+<p>例如執行一個程式, 比如說 <code>mv</code>  </p>
+
+<p>在Terminal輸入 <code>mv --help</code> 之後</p>
+
+<p>顯示如下：</p>
+
+<p>```sh
+$ mv –help
+Usage: mv [OPTION]… [-T] SOURCE DEST
+  or:  mv [OPTION]… SOURCE… DIRECTORY
+  or:  mv [OPTION]… -t DIRECTORY SOURCE…
+Rename SOURCE to DEST, or move SOURCE(s) to DIRECTORY.</p>
+
+<p>Mandatory arguments to long options are mandatory for short options too.
+      –backup[=CONTROL]       make a backup of each existing destination file
+  -b                           like –backup but does not accept an argument
+  -f, –force                  do not prompt before overwriting
+  -i, –interactive            prompt before overwrite
+……</p>
+
+<p>```</p>
+
+<p>由此可知, <code>mv</code> 後面可以有很多種argument</p>
+
+<p>那要寫程式去parse這些command line的argument很麻煩</p>
+
+<p>如果用了 <code>argparse</code> 這個module</p>
+
+<p>就不用自己寫程式去parse這些argument了</p>
+
+<!--more-->
+
+<p>接下來實作看看</p>
+
+<p>首先, 寫個很簡單的程式, 試試看 <code>argparse</code></p>
+
+<p>```python argprog0.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog0’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中, <code>prog='argprog0'</code> 為 <em>help</em> 的內容中,顯示的程式名稱</p>
+
+<p>而 <code>args</code> 為 <code>argparse</code> parse完後的argument</p>
+
+<p>這個程式可以判斷後面接的argument是不是 <code>-h</code> 或 <code>--help</code></p>
+
+<p>如果是的話, 則顯示出 <em>help</em> 的內容</p>
+
+<p>```sh
+$ python argprog0.py -h
+usage: argprog0 [-h]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog0.py –help
+usage: argprog0 [-h]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit</p>
+
+<p>```</p>
+
+<p>如果輸入的argument不是<code>-h</code> 或 <code>--help</code></p>
+
+<p>則會顯示出error message</p>
+
+<p>```sh
+$ python argprog0.py 1
+usage: argprog0 [-h]
+argprog0: error: unrecognized arguments: 1</p>
+
+<p>```</p>
+
+<p>如果沒有輸入argument, 則顯示如下：</p>
+
+<p>```sh
+$ python argprog0.py 
+Namespace()</p>
+
+<p>```</p>
+
+<p>其中, <code>Namespace()</code> 是 <code>args</code> 中的argument</p>
+
+<p>因為沒有輸入任何argument, 所以 <code>Namespace()</code> 是空的</p>
+
+<p>接下來,看看要怎麼把argument存到 <code>args</code> 裡面</p>
+
+<h2 id="optional-argument">1.Optional Argument</h2>
+
+<p>先來試試看加個 <em>optional argument</em> 到程式當中</p>
+
+<p>所謂 <em>optional argument</em> 就是可有可無的argument</p>
+
+<p>通常會以 <code>-</code> 或 <code>--</code> 開頭, 例如 <code>--help</code></p>
+
+<p>試試看加一個 <code>--foo</code> 到程式裡面 </p>
+
+<p>```python argprog1.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog1’)
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中 <code>help='foo of the %(prog)s program'</code> 為 <em>help</em> 中, 對於 <code>--foo</code> 的解說</p>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<p>```sh
+$ python argprog1.py -h
+usage: argprog1 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog1 program</p>
+
+<p>```</p>
+
+<p>接著, 來輸入 <code>--foo</code> 的值</p>
+
+<p>輸入方法如下, 在 <code>--foo</code> 後面接的argument就是它的值</p>
+
+<p>```sh
+$ python argprog1.py –foo FOO
+Namespace(foo=’FOO’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog1.py –foo BAR
+Namespace(foo=’BAR’)</p>
+
+<p>```</p>
+
+<p>也可以什麼都不輸入, 因為 <code>--foo</code> 是 <em>optional argument</em></p>
+
+<p>這樣的話 <code>foo</code> 的值就會是 <code>None</code></p>
+
+<p>```sh
+$ python argprog.py 
+Namespace(foo=None)</p>
+
+<p>```</p>
+
+<p>但是如果只輸入 <code>--foo</code> 而後面沒有值, 或是多輸入了一個值</p>
+
+<p>皆會出現error</p>
+
+<p>```sh
+$ python argprog1.py –foo 
+usage: argprog1 [-h] [–foo FOO]
+argprog1: error: argument –foo: expected one argument</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog1.py –foo FOO BAR
+usage: argprog1 [-h] [–foo FOO]
+argprog1: error: unrecognized arguments: BAR</p>
+
+<p>```</p>
+
+<h2 id="positional-argument">2.Positional Argument</h2>
+
+<p>再來, 於程式中加入 <em>positional argument</em></p>
+
+<p>和 <em>optional argument</em> 不一樣的地方在於</p>
+
+<p><em>positional argument</em> 是必須要輸入的argument</p>
+
+<p>且 <em>positional argument</em> 的值, 是根據argument的位置而定</p>
+
+<p><em>positional argument</em> 的開頭, 沒有 <code>-</code> , 或 <code>--</code></p>
+
+<p>把 <code>bar1</code> 和 <code>bar2</code> 這兩個 <em>positional argument</em> 加到程式中,如下：</p>
+
+<p>```python argprog2.py
+import argparse
+parser = argparse.ArgumentParser(prog=’argprog2’)
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+parser.add_argument(‘bar1’, help=’bar1 of the %(prog)s program’)
+parser.add_argument(‘bar2’, help=’bar2 of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>程式寫好之後, 先來看 <code>help</code> 有什麼改變</p>
+
+<p>```sh
+$ python argprog2.py -h
+usage: argprog2 [-h] [–foo FOO] bar1 bar2</p>
+
+<p>positional arguments:
+  bar1        bar1 of the argprog2 program
+  bar2        bar2 of the argprog2 program</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog2 program</p>
+
+<p>```</p>
+
+<p>接著輸入 <em>positional argument</em> 的值</p>
+
+<p>輸入的時候, 不需要輸入argument的名稱</p>
+
+<p>只要根據argument的位置, 依序輸入值就可以了</p>
+
+<p>輸入的位置不同, argument的值就會不同, 如下：</p>
+
+<p>```sh
+$ python argprog2.py x y 
+Namespace(bar1=’x’, bar2=’y’, foo=None)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py y x
+Namespace(bar1=’y’, bar2=’x’, foo=None)</p>
+
+<p>```</p>
+
+<p>另外, 也可以輸入 <em>optional argument</em></p>
+
+<p>可以在任意位置插入 <em>optional argument</em> </p>
+
+<p>不會影響 <em>positional argument</em> 的值</p>
+
+<p>```sh
+$ python argprog2.py x y –foo z
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x –foo z y
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py –foo z x y
+Namespace(bar1=’x’, bar2=’y’, foo=’z’)</p>
+
+<p>```</p>
+
+<p>以下為出現error的情形</p>
+
+<p>因為<em>positional argument</em> 是必須要輸入的</p>
+
+<p>沒有輸入的話, 就會出現error message</p>
+
+<p>```sh
+$ python argprog2.py 
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog2.py x –foo y
+usage: argprog2 [-h] [–foo FOO] bar1 bar2
+argprog2: error: too few arguments</p>
+
+<p>```</p>
+
+<h2 id="description-and-epilog">3.Description and Epilog</h2>
+
+<p>如果我們要在 <em>help</em> 中, 加入關於整個程式的解說,</p>
+
+<p>而不是針對個別的 argument做解說</p>
+
+<p>可以用 <code>description</code> 和 <code>epilog</code> , 方法如下：</p>
+
+<p>```python argprog3.py
+import argparse
+parser = argparse.ArgumentParser(
+        prog=’argprog3’,
+        description=’### This is description. ###’,
+        epilog=’### This is epilog. ###’
+        )
+parser.add_argument(‘–foo’, help=’foo of the %(prog)s program’)
+parser.add_argument(‘bar’, help=’bar of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>其中, <code>description</code> 和 <code>epilog</code> 為解說內容, 唯出現的位置不同</p>
+
+<p>來看輸入 <code>-h</code> 後, 它們的位置在哪：</p>
+
+<p>```sh
+$ python argprog3.py -h
+usage: argprog3 [-h] [–foo FOO] bar</p>
+
+<h3 id="this-is-description">This is description.</h3>
+
+<p>positional arguments:
+  bar         bar of the argprog3 program</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog3 program</p>
+
+<h3 id="this-is-epilog">This is epilog.</h3>
+
+<p>```</p>
+
+<p>所以, description是在arguments解說的前方的內容</p>
+
+<p>而epilog是在arguments解說的後方的內容</p>
+
+<h2 id="default-value">4.Default Value</h2>
+
+<p>針對 <em>optional argument</em> 在沒有輸入值得情形下</p>
+
+<p>如果我們想要讓這個有 <em>Default</em> 的值, 而不是 <em>None</em></p>
+
+<p>可以用 <code>default</code> ,方法如下：</p>
+
+<p>```python argprog4.py
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog4’)
+parser.add_argument(‘–foo’, default=’10’,
+                    help=’foo of the %(prog)s program, (default: %(default)s)’)
+print parser.parse_args()</p>
+
+<p>```</p>
+
+<p>其中 <code>help='foo of the %(prog)s program, (default: %(default)s)'</code> </p>
+
+<p>是 <em>help</em> 中顯示的 <em>default</em> 值</p>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 default 的值是多少</p>
+
+<p>```sh
+$ python argprog4.py -h
+usage: argprog4 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog4 program, (default: 10)</p>
+
+<p>```</p>
+
+<p>接著我們可以什麼都不輸入</p>
+
+<p>看看 <code>foo</code> 的值是不是 <em>default</em> 的值</p>
+
+<p>```sh
+$ python argprog4.py 
+Namespace(foo=’10’)</p>
+
+<p>```</p>
+
+<p>或者在 <code>--foo</code> 後面接其他值, 改變它的值</p>
+
+<p>```sh
+$ python argprog4.py –foo 29
+Namespace(foo=’29’)</p>
+
+<p>```</p>
+
+<p>但是 <code>--foo</code> 後面沒有值的話, 還是會有Error</p>
+
+<p>```sh
+$ python argprog4.py –foo
+usage: argprog4 [-h] [–foo FOO]
+argprog4: error: argument –foo: expected one argument</p>
+
+<p>```</p>
+
+<h2 id="action">5.Action</h2>
+
+<p>上一節提到, 如果 <em>optional argument</em> , 例如 <code>--foo</code></p>
+
+<p>後面沒有值的話, 還是會有Error</p>
+
+<p>那麼像是 <code>--help</code> 這種 <em>optional argument</em>, 後面沒有接值, 也沒出現error</p>
+
+<p>這是怎麼辦到的呢？</p>
+
+<p>這就要用到 <code>action</code> 了, 例如以下程式中, </p>
+
+<p><code>action='store_true'</code> 表示有輸入 <code>--foo1</code> 則 <code>foo1</code> 為 <em>true</em> 若沒有則為 <em>Fales</em></p>
+
+<p><code>action='store_false'</code> 表示有輸入 <code>--foo2</code> 則 <code>foo2</code> 為 <em>Fales</em> 若沒有則為 <em>True</em></p>
+
+<p>```python argprog5.py
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog5’)
+parser.add_argument(‘–foo1’, action=’store_true’, help=’foo1 of the %(prog)s program’)
+parser.add_argument(‘–foo2’, action=’store_false’, help=’foo2 of the %(prog)s program’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>接著,看看什麼都沒輸入的情形：</p>
+
+<p>```sh
+$ python argprog5.py 
+Namespace(foo1=False, foo2=True)</p>
+
+<p>```</p>
+
+<p>再來是有輸入 <code>--foo1</code> 或 <code>--foo2</code> 的情形：</p>
+
+<p>```sh
+$ python argprog5.py –foo1
+Namespace(foo1=True, foo2=True)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog5.py –foo2
+Namespace(foo1=False, foo2=False)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog5.py –foo1 –foo2
+Namespace(foo1=True, foo2=False)</p>
+
+<p>```</p>
+
+<h2 id="type">6.Type</h2>
+
+<p>如果要限定一個argument的 <em>Type</em></p>
+
+<p>例如 <em>type</em> 為 <em>Int</em>, 可以加入 <code>type=int</code> 於程式中</p>
+
+<p>例如以下程式, 我們限定 <code>type=int</code> , 表示 <code>--foo</code> 只接受整數值</p>
+
+<p>```python argprog6.py 
+import argparse
+parser = argparse.ArgumentParser( prog=’argprog6’)
+parser.add_argument(‘–foo’, type=int,
+                    help=’foo of the %(prog)s program, (type: %(type)s)’)
+args = parser.parse_args()
+print args</p>
+
+<p>```</p>
+
+<p>然後輸入 <code>-h</code> 看看, help中有顯示出 <code>type</code> 了</p>
+
+<p>```sh
+$ python argprog6.py -h
+usage: argprog6 [-h] [–foo FOO]</p>
+
+<p>optional arguments:
+  -h, –help  show this help message and exit
+  –foo FOO   foo of the argprog6 program, (type: int)</p>
+
+<p>```</p>
+
+<p>在 <code>--foo</code> 後接整數, 是可以的</p>
+
+<p>```sh
+$ python argprog6.py –foo 100
+Namespace(foo=100)</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog6.py –foo -100
+Namespace(foo=-100)</p>
+
+<p>```</p>
+
+<p>但如果後面接的不是整數, 就會有error</p>
+
+<p>```sh
+$ python argprog6.py –foo -1.35
+usage: argprog6 [-h] [–foo FOO]
+argprog6: error: argument –foo: invalid int value: ‘-1.35’</p>
+
+<p>```</p>
+
+<p>```sh
+$ python argprog6.py –foo abc
+usage: argprog6 [-h] [–foo FOO]
+argprog6: error: argument –foo: invalid int value: ‘abc’</p>
+
+<p>```</p>
+
+<h2 id="further-reading">7.Further Reading</h2>
+
+<p>關於 <code>argparse</code> 的用法</p>
+
+<p>今天只講了一小部份</p>
+
+<p>若有興趣更深入了解, 請看：</p>
+
+<p>http://docs.python.org/2/library/argparse.html#type</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Python Difflib]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/03/30/python-standard-library-difflib/"/>
+    <updated>2014-03-30T04:24:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/03/30/python-standard-library-difflib</id>
+    <content type="html"><![CDATA[<h2 id="intoduction">1.Intoduction</h2>
+
+<p>今天來看看 python 的 <em>difflib</em> ,</p>
+
+<p><em>difflib</em> 常常用於字串處理,</p>
+
+<p>例如可以用來比較兩個 <em>string</em> , 或兩個 <em>list</em> 有哪些不一樣</p>
+
+<!--more-->
+
+<p>首先,載入模組：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from difflib import *</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="contetdiff">2.contet_diff</h2>
+
+<p>要比較兩個檔案裡面有哪幾行不一樣, 可以用 <code>contet_diff</code></p>
+
+<p>假設已經先把檔案讀進來了, 存成 <em>s1</em> 和 <em>s2</em> 兩個 <em>list</em></p>
+
+<p>則可以用這個方式做比較</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>s1 = [‘aa’,’bb’,’cc’,’dd’]
+s2 = [‘aaa’,’bb’,’dd’,’ee’]
+g1 = context_diff(s1, s2, fromfile=’s1’, tofile=’s2’)
+print g1
+&lt;generator object context_diff at 0xb72803c4&gt;</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中 <code>fromfile</code> 和 <code>tofile</code> </p>
+
+<p>只是標示這兩個 <em>list</em> 的名稱而已,</p>
+
+<p>和檔案讀取沒什麼關係</p>
+
+<p>執行完以後會產生一個 <em>generator</em> </p>
+
+<p>而 <em>generator</em> 是一種 <em>Design Pattern</em> </p>
+
+<p>在此不提相關理論</p>
+
+<p>其實只要把它當成 <em>iterable</em> 用 <em>for</em>  迴圈印出來就可以了</p>
+
+<p>如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for line in g1:
+…     print line
+… 
+*** s1</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>— s2</p>
+
+<hr />
+
+<p><strong>* 1,4 **</strong></p>
+
+<p>! aa
+  bb
+- cc
+  dd
+— 1,4 —-</p>
+
+<p>! aaa
+  bb
+  dd
++ ee</p>
+
+<p>```</p>
+
+<p>印出結果後, 每一行前面會有一些符號, 例如 <code>-</code> , <code>+</code> ,所代表的意思如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>符號</th>
+      <th>意思</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>’-‘</td>
+      <td>這一行只在 <em>s1</em></td>
+    </tr>
+    <tr>
+      <td>’+’</td>
+      <td>這一行只在 <em>s2</em></td>
+    </tr>
+    <tr>
+      <td>‘  ’</td>
+      <td>這一行, <em>s1</em> 和 <em>s2</em> 都有,且都一樣</td>
+    </tr>
+    <tr>
+      <td>’!’</td>
+      <td>這一行, <em>s1</em> 和 <em>s2</em> 都有,但不太一樣</td>
+    </tr>
+    <tr>
+      <td>’?’</td>
+      <td>這一行, <em>s1</em> 和 <em>s2</em> 都沒有</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>例如, <code>aa</code> 和 <code>aaa</code> 分別在 <em>s1</em> 和 <em>s2</em> , 但這兩行不太一樣, 所以標示出 ‘!’</p>
+
+<p>而 <code>cc</code>  只存在於 <em>s1</em> , 所以標示出 ‘-‘ </p>
+
+<h2 id="unifieddiff">3.unified_diff</h2>
+
+<p>和 <code>contet_diff</code> 一樣, </p>
+
+<p><code>unified_diff</code> 也可以用來比較兩個 <em>list</em> 的差異</p>
+
+<p>只是結果顯示的方式不一樣, </p>
+
+<p>不會把兩個 <em>list</em> 的內容分開顯示,</p>
+
+<p>而是會合併起來一起顯示</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>g2 = unified_diff(s1, s2, fromfile=’s1’, tofile=’s2’)
+for line in g2:
+…     print line
+… 
+— s1</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>+++ s2</p>
+
+<p>@@ -1,4 +1,4 @@</p>
+
+<p>-aa
++aaa
+ bb
+-cc
+ dd
++ee</p>
+
+<p>```</p>
+
+<h2 id="ndiff">4.ndiff</h2>
+
+<p><code>ndiff</code> 也是用來比較兩個 <em>list</em> 有哪裡不同,</p>
+
+<p>和 <code>contet_diff</code> 以及 <code>unified_diff</code> 最大的差別在於</p>
+
+<p><code>ndiff</code> 會標示出某個 <em>element</em> 哪邊不一樣,</p>
+
+<p>要怎麼修改,才會使兩個 <em>list</em> 看起來一樣</p>
+
+<p>比較以下兩個 <em>list</em> 的異同</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>s3 = [‘aaa’,’bbb’,’ccc’,’ddfd’,’eeee’]
+s4 = [‘aa’,’bbbb’,’ccc’,’dded’,’ffff’]
+for line in g3:
+…     print line
+… </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>g3 = ndiff(s3,s4)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <em>for</em> 迴圈印出 <em>generator</em> 的結果：</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for line in g3:
+…     print line
+… 
+- aaa
+?   -</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<ul>
+  <li>aa</li>
+  <li>bbb</li>
+  <li>
+    <p>bbbb
+?    +</p>
+
+    <p>ccc</p>
+  </li>
+  <li>
+    <p>ddfd
+?   ^</p>
+  </li>
+  <li>
+    <p>dded
+?   ^</p>
+  </li>
+  <li>eeee</li>
+  <li>ffff</li>
+</ul>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中, <code>?   -</code> , <code>?    +</code> 和 <code>?   ^</code> ,</p>
+
+<p>標示出了 <em>s3</em> 的某個 <em>element</em> ,和 <em>s4</em> 的某個 <em>element</em> ,哪邊不一樣,</p>
+
+<h2 id="getclosematches">5.get_close_matches</h2>
+
+<p><code>get_close_matches</code> 是用來尋找某個 <em>input string</em> 和哪個 <em>list</em> 裡面的 <em>element</em> 最相近</p>
+
+<p>這可以用來做拼字錯誤的修正</p>
+
+<p>例如：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>get_close_matches(‘appel’, [‘apple’, ‘bird’, ‘chair’])
+[‘apple’]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>get_close_matches(‘appel’, [‘apples’, ‘apple’, ‘bird’, ‘chair’])
+[‘apple’, ‘apples’]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>結果會顯示出一個或多個 <em>element</em>, 並依據相似程度排序</p>
+
+<h2 id="sequencematcher">6.SequenceMatcher</h2>
+
+<p>接著來看看 <em>SequenceMatcher</em> 這個 <em>Class</em></p>
+
+<h4 id="findlongestmatch">6.1.find_longest_match</h4>
+
+<p><code>find_longest_match</code>  就是 *Longest Common Subsequence(LCS) *</p>
+
+<p>就是在演算法課程中提到的DNA定序的演算法</p>
+
+<p>假設有 <code>a1</code> , <code>b1</code> 兩個序列, 則方法如下： </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a1 = “ATGCATAA”
+b1 = “CCTGCATC”
+match1 = SequenceMatcher(None, a1, b1).find_longest_match(0, len(a1), 0, len(b1))
+print match1
+Match(a=1, b=2, size=5)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><code>Match</code> 中的值, 分別是 <em>LCS</em> <code>a1</code> , <code>b1</code> 兩序列的起點, 以及 <em>LCS</em> 的長度</p>
+
+<p>可用以下方法把 <em>LCS</em> 從 <code>a1</code> , <code>b1</code> 中取出</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a1[match1[0]:match1[0]+match1[2]]
+‘TGCAT’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>b1[match1[1]:match1[1]+match1[2]]
+‘TGCAT’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h4 id="getmatchingblocks">6.2.get_matching_blocks</h4>
+
+<p><code>get_matching_blocks</code> 可以取出兩個 sequence 中數個 match 的部份,</p>
+
+<p>如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>a2 = “ATGAACTCTTAAGA”
+b2 = “AATGCCAGACTTAC”
+match2 = SequenceMatcher(None, a2, b2).get_matching_blocks()
+match2
+[Match(a=0, b=1, size=3), Match(a=3, b=6, size=1), Match(a=4, b=8, size=1), Match(a=7, b=9, size=4), Match(a=14, b=14, size=0)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>結果會回傳多個 match 的 subsequence</p>
+
+<p>可用以下方法印出來看看</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for m in match2:
+…     print a2[m[0]:m[0]+m[2]],b2[m[1]:m[1]+m[2]]
+… 
+ATG ATG
+A A
+A A
+CTTA CTTA</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>將match的部份標出來：</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">a2=&quot;</font><font style="background:#ff00ff !important;">ATG</font><font style="background:#00ffff !important;">A</font><font style="background:#00ff00 !important;">A</font>CT<font style="background:#ffff00 !important;">CTTA</font>AGA&quot;</span>
+
+</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">b2=&quot;A</font><font style="background:#ff00ff !important;">ATG</font>CC<font style="background:#00ffff !important;">A</font>G<font style="background:#00ff00 !important;">A</font><font style="background:#ffff00 !important;">CTTA</font>C&quot;</span>
+
+</p>
+
+<p>如果把 <code>a2</code> 和 <code>b2</code> 對調,</p>
+
+<p>會發現得出的結果不太一樣</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>match3 = SequenceMatcher(None, b2, a2).get_matching_blocks()
+for m in match3:
+…     print b2[m[0]:m[0]+m[2]],a2[m[1]:m[1]+m[2]]
+… 
+ATG ATG
+C C
+CTTA CTTA</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>將match的部份標出來：</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">b2=&quot;A</font><font style="background:#ff00ff !important;">ATG</font><font style="background:#00ffff !important;">C</font>CAGA<font style="background:#00ff00 !important;">CTTA</font>C&quot;</span>
+
+</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">a2=&quot;</font><font style="background:#ff00ff !important;">ATG</font>AA<font style="background:#00ffff !important;">C</font>T<font style="background:#00ff00 !important;">CTTA</font>AGA&quot;</span>
+
+</p>
+
+<p>至於為什麼會這樣呢？</p>
+
+<p>可能是因為演算法是先從第一個sequence逐次比對</p>
+
+<h4 id="getopcodes">6.3.get_opcodes</h4>
+
+<p>跟 <code>get_matching_blocks</code> 一樣, </p>
+
+<p><code>get_opcodes</code> 也可以取出兩個 sequence 中數個 match 的部份,</p>
+
+<p>所得出的 match部份也一樣, </p>
+
+<p>唯一不一樣之處,在於 <code>get_opcodes</code> 會顯示出, </p>
+
+<p>要怎麼把 <code>a</code> 修正, 才會和 <code>b</code> 一樣</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>opc1=SequenceMatcher(None, a2, b2).get_opcodes()
+for tag, i1, i2, j1, j2 in  opc1:
+…     print “%7s a[%d:%d] (%s) b[%d:%d] (%s)” %(tag, i1, i2, a2[i1:i2], j1, j2, b2[j1:j2])
+… 
+ insert a[0:0] () b[0:1] (A)
+  equal a[0:3] (ATG) b[1:4] (ATG)
+ insert a[3:3] () b[4:6] (CC)
+  equal a[3:4] (A) b[6:7] (A)
+ insert a[4:4] () b[7:8] (G)
+  equal a[4:5] (A) b[8:9] (A)
+ delete a[5:7] (CT) b[9:9] ()
+  equal a[7:11] (CTTA) b[9:13] (CTTA)
+replace a[11:14] (AGA) b[13:14] (C)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中 <code>equal</code> 是指兩個sequence一樣的部份</p>
+
+<p>把 <code>equal</code> 的部份標示出來, </p>
+
+<p>跟剛剛的 <code>get_matching_blocks</code> 結果一樣</p>
+
+<p>另外, <code>insert</code> , <code>delete</code> 和 <code>replace</code> 是修正方法</p>
+
+<p>例如 <code>insert a[0:0] () b[0:1] (A)</code> 就是把 <code>a2[0:0]</code> 的部份插入 <code>(A)</code></p>
+
+<p>做完這一步以後會變成這樣,</p>
+
+<p>a2 = “AATG…”</p>
+
+<p>b2 = “AATG…”</p>
+
+<p>以下為 <code>equal</code> 的部份：</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">a2=&quot;</font><font style="background:#ff00ff !important;">ATG</font><font style="background:#00ffff !important;">A</font><font style="background:#00ff00 !important;">A</font>CT<font style="background:#ffff00 !important;">CTTA</font>AGA&quot;</span>
+
+</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">b2=&quot;A</font><font style="background:#ff00ff !important;">ATG</font>CC<font style="background:#00ffff !important;">A</font>G<font style="background:#00ff00 !important;">A</font><font style="background:#ffff00 !important;">CTTA</font>C&quot;</span>
+
+</p>
+
+<p>再來, 我們也可以把 <code>a2</code> 和 <code>b2</code> 順序對調, </p>
+
+<p>也可得出不太一樣的結果,如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>opc2=SequenceMatcher(None, b2, a2).get_opcodes()
+for tag, i1, i2, j1, j2 in  opc2:
+…     print “%7s b[%d:%d] (%s) a[%d:%d] (%s)” %(tag, i1, i2, b2[i1:i2], j1, j2, a2[j1:j2])
+… 
+ delete b[0:1] (A) a[0:0] ()
+  equal b[1:4] (ATG) a[0:3] (ATG)
+ insert b[4:4] () a[3:5] (AA)
+  equal b[4:5] (C) a[5:6] (C)
+replace b[5:9] (CAGA) a[6:7] (T)
+  equal b[9:13] (CTTA) a[7:11] (CTTA)
+replace b[13:14] (C) a[11:14] (AGA)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>標示出 <code>equal</code> 的部份：</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">b2=&quot;A</font><font style="background:#ff00ff !important;">ATG</font><font style="background:#00ffff !important;">C</font>CAGA<font style="background:#00ff00 !important;">CTTA</font>C&quot;</span>
+
+</p>
+
+<p>
+
+<span style="text-decoration: none"><font face="Arial, serif">a2=&quot;</font><font style="background:#ff00ff !important;">ATG</font>AA<font style="background:#00ffff !important;">C</font>T<font style="background:#00ff00 !important;">CTTA</font>AGA&quot;</span>
+
+</p>
+
+<h4 id="match-lists-of-strings">6.4.match lists of strings</h4>
+
+<p>其實, <code>SequenceMatcher</code> 也可以用來比對兩個 <em>list</em> 中的 <em>element</em> 一不一樣</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>l1=[“ab”,”cd”,”x”,”cd”]
+l2=[“ab”,”cd”,”cd”]
+s4 = SequenceMatcher(None, l1,l2)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h5 id="findlongestmatch-1">6.4.1.find_longest_match</h5>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>match4=s4.find_longest_match(0, len(l1), 0, len(l2))
+l1[match4[0]:match4[0]+match4[2]]
+[‘ab’, ‘cd’]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>l2[match4[1]:match4[1]+match4[2]]
+[‘ab’, ‘cd’]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h5 id="findlongestmatch-2">6.4.2.find_longest_match</h5>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>match5=s4.get_matching_blocks()
+for m in match5:
+…     print l1[m[0]:m[0]+m[2]],l2[m[1]:m[1]+m[2]]
+… 
+[‘ab’, ‘cd’] [‘ab’, ‘cd’]
+[‘cd’] [‘cd’]
+[] []</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h5 id="getopcodes-1">6.4.3.get_opcodes</h5>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>opc3=s4.get_opcodes()
+for tag, i1, i2, j1, j2 in  opc3:
+…     print “%7s l1[%d:%d] (%s) l2[%d:%d] (%s)” %(tag, i1, i2, l1[i1:i2], j1, j2, l2[j1:j2])
+… 
+  equal l1[0:2] ([‘ab’, ‘cd’]) l2[0:2] ([‘ab’, ‘cd’])
+ delete l1[2:3] ([‘x’]) l2[2:2] ([])
+  equal l1[3:4] ([‘cd’]) l2[2:3] ([‘cd’])</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="reference">7.Reference</h2>
+
+<p>本文參考於python官網的documentation</p>
+
+<p>想要更深入了解 <code>difflib</code> 請看：</p>
+
+<p>https://docs.python.org/2/library/difflib.html</p>
+]]></content>
+  </entry>
+  
+</feed>

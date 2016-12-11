@@ -1,0 +1,1264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Probabilistic Graphical Models | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/probabilistic-graphical-models/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-11T15:32:34+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Gibbs Sampling]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling/"/>
+    <updated>2016-07-09T08:36:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p><em>Gibbs Sampling</em> 是一種類似於 <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 的抽樣方式，也是根據機率分佈來建立 <em>Markov Chain</em> ，並在 <em>Markov Chain</em> 上行走，抽樣出機率分佈。</p>
+
+<p>設一 <em>Markov Chain</em> ， 有 <em>a</em> 和 <em>b</em> 兩個 <em>state</em> ，它們的值分別為 <script type="math/tex">p(a)</script> 和 <script type="math/tex">p(b)</script> ，而它們之間的轉移機率，分別為 <script type="math/tex">q_1(a,b)</script> 和 <script type="math/tex">q_2(a,b)</script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00179.png" alt="" /></p>
+
+<p>達平衡時，會滿足以下條件：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+1-q_1(a,b) & q_2(a,b) \\
+
+q_1(a,b) & 1-q_2(a,b)
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+p(a) \\
+
+p(b)
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+p(a)(1-q_1(a,b) +p(b)q_2(a,b) = p(a)  \\
+
+p(a)q_1(a,b) + p(b)(1-q_2(a,b)) = p(b) 
+
+\end{cases}\\
+
+& \Rightarrow p(a)q_1(a,b) = p(b)q_2(a,b)
+
+\end{align}
+
+
+ %]]&gt;</script>
+
+<p>因此，達到平衡時，得出 <a name="eq1">（公式一）</a> ：</p>
+
+<script type="math/tex; mode=display">
+
+ p(a)q_1(a,b) = p(b)q_2(a,b)
+
+</script>
+
+<p>在  <a href="/blog/2016/07/07/pgm-metropolis-hasting">Metropolis Hasting</a> 這篇有提到，可以利用 <em>Markov Chain</em> 最終會達到平衡的特性，來為某機率分佈 <script type="math/tex">p(x)</script> 抽樣。</p>
+
+<p>但是 <em>Metropolis Hasting</em> 抽樣時，需要先用 <em>proposed distribution</em> 計算出下一個時間點可能的值，然後 <em>acceptance probability</em> 來拒絕它，因為計算出來的值會被拒絕，所以造成計算上的浪費。</p>
+
+<p>而對於一高維度的機率分佈 <script type="math/tex">p(x_1,x_2,...,x_n)</script> ，可以用另一種方式來建立 <em>Markov Chain</em> ，則不會有這個問題。這種方法為 <em>Gibbs Sampling</em> 。</p>
+
+<!--more-->
+
+<h2 id="gibbs-sampling">Gibbs Sampling</h2>
+
+<p>首先，先考慮二維的空間，設一機率分佈 <script type="math/tex">p(X,Y)</script> ，若此機率分佈的 <em>Random Variable</em> 有四個值，分別為 <script type="math/tex">A(x_1,y_1)</script> ， <script type="math/tex">B(x_2,y_1)</script> ， <script type="math/tex">C(x_1,y_2)</script> 和 <script type="math/tex">D(x_2,y_2)</script> 。</p>
+
+<p><img src="/images/pic/pic_00180.png" alt="" /></p>
+
+<p>首先，看看如何在  <em>A</em> 和 <em>B</em> 建立 <em>Markov Chain</em> 。由於 <em>A</em> 和 <em>B</em> 只有在 <script type="math/tex">x</script> 維度上的值不一樣，則：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& p(x_1,y_1)p(x_2|y_1)=p(y_1)p(x_1|y_1)p(x_2|y_1) \\
+
+& p(x_2,y_1)p(x_1|y_1)=p(y_1)p(x_2|y_1)p(x_1|y_1)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>由於兩式的等號右邊一樣，則可得出：</p>
+
+<script type="math/tex; mode=display">
+
+\begin{align}
+
+p(x_1,y_1)p(x_2|y_1)=p(x_2,y_1)p(x_1|y_1)
+
+\end{align}
+
+</script>
+
+<p>此結果符合 <a href="#eq1">（公式一）</a> 的 <em>Markov Chain</em> 平衡狀態。根據此結果，建立以下的 <em>Markov Chain</em> ：</p>
+
+<p><img src="/images/pic/pic_00181.png" alt="" /></p>
+
+<p>其中， <script type="math/tex">p(x_1\mid y_1)+p(x_2\mid y_1) = 1</script> 。</p>
+
+<p>若在此 <em>Markov Chain</em> 上行走，如果走得夠多次的話，走到 <em>A</em> 和走到 <em>B</em> 的次數比，會是 <script type="math/tex">p(x_1,y_1) : p(x_2,y_1)</script> 。因此，用此 <em>Markov Chain</em> 得出的次數比，就相當於從機率分佈 <script type="math/tex">p(X,Y)</script> 抽樣後，  <em>A</em> 和 <em>B</em>  所抽出的次數比。</p>
+
+<p>也可用同樣方法，在 <em>A</em> 和 <em>C</em> 之間建立 <em>Markov Chain</em>：</p>
+
+<p><img src="/images/pic/pic_00182.png" alt="" /></p>
+
+<p>同理，<em>D</em> 和 <em>B</em> 或 <em>C</em> 之間，只有一個維度是不一樣的值，也可建立這樣的 <em>Markov Chain</em> 。</p>
+
+<p>結合以上 <em>Markov Chain</em> ，若要對 <script type="math/tex">p(X,Y)</script> 進行抽樣，則可先固定 <script type="math/tex">y</script> 的值，先在 <script type="math/tex">x</script> 軸上抽樣， 再固定 <script type="math/tex">x</script> 的值，在  <script type="math/tex">y</script> 軸上抽樣，如此交替進行，即為 <em>Gibbs Sampling</em> 的方法。</p>
+
+<p>舉個例子，假設有一聯合分佈 <script type="math/tex">p(X,Y)</script> ，其機率值如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c | c c}
+
+p(X,Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & 0.5 & 0.2 \\
+
+X=1  & 0.1 & 0.2 \\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>這些點在座標上的位置如下圖：</p>
+
+<p><img src="/images/pic/pic_00183.png" alt="" /></p>
+
+<p>先把 <script type="math/tex">p(X\mid Y)</script> 和 <script type="math/tex">p(Y\mid X)</script> 計算出來，以便之後使用。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{array}{c | c c}
+
+p(X|Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & \frac{5}{6} & \frac{1}{2} \\
+
+X=1  & \frac{1}{6} & \frac{1}{2} \\
+
+\end{array} 
+
+&
+
+\begin{array}{c | c c}
+
+p(Y|X) & Y=0  & Y=1  \\ \hline
+
+X=0  & \frac{5}{7} & \frac{2}{7} \\
+
+X=1  & \frac{1}{3} & \frac{2}{3} \\
+
+\end{array}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>然後，進行 <em>gibbs sampling</em> ，首先，從 (0,0) 開始，固定 y 軸，在 x 軸上抽樣，用 <script type="math/tex">p(X\mid Y=0)</script> 的值，建立從 (0,0) 在 x 軸上轉移的 <em>Markov Chain</em> ，如下： </p>
+
+<p><img src="/images/pic/pic_00184.png" alt="" /></p>
+
+<p>根據此 <em>Marokv Chain</em> ， 從 <script type="math/tex">p(X\mid  Y=0)</script> 中，抽出 <script type="math/tex">X</script> ， 假設抽出的 <script type="math/tex">X</script> 值為 1，則抽出來的點為 (1,0) ，下一步則是要固定 x 軸，在 y 軸上抽樣。用 <script type="math/tex">p(Y\mid Y=1)</script> 的值，建立從 (1,0) 在 y 軸上轉移的 <em>Markov Chain</em> ，如下：</p>
+
+<p><img src="/images/pic/pic_00185.png" alt="" /></p>
+
+<p>根據此 <em>Marokv Chain</em> ， 從 <script type="math/tex">p(Y\mid  X=1)</script> 中，抽出 <script type="math/tex">Y</script>， 假設抽出的 <script type="math/tex">Y</script> 值為 1，則抽出來的點為 (1,1)，到目前為止，抽出來的樣本序列為這樣：</p>
+
+<p>``` sh
+(0,0) (1,0) (1,1) </p>
+
+<p>```</p>
+
+<p>然後再固定 y 軸，在 x 軸上抽樣，這樣持續抽樣下去，抽到最後，得出以下序列：</p>
+
+<p>``` sh
+(0,0) (1,0) (1,1) (0,1) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (1,0) 
+(1,1) (1,1) (1,1) (1,1) (1,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) (0,0) 
+(0,1) (1,1) (1,1) (0,1) (0,1) (0,1) (0,0) (0,0) …</p>
+
+<p>```</p>
+
+<p>最後，統計抽樣序列中各個點的出現次數， (0,0) (1,0) (1,1) (0,1) 這四個點的次數比會接近 0.5 : 0.1 : 0.2 : 0.2</p>
+
+<p><em>Gibbs Sampling</em> 也可用在高維度的機率分佈 <script type="math/tex">p(x_1,x_2,...,x_n)</script> 。抽樣時，先從第一個維度上抽樣，固定其他維度，用 <script type="math/tex">p(x_1\mid x_2,...,x_{n})</script> 抽出下一個樣本，然後再從第二個維度抽樣，固定其他維度，用 <script type="math/tex">p(x_2\mid x_1,x_3,...,x_{n})</script> 抽出下一個樣本，如此一直循環下去。</p>
+
+<p>整個抽樣過程的 pseudo code 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+1 & \text{set }t = 0 \\
+
+2 & \text{generate an initial state } \textbf{x}_0 \in \text{domain of }p(x_1,x_2,...,x_n) \\
+
+3 & \text{repeat until }t = M \\
+
+4 & \mspace{30mu}\text{for each dimension }i = 1...n \\
+
+5 & \mspace{60mu}\text{draw } \textbf{x}_t \text{ from } p(x_i|x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n) \\
+
+6 & \mspace{60mu}\text{set }t = t+1
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>此處流程大致上和 <em>Metropolis Hasting</em> 類似， 而 <script type="math/tex">p(x_i\mid x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n)</script> 就相當於是  <em>Metropolis Hasting</em> 中的 <em>proposed distribution</em> ，但在 <em>Gibbs Sampling</em> 中 ， <script type="math/tex">p(x_i\mid x_1,x_2,\dots,x_{i-1},x_{i+1},\dots,x_n)</script> 得出的值，就直接是抽樣結果了，不需要再算一個 <em>acceptance probability</em> 來判斷是否要接受或拒絕它。因此，不會造成計算上的浪費。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>此例實作先前提到的  <script type="math/tex">p(X,Y)</script> 抽樣：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c | c c}
+
+p(X,Y) & Y=0  & Y=1  \\ \hline
+
+X=0  & 0.5 & 0.2 \\
+
+X=1  & 0.1 & 0.2 \\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>程式碼如下：</p>
+
+<p>```python gibbssamp.py
+import numpy as np
+from collections import Counter</p>
+
+<p>def gibbssamp(m):
+    P = np.matrix([[0.5, 0.2], [0.1, 0.2]])
+    condi = [np.divide(P, np.sum(P, axis=0)), np.divide(P, np.sum(P, axis=1)).T]
+    x = [0, 0]
+    samples = []
+    for i in range(m):
+        for j in range(2):
+            one_prob = condi[j][1, x[(j + 1) % 2]]
+            x[j] = np.random.binomial(1, one_prob, 1)[0]
+            samples.append([x[0], x[1]])
+    return samples</p>
+
+<p>def count(samples):
+    c = Counter()
+    for s in samples:
+        c.update([”(%s,%s)” % (s[0], s[1])])
+    for k in c.keys():
+        print k, c[k]</p>
+
+<p>```</p>
+
+<p>其中，程式碼中的 <code>P</code> 為機率分佈 <script type="math/tex">p(X,Y)</script> ， <code>condi[0]</code> 為 <script type="math/tex">p(X\mid Y)</script> ， <code>condi[1]</code> 為 <script type="math/tex">p(Y\mid X)</script> 。 <code>gibbssamp</code> 為執行 <em>Gibbs Sampling</em> 的主要函數。</p>
+
+<p>執行 <code>gibbssamp</code> 抽出 1000 * 2 個樣本，如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>X = gibbssamp(1000)
+print X
+[[0, 0], [0, 0], [1, 0], [1, 1], [0, 1], [0, 1], [0, 1], [0, 0], [0, 0], [0, 0], [0, 0], [0, 1],
+[0, 1], [0, 1], [0, 1], [0, 1], [1, 1], [1, 1], [0, 1], [0, 0], [0, 0], [0, 1], [1, 1], [1, 1], 
+[1, 1], [1, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [1, 0], [1, 1], 
+[0, 1], [0, 1], [0, 1], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0], 
+[0, 0], [0, 0], [1, 0], [1, 1], [1, 1], [1, 0], [0, 0], [0, 1], [0, 1] … </p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <code>count</code> 用來統計抽樣結果：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>count(X)
+(0,0) 1043
+(1,0) 172
+(0,1) 387
+(1,1) 398</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>統計結果顯示， (0,0) (1,0) (0,1) (1,1) 的比率會接近 0.5 : 0.1 : 0.2 : 0.2</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>The Gibbs Sampler</p>
+
+<p>https://theclevermachine.wordpress.com/2012/11/05/mcmc-the-gibbs-sampler/</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(1)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling1</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(2)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling2</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Metropolis Hasting]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/07/pgm-metropolis-hasting/"/>
+    <updated>2016-07-07T17:21:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/07/pgm-metropolis-hasting</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>對一個 <em>Markov Chain</em> 而言，不論起始狀態為多少，最後會達到一個穩定平衡的狀態。</p>
+
+<p>舉個例子，以下為一 <em>Markov Chain</em></p>
+
+<p><img src="/images/pic/pic_00172.png" alt="" /></p>
+
+<p>則此 <em>Markov Chain</em> 達平衡狀態時， <script type="math/tex">A,B</script> 的比率為<script type="math/tex"> 5:6 </script>，也就是說：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+0.4 & 0.5 \\
+
+0.6 & 0.5 
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+4A+5B = 10A \\
+
+6A+5B = 10B 
+
+\end{cases}\\
+
+& \Rightarrow 6A = 5B
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>不管此 <em>Markov Chain</em> 的起始狀態如何，最後達平衡狀態時， <script type="math/tex">A,B</script> 的比率一定為<script type="math/tex"> 5:6 </script>。因此，如果在這 <em>Markov Chain</em> 的  <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 任一一個點開始走，假設走的次數夠多的話，走到 <script type="math/tex">A</script> 和走到 <script type="math/tex">B</script> 的比例。會是 <script type="math/tex">5 : 6</script> 。因此，可利用 <em>Markov Chain</em> 最後會收斂到一穩定狀態的特性，來進行抽樣。</p>
+
+<p><em>Metropolis Sampler</em> 即是給定一機率分佈函數，從這機率函數建立 <em>Markov Chain</em> ，然後再用建立出來的 <em>Markov Chain</em> 來進行抽樣。</p>
+
+<!--more-->
+
+<h2 id="metropolis-sampler">Metropolis Sampler</h2>
+
+<p>設某一機率分佈 <script type="math/tex">p(X)</script> ，起始值為 <script type="math/tex">x_{0}</script> 。隨機變數的值為 <script type="math/tex"> X = \{ a_{1}, a_{2}, ..., a_{n}\} </script>。</p>
+
+<p>抽樣過程如下：</p>
+
+<p>設目前時間點 <script type="math/tex">t</script> 抽出的值為 <script type="math/tex">x_{t}=a_{i}</script> 然後，從一機率分佈（稱為 <em>proposal distribution</em>），<script type="math/tex">q(x_{t+1}\mid x_{t})</script> 中，抽出一個值，為 <script type="math/tex">a_{j}</script> ，其中 <script type="math/tex">q(x_{t+1}\mid x_{t})</script> 滿足以下對稱性即可：</p>
+
+<script type="math/tex; mode=display">
+
+q(x_{t+1}|x_{t}) = q(x_{t}|x_{t+1})
+
+</script>
+
+<p><script type="math/tex">q(x_{t+1}\mid x_{t})</script> 可以是比較好計算的函數，用於快速產生下一個可能的樣本 <script type="math/tex">a_{j}</script> ，  <script type="math/tex">a_{j}</script> 為 <em>proposed state</em> ，意思就是說，想從 <script type="math/tex">q(x_{t+1}\mid x_{t})</script> 「提出」一個值，看看這個值能不能成為 <script type="math/tex">x_{t+1}</script> 的值，但實際上，這時還不知道 <script type="math/tex">a_{j}</script> 適不適合為<script type="math/tex">x_{t+1}</script> 的值，所以要做以下運算。</p>
+
+<p>如果 <script type="math/tex">p(a_{j}) \geq p(a_{i})</script> ，則：</p>
+
+<script type="math/tex; mode=display">
+
+x_{t+1} = a_{j}
+
+</script>
+
+<p>如果 <script type="math/tex">% &lt;![CDATA[
+p(a_{j}) < p(a_{i}) %]]&gt;</script> 則：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x_{t+1} = \begin{cases}
+
+   a_{j} & \text{with probability of } \alpha  \\
+
+   a_{i} & \text{with probability of } 1- \alpha 
+
+\end{cases}\\
+
+& \text{where }  \alpha = \frac{p(a_j)}{p(a_{i})}
+
+\end{align}
+
+
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex">\alpha</script> 稱為 <em>acceptance probability</em> ，意思是，接受 <script type="math/tex">x_{t+1}</script> 的值為 <script type="math/tex">a_{j}</script> 的機率有多少？</p>
+
+<p>此方法可以看成是在 <script type="math/tex">a_{i}</script> 與 <script type="math/tex">a_{j}</script> 之間，建立 <em>Markov Chain</em> ：</p>
+
+<p>如果想從 <script type="math/tex">a_{i}</script> 轉移到 <script type="math/tex">a_{j}</script> ，且， <script type="math/tex">p(a_{j}) \geq p(a_{i})</script> ，則建立出的 <em>Markov Chain</em> ，如下：</p>
+
+<p><img src="/images/pic/pic_00173.png" alt="" /></p>
+
+<p>由於 <script type="math/tex">p(a_{j}) \geq p(a_{i})</script> ，所以一定會接受 從 <script type="math/tex">a_{i}</script> 到 <script type="math/tex">a_{j}</script> 的轉移。</p>
+
+<p>呈上，如果想從 <script type="math/tex">a_{j}</script> 轉移回 <script type="math/tex">a_{i}</script> ，則建立出的 <em>Markov Chain</em> ，如下：</p>
+
+<p><img src="/images/pic/pic_00174.png" alt="" /></p>
+
+<p>由於 <script type="math/tex">% &lt;![CDATA[
+p(a_{i}) < p(a_{j}) %]]&gt;</script>  ，所以從 <script type="math/tex">a_{j}</script> 轉到 <script type="math/tex">a_{i}</script> 的轉移，不一定會成立，而是由 <em>acceptance probability</em> 來決定。</p>
+
+<p>把以上兩個合起來，得出 <script type="math/tex">a_{i}</script> 與 <script type="math/tex">a_{j}</script> 之間的  <em>Markov Chain</em> ，如下：</p>
+
+<p><img src="/images/pic/pic_00175.png" alt="" /></p>
+
+<p>假設在這 <em>Markov Chain</em> 上，隨機走動，設走到 <script type="math/tex">a_i</script> 的機率為 <script type="math/tex">A</script> ，走到 <script type="math/tex">a_j</script> 的機率為 <script type="math/tex">B</script> ，則達平衡時：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+0 & \frac{p(a_i)}{p(a_j)} \\
+
+1 & 1 -  \frac{p(a_i)}{p(a_j)}
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+\frac{p(a_i)}{p(a_j)} B = A \\
+
+A + (1 -  \frac{p(a_i)}{p(a_j)})B = B 
+
+\end{cases}\\
+
+& \Rightarrow A : B = p(a_i) : p(a_j)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>因此 <em>Markov Chain</em> 達到平衡狀態時， 走到 <script type="math/tex">a_i</script> 和走到 <script type="math/tex">a_j</script> 的次數比，會是 <script type="math/tex">p(a_i):p(a_j)</script> 。</p>
+
+<p>舉個簡單的例子，假設 <script type="math/tex">p(x)</script> 如下， <script type="math/tex">X</script> 有0.8的機率為 0 ，有0.2的機率為 1 ，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+p(x) = \begin{cases}
+
+0.2 & X=0 \\
+
+0.8 & X=1
+
+\end{cases}\\
+
+ %]]&gt;</script>
+
+<p>則建立出來的 <em>Markov Chain</em> 如下圖：</p>
+
+<p><img src="/images/pic/pic_00176.png" alt="" /></p>
+
+<p>從這 <em>Markov Chain</em> 上，從 0 開始走，會先轉移到 1 ，走過的序列如下：</p>
+
+<p>```sh
+01</p>
+
+<p>```</p>
+
+<p>到 1 以後，有 0.75的機率會走回 1，有0.25會再走到 0 ，走到 1 和走到 0 的比率是 3:1 ， 假設走回 1 三次以後才走回0 ，則走過的序列如下：</p>
+
+<p>```sh
+011110</p>
+
+<p>```</p>
+
+<p>這樣一直走下去，則</p>
+
+<p>```sh
+01111011110111101111…</p>
+
+<p>```</p>
+
+<p>序列中任取一個數，則有0.8的機率為 0 ，有0.2的機率為 1 ，和 <script type="math/tex">p(x)</script> 的機率分佈一樣。</p>
+
+<p>因此，建立了  <script type="math/tex">a_{i}</script> 與 <script type="math/tex">a_{j}</script> 之間的 <em>Markov Chain</em> 之後，就可以在這兩個點上面來回行走，抽出適當比例的樣本。</p>
+
+<p>可以把 <script type="math/tex">X</script> 只有兩個值的機率分佈，推廣到多個值，在 <script type="math/tex"> X = \{ a_{1}, a_{2}, ..., a_{n}\} </script> 中的任兩個值都可以建立這樣的 <em>Markov Chain</em> ，在這些 <em>Markov Chain</em> 中，來回行走，最後達平衡時，抽出來的序列就等同於從 <script type="math/tex">p(X)</script> 的機率分佈中抽樣。</p>
+
+<p>整個抽樣過程的 <em>pseudo code</em> 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+1 & \text{set }t = 0 \\
+
+2 & \text{generate an initial state } x_0 \in \{ a_{1}, a_{2}, ..., a_{n}\} \\
+
+3 & \text{repeat until }t = M \\
+
+4 & \mspace{30mu} \text{generate a proposal state } a_{j} \text{ from } q(x_{t+1} | x_t ) \\
+
+5 & \mspace{30mu} \text{calculate the acceptance probability }\alpha = \text{min} \left(1,\frac{p(a_{j})}{p(x_t)} \right) \\
+
+6 & \mspace{30mu} \text{draw a random number } u \text{ from } \text{Unif}(0,1) \\
+
+7 & \mspace{30mu} \text{if }u \leq \alpha \\
+
+8 & \mspace{60mu} \text{ accept the proposal state } a_{j} \text{ and set } x_{t+1}= a_{j} \\
+
+9 & \mspace{30mu} \text{else set } \\
+
+10 & \mspace{60mu} x_{t+1} = x_{t}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex">M</script> 為抽出的樣本數，而從 <em>Unif(0,1)</em> 抽出的 <script type="math/tex">u</script> ，目的是要讓 <script type="math/tex">x_{t+1}= a_{j}</script> 成立的機率為 <script type="math/tex">\alpha</script> 。</p>
+
+<h2 id="metropolis-hasting">Metropolis Hasting</h2>
+
+<p>由於 <em>Metropolis Sampler</em> 的 <em>proposed distribution</em> 一定要滿足對稱性，如果 <script type="math/tex">p(x)</script> 為非對稱性的機率分佈，例如 <em>Gamma distribution</em> ，就不太適合用對稱性的 <em>proposed distribution</em> 來進行抽樣。</p>
+
+<p><em>Metropolis Hasting</em> 是一種更 <em>General</em> 的抽樣方式，它可用於以下情形：</p>
+
+<script type="math/tex; mode=display">
+
+q(x_{t+1}|x_{t}) \neq q(x_{t}|x_{t+1})
+
+</script>
+
+<p>如果 <script type="math/tex">q(x_{t+1}\mid x_{t})</script> 不對稱，例如 <script type="math/tex">q(x_{t+1}\mid x_{t}) > q(x_{t}\mid x_{t+1}) </script> 這種情況，表示從 <script type="math/tex">x_{t}</script> 的位置「提出」走到 <script type="math/tex">x_{t+1}</script> 的位置，機率是比從 <script type="math/tex">x_{t+1}</script> 「提出」走回 <script type="math/tex">x_{t}</script> 還高。所以也要把這個機率的差異考慮到 <em>Markov Chain</em> 裡面，因此要加入 <em>correction factor</em> <script type="math/tex">c</script> ：</p>
+
+<script type="math/tex; mode=display">
+
+c = \frac{q(x_{t}|x_{t+1})}{q(x_{t+1}|x_{t})}
+
+</script>
+
+<p>將 <script type="math/tex">c</script> 乘上 <em>proposed probability</em>  ，來修改 <em>acceptance probability</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+\alpha = \frac{p(a_j)}{p(a_{i})} \times c = \frac{p(a_j)}{p(a_{i})} \times \frac{q(a_i|a_j)}{q(a_j|a_i)}
+
+</script>
+
+<p>如果要在 <script type="math/tex">a_i</script> 與 <script type="math/tex">a_j</script> 之間，建立 <em>Markov Chain</em> ，且 <script type="math/tex">p(a_j)q(a_i\mid a_j) > p(a_{i})q(a_j\mid a_i)</script>，則建立出的 Markov Chain ，如下：</p>
+
+<p><img src="/images/pic/pic_00177.png" alt="" /></p>
+
+<p>除了 <em>acceptance probability</em> 要加上 <em>correction factor</em> 之外， <em>Metropolis Hasting</em> 的抽樣過程，幾乎和 <em>Metropolis Sampler</em> 一樣。整個抽樣過程的 <em>pseudo code</em> 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+1 & \text{set }t = 0 \\
+
+2 & \text{generate an initial state } x_0 \in \{ a_{1}, a_{2}, ..., a_{n}\} \\
+
+3 & \text{repeat until }t = M \\
+
+4 & \mspace{30mu} \text{generate a proposal state } a_{j} \text{ from } q(x_{t+1} | x_t ) \\
+
+5 & \mspace{30mu} \text{calculate the proposal correction factor }c = \frac{q(x_{t-1} | a_j) }{q(a_j|x_{t-1})} \\
+
+6 & \mspace{30mu} \text{calculate the acceptance probability }\alpha = \text{min} \left(1,\frac{p(a_{j})}{p(x_t)} \times c \right) \\
+
+7 & \mspace{30mu} \text{draw a random number } u \text{ from } \text{Unif}(0,1) \\
+
+8 & \mspace{30mu} \text{if }u \leq \alpha \\
+
+9 & \mspace{60mu} \text{ accept the proposal state } a_{j} \text{ and set } x_{t+1}= a_{j} \\
+
+10 & \mspace{30mu} \text{else set } \\
+
+11 & \mspace{60mu} x_{t+1} = x_{t}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來，進入實作的部分</p>
+
+<h4 id="metropolis-sampler-1">Metropolis Sampler</h4>
+
+<p>首先，從 <em>Metropolis Sampler</em> 開始，用 <em>Metropolis Sampler</em> 對以下 <script type="math/tex">p(x)</script> 進行抽樣：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+p(x) = \begin{cases}
+
+0.2 & X=0 \\
+
+0.8 & X=1
+
+\end{cases}\\
+
+ %]]&gt;</script>
+
+<p>程式碼如下：</p>
+
+<p>```python matrosamp.py
+import random
+import collections</p>
+
+<p>def metrosamp(ITER):
+    P = {0: 0.2, 1: 0.8}
+    Q = {1: 0, 0: 1}
+    X = []
+    xt = 0
+    for i in range(ITER):
+        xtp1 = Q[xt]
+        alpha = min(1., P[xtp1] / P[xt])
+        if random.random() &lt;= alpha:
+            xt = xtp1
+        X.append(xt)
+    return X</p>
+
+<p>def count(X):
+    counter = collections.Counter(X)
+    for key in counter:
+        print key, counter[key] </p>
+
+<p>```</p>
+
+<p>程式碼中的 <code>P</code> 即 <script type="math/tex">p(x)</script> ， 而 <code>Q</code> 則是 <em>proposed distribution</em> ， <script type="math/tex">q(x_{t}\mid x_{t-1})</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& q(x_{t} = 0 |x_{t-1}=1) = 1 \\
+
+& q(x_{t} = 1|x_{t-1}=0) = 1 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>也就是說，位於 0 時， <em>proposed distribution</em> 會「提出」走到 1 ，位於 1 時會提出走到 0 。</p>
+
+<p>而進行 <em>Metropolis Sampler</em> 抽樣的演算法為程式碼中的 <code>metrosamp</code> ，抽樣結果儲存於 <code>X</code> ：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>X = metrosamp(10000)
+print X 
+[1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1,….]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>用count` 則是將結果做統計：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>count(X)
+0 2027
+1 7973</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>0 和 1 的比例，接近 0.2 和 0.8 。</p>
+
+<h4 id="metropolis-hasting-1">Metropolis Hasting</h4>
+
+<p>再來舉個 <em>Metropolis Hasting</em> 的例子。</p>
+
+<p><em>Metropolis Hasting</em> 也可以用在連續的機率分佈，此例用 <em>Metropolis Hasting</em> 來對 <em>gamma distribution</em> 進行抽樣，程式碼如下：</p>
+
+<p>```python metrohast.py
+import numpy as np
+import random
+import collections
+import matplotlib.pyplot as plt
+import math
+import scipy.stats</p>
+
+<p>def p_func_raw(x, a, b):
+    S1 = ((b ** a) / math.gamma(a))
+    S2 = x ** (a - 1)
+    S3 = math.exp(-b * x)
+    return S1 * S2 * S3  # * S4</p>
+
+<p>def p_func(y):
+    return p_func_raw(y, 2, 1)</p>
+
+<p>def q_func(beta):
+    return np.random.exponential(beta)</p>
+
+<p>def q_func_pdf(x, beta):
+    return scipy.stats.expon.pdf(x, scale=beta)</p>
+
+<p>def metrohast(M):
+    X = []
+    beta = 5.
+    xt = beta
+    for i in range(M):
+        aj = q_func(beta)
+        c = q_func_pdf(xt, beta) / q_func_pdf(aj, beta)
+        alpha = min(1., (p_func(aj) / p_func(xt)) * c)
+        if random.random() &lt;= alpha:
+            xt = aj
+        X.append(xt)
+    return X</p>
+
+<p>def draw(S):
+    n, bins, patches = plt.hist(S, 100, normed=1, facecolor=’b’, alpha=0.2)
+    plt.plot(bins, [p_func(x) for x in bins], color=’r’)
+    plt.show()</p>
+
+<p>```</p>
+
+<p>本例實作一個 <em>gamma distribution</em> 的抽樣：</p>
+
+<script type="math/tex; mode=display">
+
+Gamma(x,a,b) = \frac{ b^a }{\Gamma(a)}x^{a-1}e^{-bx}
+
+</script>
+
+<p>在本例中，令 a=2, b=1</p>
+
+<script type="math/tex; mode=display">
+
+p(x) = Gamma(x,2,1)
+
+</script>
+
+<p>程式碼中， <code>p_func</code> 為 <script type="math/tex">p(x)</script></p>
+
+<p>而抽樣所用的 <em>proposed distribution</em> 為 <em>exponantial distribution</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+exp(x,\beta) =  \frac{1}{\beta} e^{-\frac{x}{\beta}}
+
+</script>
+
+<p>在本例中，令 <script type="math/tex">\beta=5</script> </p>
+
+<script type="math/tex; mode=display">
+
+q(x) = exp(x,5) 
+
+</script>
+
+<p>此例的 <script type="math/tex">q(x)</script> 跟上一時間點的 <script type="math/tex">x</script> 值無關，即： <script type="math/tex">q(x_{t+1}) = q(x_{t+1}\mid x_{t})</script> 。</p>
+
+<p>程式碼中， <code>q_func</code> 和 <code>q_func_pdf</code> 為 <script type="math/tex">q(x)</script> 。其中， <code>q_func</code> 用於產生 <script type="math/tex">a_j</script> ，而 <code>q_func_pdf</code> 用於計算 <em>correction factor</em> 。</p>
+
+<p>而進行 <em>Metropolis Hasting</em> 抽樣的演算法為程式碼中的 <code>metrohast</code> ，抽樣結果儲存於 <code>X</code> 。<code>draw</code> 則是將結果畫成 <em>Histogram</em> 。</p>
+
+<p>用 <code>metrohast</code> 執行抽樣，並用 <code>draw</code> 畫出結果：</p>
+
+<p>``` sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>X = metrohast(10000)
+draw(X)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p><img src="/images/pic/pic_00178.png" alt="" /></p>
+
+<p>其中，紅色的線為 <em>Gamma Distribution</em> 實際上的值，藍色的線為 <em>Metropolis Hasting</em> 的抽樣結果。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>Metropolis Sampler</p>
+
+<p>https://theclevermachine.wordpress.com/2012/10/05/mcmc-the-metropolis-sampler/</p>
+
+<p>Metropolis Hasting</p>
+
+<p>https://theclevermachine.wordpress.com/2012/10/20/mcmc-the-metropolis-hastings-sampler/</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(1)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling1</p>
+
+<p>LDA-math-MCMC 和 Gibbs Sampling(2)</p>
+
+<p>http://www.52nlp.cn/lda-math-mcmc-%e5%92%8c-gibbs-sampling2</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Variational Inference]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference/"/>
+    <updated>2016-06-20T02:42:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>若某個有 <script type="math/tex">m</script> 個維度的 data <script type="math/tex">\textbf{x} = \{x_1,x_2,...,x_m\}</script> 的產生，是跟某個有 <script type="math/tex">n</script>個維度的 hidden variable <script type="math/tex">\textbf{z} = \{z_1,z_2,...,z_n\} </script> 有關，在機率圖模型，表示成：  </p>
+
+<p><img src="/images/pic/pic_00171.png" alt="" /></p>
+
+<p>從這機率圖形，可得出 hidden variable <script type="math/tex">\textbf{z}</script> 和 <script type="math/tex">\textbf{x}</script> 的聯合分佈機率：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x},\textbf{z})  = p(\textbf{z})p(\textbf{x}|\textbf{z})
+
+</script>
+
+<p>若是給定 hidden variable <script type="math/tex">\textbf{z}</script> 的值，則可產生 data <script type="math/tex">\textbf{x}</script> ，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x}|\textbf{z}) 
+
+</script>
+
+<p>但如果給定 data <script type="math/tex">\textbf{x}</script> 的值，這組 data 所對應到的 hidden variable 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\frac{p(\textbf{x} | \textbf{z}) p(\textbf{z}) }{\int p(\textbf{x} | \textbf{z})p(\textbf{z}) \text{d}\textbf{z}} 
+
+
+</script>
+
+<p>其中，分母 <script type="math/tex">\int p(\textbf{x} \mid  \textbf{z})p(\textbf{z}) \text{d}\textbf{z}</script> 積分如果無法算出來的時候，就無法直接算出 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值，則要用估計的方法來計算 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值。</p>
+
+<p>Variational Inference 用來估計 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值 。</p>
+
+<!--more-->
+
+<p><em>Variational Inference</em> 的做法是，不直接把 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 求出，而是用一個較好算的 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script> 來求出近似解。其中， <script type="math/tex">\mathbf{\theta}</script> 為參數，調整此參數可以讓 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script>。較接近 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 。</p>
+
+<p>求近似解的方法，是讓 <script type="math/tex">q(\textbf{z}\mid \mathbf{\theta})</script> 和 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 這兩個機率分佈的 <em>KL Divergence</em> 越小越好：<a name="eq1">（公式一）</a></p>
+
+<script type="math/tex; mode=display">
+
+\min_{\theta} D_{KL}[  q(\textbf{z}| \mathbf{\theta} )  ||   p(\textbf{z}|\textbf{x})   ]
+
+</script>
+
+<h2 id="evidence-lower-bound-elob">Evidence Lower Bound (ELOB)</h2>
+
+<p>由於<a href="#eq1">（公式一）</a>中的 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 無法直接計算出，因此這個</p>
+
+<p><em>KL Divergence</em> 的值也無法算出來。但可以把它稍微整理一下，如下<a name="eq2">（公式二）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+
+&
+
+D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})] = \int
+
+q(\textbf{z}) \text{log}  \frac{q(\textbf{z})}{p(\textbf{z}|\textbf{x})} \text{d}\textbf{z}
+
+\\&
+
+
+=  \int
+
+q(\textbf{z}) \text{log} \frac{  q(\textbf{z}) p(\textbf{x}) }{ p(\textbf{x},\textbf{z})  } \text{d}\textbf{z}
+
+\\
+
+&
+
+
+=  \int
+
+q(\textbf{z}) \text{log} \frac{  q(\textbf{z})  }{ p(\textbf{x},\textbf{z})  } \text{d}\textbf{z}
+
++ \int q(\textbf{z})\text{log} {p(\textbf{x})} \text{d}\textbf{z}
+
+\\
+
+
+&
+
+=  \int 
+
+q(\textbf{z})
+
+\bigg(\text{log}   q(\textbf{z})
+
+-\text{log} p(\textbf{z},\textbf{x} )\bigg)  \text{d} \textbf{z}
+
++ \text{log} p(\textbf{x})
+
+\\
+
+&
+
+= -\bigg( E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] - E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]\bigg) + \text{log}p(\textbf{x})
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>註：以上省略 <script type="math/tex">\theta</script></p>
+
+<p>定義 Evidence Lower Bound (ELOB) <script type="math/tex">L[q(\textbf{z})]</script> 為：</p>
+
+<script type="math/tex; mode=display">
+
+L[q(\textbf{z})]
+
+   =  E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] - E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]
+
+
+</script>
+
+<p>將 <script type="math/tex">L[q(\textbf{z})]</script> 代入<a href="#eq2">（公式二）</a>的推導結果，得出：</p>
+
+<script type="math/tex; mode=display">
+
+D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})]  = -L[q(\textbf{z})]
+
+ + \text{log}p(\textbf{x})
+
+</script>
+
+<p>因此：</p>
+
+<script type="math/tex; mode=display">
+
+\text{log}p(\textbf{x})  = D_{KL}[q(\textbf{z})||p(\textbf{z}|\textbf{x})] +  L[q(\textbf{z})]
+
+</script>
+
+<p>由於 <script type="math/tex">p(\textbf{x})</script> 為一個固定的機率分佈，因此 <script type="math/tex">\text{log}p(\textbf{x})</script> 為常數。</p>
+
+<p>因此，只要將 <script type="math/tex">L[q(\textbf{z})]</script> 的最大化，即可將 <script type="math/tex">D_{KL}[q(\textbf{z})\mid \mid p(\textbf{z}\mid \textbf{x})] </script> 最小化。</p>
+
+<p>而 <script type="math/tex">L[q(\textbf{z})]</script> 中的 <script type="math/tex">p(\textbf{x}, \textbf{z})</script> 是可以算得出來的，因此目標函數為：</p>
+
+<script type="math/tex; mode=display">
+
+\max_{\theta} L[q(\textbf{z} | \theta )]
+
+
+</script>
+
+<h2 id="mean-field-variational-inference">Mean-Field Variational Inference</h2>
+
+<p><em>Variational Inference</em> 有很多種作法，其中一種常見的作法為 <em>Mean-Field Variational Inference</em> ，這種方法是，假設 <script type="math/tex">q(\textbf{z}\mid  \mathbf{\theta} )</script> 中的每個維度都是獨立的。這樣會比較容易求出它的值，即：<a name="eq3">（公式三）</a></p>
+
+<script type="math/tex; mode=display">
+
+q(\textbf{z}|\mathbf{\theta}) = \prod_{i} q_{i}(z_{i}| \theta_{i} ) 
+
+</script>
+
+<p>每個獨立的 <script type="math/tex">q(z_{i}\mid \theta)</script> 都是機率分佈，即積分結果為1：</p>
+
+<script type="math/tex; mode=display">
+
+\forall i  ,  \int q_{i}(z_{i}| \theta_{i} )  \text{d} z_{i} = 1
+
+</script>
+
+<h2 id="maximizing-elob">Maximizing ELOB</h2>
+
+<p>再來，用 <em>Mean-Field Variational Inference</em> 的方法，把  <script type="math/tex">L[q(\textbf{z})]</script>  整理一下。</p>
+
+<p><script type="math/tex">L[q(\textbf{z})]</script> 可分成兩部分：<script type="math/tex"> E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]</script> 和 <script type="math/tex">  E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] </script></p>
+
+<p>現在，要分別把<a href="#eq3">（公式三）</a>代入這兩項，並稍做整理，讓它們的值可以被求出來。</p>
+
+<p>首先，來看 <script type="math/tex"> E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})] = \int \prod_{i} q_{i}(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \int_{z_{1}}\int_{z_{2}} ... \int_{z_{n}} \int \prod_{i} q_{i}(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \text{d}z_{1} \text{d}z_{2}...\text{d}z_{n}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>挑出 <script type="math/tex">\textbf{z}</script> 中的某個元素： <script type="math/tex">z_{j}</script> ，整理一下，繼續以上推導過程：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& = \int_{z_{j}} q_{j}(z_{j}) \bigg( \int... \int_{z_{i\neq j }} \prod_{i} q(z_{i}) \text{log} p (\textbf{z},\textbf{x}) \prod_{i \neq j} \text{d}z_{i} \bigg) \text{d}z_{j}
+
+\\
+
+& =  \int_{z_{j}} q_{j}(z_{j}) \bigg( \int... \int_{z_{i\neq j }} \text{log} p (\textbf{z},\textbf{x}) \prod_{i \neq j } q(z_{i})  \text{d}z_{i} \bigg) \text{d}z_{j}
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>由於 <script type="math/tex"> \prod_{i \neq j } q(z_{i})</script> 是 joint distribution，可以把 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 放到此機率分布的期望值裡，繼續以上推導過程：<a name="eq4">（公式四）</a></p>
+
+<script type="math/tex; mode=display">
+
+=  \int q_{j}(z_{j}) E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg] \text{d}z_{j}
+
+</script>
+
+<p>由於 <script type="math/tex">E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg]</script> 中，把 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 中不是 <script type="math/tex">z_{j}</script> 的 <script type="math/tex">z_{i}</script> 全都消掉了，所以算完後的 <script type="math/tex">p (\textbf{z},\textbf{x})</script> 只會剩 <script type="math/tex">z_{j}</script> ，令：</p>
+
+<script type="math/tex; mode=display">
+
+\text{log} \tilde{p}(\textbf{x},z_{j}) =  E_{q_{i \neq j}(z)}\bigg[  \text{log} p (\textbf{z},\textbf{x}) \  \bigg] 
+
+</script>
+
+<p>將其代入<a href="#eq4">（公式四）</a>，繼續推導過程，得出<a name="eq5">公式五</a>：</p>
+
+<script type="math/tex; mode=display">
+
+ E_{q(\textbf{z}) }[\text{log}p(\textbf{x},\textbf{z})]  =  \int q_{j}(z_{j})   \text{log} \tilde{p}(\textbf{x},z_{j}) \text{d}z_{j}
+
+</script>
+
+<p>再來看 <script type="math/tex"> E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})]</script>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] = \int \prod_{i} q_{i}(z_{i}) \text{log} \prod_{i} q (z_{i}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \int \prod_{i} q_{i}(z_{i}) \sum_{i} \text{log} q (z_{i}) \text{d}\textbf{z}
+
+\\
+
+&
+
+= \sum_{i} \bigg(\prod_{k \neq i} \int_{k}q_{k}(z_{k})\text{d}z_{k}  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+\\
+
+&
+
+= \sum_{i} \bigg(  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>挑出 <script type="math/tex">\textbf{z}</script> 中的某個元素： <script type="math/tex">z_{j}</script> ，整理一下，繼續以上推導過程：</p>
+
+<script type="math/tex; mode=display">
+
+=  \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} + \sum_{i \neq j } \bigg(  \int  q_{i}(z_{i}) \text{log} q (z_{i}) \text{d}z_{i}  \bigg)
+
+</script>
+
+<p>不涉及 <script type="math/tex">j</script>的部分，就當 <script type="math/tex">const</script> 來處理，整理以上公式，得出：<a name="eq6">（公式六）</a></p>
+
+<script type="math/tex; mode=display">
+
+E_{ q(\textbf{z} ) }[\text{log}q(\textbf{z})] =  \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} + const
+
+</script>
+
+<p>將 <a href="#eq5">（公式五）</a>和<a href="#eq6">（公式六）</a> 代入 <script type="math/tex">L[q(\textbf{z})]</script> ，得出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& L[q(\textbf{z})] =\int q_{j}(z_{j})   \text{log} \tilde{p}(\textbf{x},z_{j}) \text{d}z_{j}- \int  q_{j}(z_{j}) \text{log} q (z_{j}) \text{d}z_{j} - const
+
+\\
+
+&
+
+= \int q_{j}(z_{j})   \text{log} \frac{ \tilde{p}(\textbf{x},z_{j}) } { q_{j}(z_{j}) } \text{d} z_{j} - const
+
+\\
+
+& 
+
+= -D_{KL}[\tilde{p}(\textbf{x},z_{j})|| q_{j}(z_{j} ) ] - const
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>根據以上結果，要將 <script type="math/tex"> L[q(\textbf{z})] =\int q_{j}(z_{j}) </script> 最大化，則：</p>
+
+<script type="math/tex; mode=display">
+
+D_{KL}[\tilde{p}(\textbf{x},z_{j})|| q_{j}(z_{j} ) ]  = 0
+
+</script>
+
+<p>因此：</p>
+
+<script type="math/tex; mode=display">
+
+q_{j}(z_{j}) = \tilde{p}(\textbf{x},z_{j}) 
+
+</script>
+
+<p>由於 <script type="math/tex">z_{j}</script> 有 <script type="math/tex">n</script> 個， 整個運算過程，有點類似 <em>EM</em> 演算法，就是挑選某個 <script type="math/tex">q_{j}(z_{j})</script> 根據以上公式，來更新其值，而其他的 <script type="math/tex">q_{i}(z_{i})</script> 則固定。這樣依序更新每個 <script type="math/tex">q_{j}(z_{j})</script> ，一直循環下去，則最後收斂的結果，即為 <script type="math/tex">L[q(\textbf{z})]</script> 的 <em>Local Maximum</em> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>A Tutorial on Variational Bayesian Inference</p>
+
+<p>http://www.orchid.ac.uk/eprints/40/1/fox_vbtut.pdf</p>
+]]></content>
+  </entry>
+  
+</feed>

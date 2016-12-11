@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Word2vec (Part 3 : Implementation)]]></title>
+    <title type="html"><![CDATA[Word2vec (Part 3 : Implementation)]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/08/29/neural-network-word2vec-part-3-implementation/"/>
     <updated>2016-08-29T11:17:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/08/29/neural-network-word2vec-part-3-implementation</id>
@@ -673,7 +673,7 @@
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Word2vec (Part 2 : Backward Propagation)]]></title>
+    <title type="html"><![CDATA[Word2vec (Part 2 : Backward Propagation)]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/"/>
     <updated>2016-07-12T09:21:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation</id>
@@ -958,7 +958,7 @@ J = - \text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}) - \sum_{neg}
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Word2vec (Part 1 : Overview)]]></title>
+    <title type="html"><![CDATA[Word2vec (Part 1 : Overview)]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/"/>
     <updated>2016-07-12T09:19:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview</id>
@@ -1176,7 +1176,7 @@ v_{11} & v_{12} & v_{13}
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[自然語言處理 -- Vector Space of Semantics]]></title>
+    <title type="html"><![CDATA[Vector Space of Semantics]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/"/>
     <updated>2016-07-10T14:06:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics</id>
@@ -1466,7 +1466,7 @@ A bird sleep.</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[機率圖模型 -- Gibbs Sampling]]></title>
+    <title type="html"><![CDATA[Gibbs Sampling]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling/"/>
     <updated>2016-07-09T08:36:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/07/09/pgm-gibbs-sampling</id>
@@ -1824,7 +1824,7 @@ X=1  & 0.1 & 0.2 \\
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[機率圖模型 -- Metropolis Hasting]]></title>
+    <title type="html"><![CDATA[Metropolis Hasting]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/07/07/pgm-metropolis-hasting/"/>
     <updated>2016-07-07T17:21:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/07/07/pgm-metropolis-hasting</id>
@@ -2424,7 +2424,7 @@ q(x) = exp(x,5)
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[機率圖模型 -- Variational Inference]]></title>
+    <title type="html"><![CDATA[Variational Inference]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference/"/>
     <updated>2016-06-20T02:42:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/06/20/pgm-variational-inference</id>
@@ -2766,7 +2766,7 @@ q_{j}(z_{j}) = \tilde{p}(\textbf{x},z_{j})
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Optimization Method -- AdaDelta]]></title>
+    <title type="html"><![CDATA[AdaDelta]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/02/08/optimization-method-adadelta/"/>
     <updated>2016-02-08T16:13:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/02/08/optimization-method-adadelta</id>
@@ -3525,7 +3525,7 @@ y_{2} \\[0 .3em]
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Optimization Method -- Newton's Method for Optimization]]></title>
+    <title type="html"><![CDATA[Newton's Method for Optimization]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton/"/>
     <updated>2016-01-25T16:56:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton</id>
@@ -4115,7 +4115,7 @@ y_{2} \\[0 .3em]
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Optimization Method -- Gradient Descent With Momentum]]></title>
+    <title type="html"><![CDATA[Gradient Descent With Momentum]]></title>
     <link href="http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum/"/>
     <updated>2016-01-16T08:01:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum</id>
@@ -4439,7 +4439,7 @@ y_{2} \\[0 .3em]
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Optimization Method -- Gradient Descent & AdaGrad]]></title>
+    <title type="html"><![CDATA[Gradient Descent & AdaGrad]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/"/>
     <updated>2015-12-23T17:14:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad</id>
@@ -4847,7 +4847,7 @@ y_{2} \\[0 .3em]
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Convex Optimization -- Duality & KKT Conditions]]></title>
+    <title type="html"><![CDATA[Duality & KKT Conditions in Convex Optimization]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/"/>
     <updated>2015-11-05T13:18:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions</id>
@@ -5107,7 +5107,7 @@ g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Neural Turing Machine]]></title>
+    <title type="html"><![CDATA[Neural Turing Machine]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/10/26/neural-network-neural-turing-machine/"/>
     <updated>2015-10-26T16:25:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/10/26/neural-network-neural-turing-machine</id>
@@ -5440,7 +5440,7 @@ w(i) \leftarrow \frac{w(i)^{\gamma}}{\sum_{j}w(j)^{\gamma}}
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Recurrent Neural Network]]></title>
+    <title type="html"><![CDATA[Recurrent Neural Network]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network/"/>
     <updated>2015-06-06T09:32:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network</id>
@@ -5723,7 +5723,7 @@ n_{out,s} - y_{s}  & \text{if } s = t \\
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Backward Propagation 詳細推導過程]]></title>
+    <title type="html"><![CDATA[Neural Networks Backward Propagation]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation/"/>
     <updated>2015-05-28T07:47:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation</id>
@@ -6427,7 +6427,7 @@ J =-( z_{1}\times log(n_{21(out)}) + (1-z_{1})\times log (1 -n_{21(out)} ) + z_{
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)]]></title>
+    <title type="html"><![CDATA[Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/"/>
     <updated>2015-05-23T15:33:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model</id>
@@ -6531,7 +6531,7 @@ P(b_{3} = 0| b_{2} = 0, b_{1} = 1, X=x)
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[類神經網路 -- Neural Probabilistic Language Model]]></title>
+    <title type="html"><![CDATA[Neural Probabilistic Language Model]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/05/15/neural-network-neural-probabilistic-language-model/"/>
     <updated>2015-05-15T02:38:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/05/15/neural-network-neural-probabilistic-language-model</id>
@@ -6817,7 +6817,7 @@ S = \Sigma_{i}s_{i}
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[機器翻譯 -- IBM Model 1]]></title>
+    <title type="html"><![CDATA[Machine Translation : IBM Model 1]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1/"/>
     <updated>2015-02-21T09:31:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1</id>
@@ -7137,7 +7137,7 @@ P(F\mid E) = \sum_{A} P(F,A \mid E) = \sum_{A} P(F \mid E, A) \times P(A \mid E)
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[資訊檢索 -- Boolean Retrieval]]></title>
+    <title type="html"><![CDATA[Boolean Retrieval]]></title>
     <link href="http://ckmarkoh.github.io/blog/2015/02/09/-information-retrieval-boolean-retrieval/"/>
     <updated>2015-02-09T00:27:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2015/02/09/-information-retrieval-boolean-retrieval</id>
@@ -7359,7 +7359,7 @@ avoid \vee view  = [1,0,0] \vee [0,1,0] = [1 ,1, 0]
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[機器翻譯 -- Statistical Machine Translation]]></title>
+    <title type="html"><![CDATA[Machine Translation : Statistical Machine Translation]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation/"/>
     <updated>2014-10-27T16:49:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation</id>

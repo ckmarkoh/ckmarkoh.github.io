@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Functional_programming | Mark Chang's Blog]]></title>
+  <title><![CDATA[Category: Functional Programming | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/functional-programming/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Ruby -- Enumerable 1 : Collect , Inject]]></title>
+    <title type="html"><![CDATA[Ruby Enumerable 1 : Collect , Inject]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/04/30/ruby-enumerable-1/"/>
     <updated>2014-04-30T15:06:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/04/30/ruby-enumerable-1</id>
@@ -170,7 +170,7 @@ irb(main):044:1&gt; end
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python -- Functional Programming Style 2]]></title>
+    <title type="html"><![CDATA[Python Functional Programming Style 2]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/20/python-functional-programming-style-2/"/>
     <updated>2014-03-20T13:35:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/20/python-functional-programming-style-2</id>
@@ -787,7 +787,7 @@ base16(“ABCDEF”)
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python -- Functional Programming Style 1]]></title>
+    <title type="html"><![CDATA[Python Functional Programming Style 1]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/18/python-functional-programming-style-1/"/>
     <updated>2014-03-18T07:04:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/18/python-functional-programming-style-1</id>

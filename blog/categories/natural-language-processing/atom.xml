@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Natural_language_processing | Mark Chang's Blog]]></title>
+  <title><![CDATA[Category: Natural Language Processing | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/natural-language-processing/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,1736 +14,1319 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Rule-Based Chunking]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking/"/>
-    <updated>2014-05-06T14:46:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/05/06/python-nltk-rule-based-chunking</id>
-    <content type="html"><![CDATA[<h2 id="chunking">Chunking</h2>
+    <title type="html"><![CDATA[Word2vec (Part 3 : Implementation)]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/08/29/neural-network-word2vec-part-3-implementation/"/>
+    <updated>2016-08-29T11:17:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/08/29/neural-network-word2vec-part-3-implementation</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
 
-<p>分析句子的成份, 當句子不符合文法時, 使用 <em>Context-Free Grammar</em> 去做 <em>Parsing</em> , 可能會得不出結果, 而某些應用, 需要的並不是完整的剖析樹, 而是把句子中某些成份給找出來</p>
+<p>本文接續 <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation">word2vec (part2)</a> ，介紹如何根據推導出來的 <em>backward propagation</em> 公式，從頭到尾實作一個簡易版的 <em>word2vec</em> 。</p>
 
-<p><em>Chunking</em> 的概念就是, 把句子中的單字分組, 每一組是由一到多個相鄰的單字所組成, 例如, 想要得出句子中有哪些名詞片語, 就可以把相鄰的定冠詞, 名詞修飾語, 以及名詞, 分成一組, 分組所得出的即為名詞片語</p>
+<p>本例的 input layer 採用 <em>skip-gram</em> ， output layer 採用 <em>negative sampling</em></p>
 
-<p>舉個例子, 在以下的句子中, 想要找出名詞片語有哪些</p>
+<p>本例用唐詩語料庫：https://github.com/ckmarkoh/coscup_nndl/blob/master/poem.txt</p>
 
-<script type="math/tex; mode=display">
+<p>首先，載入所需的模組</p>
 
-\text{The little yellow dog barked at the cat}.
+<p>```python
+import json
+from collections import Counter, OrderedDict
+import numpy as np
+import random
+import math</p>
 
-</script>
-
-<p>首先, 對這個句子進行 <em>Part of speech Tagging</em></p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{array}{c}
-
-&\text{The} &\text{little} &\text{yellow} &\text{dog} &\text{barked} &\text{at} &\text{the} &\text{cat} \\
-
-&\text{DT} &\text{JJ} &\text{JJ} &\text{NN} &\text{VBD} &\text{IN} &\text{DT} &\text{NN} 
-
-\end{array}
-
- %]]&gt;</script>
+<p>```</p>
 
 <!--more-->
 
-<p><em>Part of speech Tagging</em> 完之後可得出這些單字, 就可以根據這些單字的 <em>Tag</em> 來決定要怎麼分組, 如果要找名詞片語, 可以把相鄰的 <em>DT</em> , <em>JJ</em> 和 <em>NN</em> 分到名詞片語 <em>NP</em> 的組別中 , 如下</p>
+<h2 id="build-dictionray">Build Dictionray</h2>
+
+<p>再來是建立字典，即將每個字給一個id來對應。</p>
+
+<p>```python
+def LearnVocabFromTrainFile():</p>
+
+<pre><code># 開啟唐詩語料庫
+f = open("poem.txt")
+ 
+# 統計唐詩語料庫中每個字出現的頻率
+vcount = Counter()
+for line in f.readlines():
+    for w in line.decode("utf-8").strip().split():
+        vcount.update(w)
+        
+# 僅保留出現次數大於五的字，並按照出現次數排序
+vcount_list = sorted(filter(lambda x: x[1] &gt;= 5, vcount.items())
+                     , reverse=True, key=lambda x: x[1])
+                     
+# 建立字典，將每個字給一個id ，字為 key, id 為 value
+vocab_dict = OrderedDict(map(lambda x: (x[1][0], x[0]), enumerate(vcount_list)))
+
+# 建立詞頻統計用的字典，給定某字，可查到其出現頻率
+vocab_freq_dict = OrderedDict(map(lambda x: (x[0], x[1]), vcount_list))
+return vocab_dict, vocab_freq_dict
+</code></pre>
+
+<p>vocab_dict, vocab_freq_dict =  LearnVocabFromTrainFile()</p>
+
+<p>```</p>
+
+<p>印出字典檔，每個字對應到一個id（編號）</p>
+
+<p>```python
+for w,wid in vocab_dict.items():
+    print “%s : %s”%(w,wid)</p>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p>```sh
+不 : 0
+人 : 1
+山 : 2
+無 : 3
+風 : 4
+……
+謏 : 5496
+笮 : 5497
+躠 : 5498
+噆 : 5499</p>
+
+<p>```</p>
+
+<p>印出詞頻統計用的字典，給定某字，可查詢到其出現頻率：</p>
+
+<p>```python
+for w,wfreq in vocab_freq_dict.items():
+    print “%s : %s”%(w,wfreq)</p>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p>```sh
+不 : 26426
+人 : 20966
+山 : 16056
+無 : 15795
+風 : 15618
+…
+謏 : 5
+笮 : 5
+躠 : 5
+噆 : 5</p>
+
+<p>```</p>
+
+<h2 id="build-unigram-table">Build Unigram Table</h2>
+
+<p>本例採用 <em>negative sampling</em> ，需要先建立 <em>unigram table</em> 以便進行 <em>negative sampling</em> 。</p>
+
+<p>所謂的 <em>Unigram Table</em> 即是一個 <em>array</em> ，其中每個元素為某字的id，而某字的頻率，即為此id在此 <em>table</em> 中出現的次數的 0.75次方。</p>
+
+<p>例如，id 為 5496 的字，詞頻為 5 ，則在此 <em>Unigram Table</em> 中，5496 的次數為：</p>
+
+<script type="math/tex; mode=display">
+
+5^{0.75} = 3.34 \approx 3
+
+</script>
+
+<p>由於 <em>array</em> 中的元素個數必須是整數，所以 5496 在 <em>Unigram Table</em> 中出現三次。</p>
+
+<p>建立 <em>Unigram Table</em> 的程式碼如下：</p>
+
+<p>```python
+def InitUnigramTable(vocab_freq_dict):
+    table_freq_list = map(lambda x: (x[0], int(x[1][1] ** 0.75)), enumerate(vocab_freq_dict.items()))
+    table_size = sum([x[1] for x in table_freq_list])
+    table = np.zeros(table_size).astype(int)
+    offset = 0
+    for item in table_freq_list:
+        table[offset:offset + item[1]] = item[0]
+        offset += item[1]</p>
+
+<pre><code>return table
+</code></pre>
+
+<p>table = InitUnigramTable(vocab_freq_dict)</p>
+
+<p>```</p>
+
+<p>得出的 <em>Unigram Table</em> 如下：</p>
+
+<p>```
+[   0    0    0    0    0    0    0    0    0    0    0    0    0    0    0  <br />
+0    0    0    0  … , 5495 5495 5495 5496  5496 5496 5497 5497 5497 5498 
+5498 5498 5499 5499 5499]</p>
+
+<p>```</p>
+
+<h2 id="training-word2vec">Training word2vec</h2>
+
+<p>```python
+def train(vocab_dict, vocab_freq_dict, table):</p>
+
+<pre><code>total_words = sum([x[1] for x in vocab_freq_dict.items()])
+vocab_size = len(vocab_dict)
+
+# 參數設定
+layer1_size = 30 # hidden layer 的大小，即向量大小
+window = 2 # 上下文寬度的上限
+alpha_init = 0.025 # learning rate
+sample = 0.001 # 用來隨機丟棄高頻字用
+negative = 10 # negative sampling 的數量
+ite = 2 # iteration 次數
+
+# Weights 初始化
+# syn0 : input layer 到 hidden layer 之間的 weights ，用隨機值初始化
+# syn1 : hidden layer 到 output layer 之間的 weights ，用0初始化
+syn0 = (0.5 - np.random.rand(vocab_size, layer1_size)) / layer1_size 
+syn1 = np.zeros((layer1_size, vocab_size))
+
+# 印出進度用
+train_words = 0 # 總共訓練了幾個字
+p_count = 0
+avg_err = 0.
+err_count = 0
+
+for local_iter in range(ite):
+    print "local_iter", local_iter
+    f = open("poem.txt")
+    for line in f.readlines():
+        
+        #用來暫存要訓練的字，一次訓練一個句子
+        sen = []
+        
+        # 取出要被訓練的字
+        for word_raw in line.decode("utf-8").strip().split():
+            last_word = vocab_dict.get(word_raw, -1)
+            
+            # 丟棄字典中沒有的字（頻率太低）
+            if last_word == -1:
+                continue
+            cn = vocab_freq_dict.get(word_raw)
+            ran = (math.sqrt(cn / float(sample * total_words + 1))) * (sample * total_words) / cn
+            
+            # 根據字的頻率，隨機丟棄，頻率越高的字，越有機會被丟棄
+            if ran &lt; random.random():
+                continue
+            train_words += 1
+            
+            # 將要被訓練的字加到 sen
+            sen.append(last_word)
+            
+        # 根據訓練過的字數，調整 learning rate
+        alpha = alpha_init * (1 - train_words / float(ite * total_words + 1))
+        if alpha &lt; alpha_init * 0.0001:
+            alpha = alpha_init * 0.0001
+            
+        # 逐一訓練 sen 中的字
+        for a, word in enumerate(sen):
+        
+        		# 隨機調整 window 大小
+            b = random.randint(1, window)
+            for c in range(a - b, a + b + 1):
+                
+                # input 為 window 範圍中，上下文的某一字
+                if c &lt; 0 or c == a or c &gt;= len(sen):
+                    continue
+                last_word = sen[c]
+									
+                # h_err 暫存 hidden layer 的 error 用
+                h_err = np.zeros((layer1_size))
+                
+                # 進行 negative sampling
+                for negcount in range(negative):
+                
+                		# positive example，從 sen 中取得，模型要輸出 1
+                    if negcount == 0:
+                        target_word = word
+                        label = 1
+                    
+                    # negative example，從 table 中抽樣，模型要輸出 0 
+                    else:
+                        while True:
+                            target_word = table[random.randint(0, len(table) - 1)]
+                            if target_word not in sen:
+                                break
+                        label = 0
+                    
+                    # 模型預測結果
+                    o_pred = 1 / (1 + np.exp(- np.dot(syn0[last_word, :], syn1[:, target_word])))
+                    
+                    # 預測結果和標準答案的差距
+                    o_err = o_pred - label
+                    
+                    # backward propagation
+                    # 此部分請參照 word2vec part2 的公式推導結果
+                    
+                    # 1.將 error 傳遞到 hidden layer                        
+                    h_err += o_err * syn1[:, target_word]
+                    
+                    # 2.更新 syn1
+                    syn1[:, target_word] -= alpha * o_err * syn0[last_word]
+                    avg_err += abs(o_err)
+                    err_count += 1
+                
+                # 3.更新 syn0
+                syn0[last_word, :] -= alpha * h_err
+                
+                # 印出目前結果
+                p_count += 1
+                if p_count % 10000 == 0:
+                    print "Iter: %s, Alpha %s, Train Words %s, Average Error: %s" \
+                          % (local_iter, alpha, 100 * train_words, avg_err / float(err_count))
+                    avg_err = 0.
+                    err_count == 0.
+                    
+    # 每一個 iteration 儲存一次訓練完的模型
+    model_name = "w2v_model_blog_%s.json" % (local_iter)
+    print "save model: %s" % (model_name)
+    fm = open(model_name, "w")
+    fm.write(json.dumps(syn0.tolist(), indent=4))
+    fm.close()
+</code></pre>
+
+<p>```</p>
+
+<p>開始訓練：</p>
+
+<p>```python
+train(vocab_dict, vocab_freq_dict, table)</p>
+
+<p>```</p>
+
+<p>輸出結果如下，可以看到，當訓練過的字數增加時， Error 也跟著降低</p>
+
+<p>大概要花幾十分鐘左右訓練完</p>
+
+<p>```sh
+Iter: 0, Alpha 0.0249923666923, Train Words 475200, Average Error: 0.499999254842
+Iter: 0, Alpha 0.0249846739501, Train Words 954100, Average Error: 0.249998343836
+Iter: 0, Alpha 0.0249771900316, Train Words 1420000, Average Error: 0.166660116256
+Iter: 0, Alpha 0.0249693430813, Train Words 1908500, Average Error: 0.124949913475
+Iter: 0, Alpha 0.024961329072, Train Words 2407400, Average Error: 0.0993522008349
+Iter: 0, Alpha 0.0249531817368, Train Words 2914600, Average Error: 0.0787704454331
+Iter: 0, Alpha 0.0249453540624, Train Words 3401900, Average Error: 0.06351951221
+Iter: 0, Alpha 0.0249377801891, Train Words 3873400, Average Error: 0.0495117808015
+……….</p>
+
+<p>```</p>
+
+<h2 id="show-result">Show Result</h2>
+
+<p>檢視 word2vec 訓練結果的方法，即是看使用 <em>cosine similarity</em> 計算，是否能得出與某字語意相近的字。</p>
+
+<p>```python</p>
+
+<h1 id="section">讀取訓練好的模型</h1>
+<p>f2 = open(“w2v_model_1.json”, “r”) 
+w2v_model = np.array(json.loads(““.join(f2.readlines())))
+f2.close()</p>
+
+<p>vocab_dict_reversed = OrderedDict([(x[1], x[0]) for x in vocab_dict.items()])</p>
+
+<h1 id="cosine-similarity-">計算 cosine similarity 最高的前五字</h1>
+<p>def get_top(word):
+    wid = vocab_dict.get(word)</p>
+
+<pre><code># 將某字與模型中所有的字向量做內積
+dot_result = np.dot(w2v_model, np.expand_dims(w2v_model[wid], axis=1))
+norm = np.sqrt(np.sum(np.power(w2v_model.T, 2), axis=0))
+
+# 計算 cosine similarity
+cosine_result = np.divide(dot_result[:, 0], norm*norm[wid])
+
+# 根據 cosine similarity 的值排序
+final_result = sorted(filter(lambda x:x[0] != wid, 
+                      [(x[0], x[1]) for x in enumerate(cosine_result)]),
+                      key=lambda x: x[1], reverse=True)
+print word
+
+# 印出語意最接近的前五字，以及其 cosine similarity
+for x in final_result[:5]:
+    print vocab_dict_reversed.get(x[0]), x[1]
+</code></pre>
+
+<p>```</p>
+
+<p>分別計算「山、峰、河、日」這四字語意最相近的字</p>
+
+<p>```python
+get_top(u”山”)
+get_top(u”峰”)
+get_top(u”河”)
+get_top(u”日”)</p>
+
+<p>```</p>
+
+<p>結果如下，可看出，計算所得出語意最相近的字，實際上，語意也相近，例如，山和峰、嶺的語意都很接近。</p>
+
+<p>```sh
+山
+嶺 0.854901128361
+嵩 0.846620438864
+峰 0.842831270385
+岡 0.838129842909
+嶂 0.834701215189
+峰
+山 0.842831270385
+嶽 0.83917452917
+嶺 0.8219837161
+頂 0.821088331571
+嶂 0.809565794884
+河
+湟 0.787726187693
+涇 0.770652269018
+淮 0.751135710239
+川 0.742243126005
+汾 0.740643816278
+日
+旦 0.869047480855
+又 0.842383624714
+曛 0.830549707539
+夕 0.826327222048
+暉 0.82616774597</p>
+
+<p>```</p>
+
+<p>向量加減運算後的 <em>cosine similarity</em> ，例如： 女 + 父 - 男 = 母</p>
+
+<p>```python
+def get_calculated_top(w1, w2, w3):
+    wid1, wid2, wid3 = vocab_dict.get(w1), vocab_dict.get(w2), vocab_dict.get(w3)
+    v1, v2, v3 = w2v_model[wid1], w2v_model[wid2], w2v_model[wid3]</p>
+
+<pre><code># 得出加減運算後的向量
+combined_vec = v1 + (v2 - v3)
+dot_result = np.dot(w2v_model, np.expand_dims(combined_vec, axis=1))
+norm = np.sqrt(np.sum(np.power(w2v_model.T, 2), axis=0))
+cvec_norm = np.sqrt(np.sum(np.power(combined_vec, 2)))
+cosine_result = np.divide(dot_result[:, 0], norm * cvec_norm)
+
+final_result = sorted(filter(lambda x: x[0] not in [wid1, wid2, wid3],
+                             [(x[0], x[1]) for x in enumerate(cosine_result)]),
+                      key=lambda x: x[1], reverse=True)
+print "%s + %s - %s" % (w1, w2, w3)
+for x in final_result[:5]:
+    print vocab_dict_reversed.get(x[0]), x[1]
+</code></pre>
+
+<p>```</p>
+
+<p>```python
+get_calculated_top(u”女”, u”父”, u”男”)</p>
+
+<p>```</p>
+
+<p>結果如下，如預期，運算結果的語意接近「母」：</p>
+
+<p>```sh
+女 + 父 - 男
+母 0.731002049447
+娥 0.707469857054
+客 0.69027387716
+娃 0.687831493041
+侶 0.681667240226</p>
+
+<p>```</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Word2vec (Part 2 : Backward Propagation)]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/"/>
+    <updated>2016-07-12T09:21:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>本文接續 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> ，介紹 <em>word2vec</em> 訓練過程的 <em>backward propagation</em> 公式推導。</p>
+
+<p><em>word2vec</em> 的訓練過程中，輸出的結果，跟上下文有關的字，在 <em>output layer</em> 輸出為 1 ，跟上下文無關的字，在 <em>output layer</em> 輸出為 0。 在此，把跟上下文有關的，稱為 <em>positive example</em> ，而跟上下文無關的，稱為 <em>negative example</em> 。</p>
+
+<p>根據 <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview">word2vec (part1)</a> 中提到的例子， <em>cat</em> 的向量為 <script type="math/tex">\textbf{v}_2</script> ， <em>run</em> 的向量為 <script type="math/tex">\textbf{w}_3</script> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{w}_4</script> ，由於 <em>cat</em> 的上下文有 <em>run</em> ，所以 <em>run</em> 為 <em>positive example</em> ，而 <em>cat</em> 的上下文沒有 <em>fly</em> ，所以 <em>fly</em> 為 <em>negative example</em> ，如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00187.png" alt="" /></p>
+
+<!--more-->
+
+<h2 id="objective-function">Objective Function</h2>
+
+<p>訓練類神經網路需要有個目標函數，如果希望 <em>positive example</em> 輸出為 1 ， <em>negative example</em> 輸出為 0，則可以將以下函數 <script type="math/tex">J</script> 做最小化。</p>
+
+<script type="math/tex; mode=display">
+
+J = - \text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}) - \sum_{neg} \text{log} ( 1- \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }} )
+
+</script>
+
+<p>其中 <script type="math/tex">\textbf{v}_I</script> 為輸入端的字向量，而 <script type="math/tex">\textbf{w}_{pos}</script> 和 <script type="math/tex">\textbf{w}_{neg}</script> 為輸出端的字向量。 <script type="math/tex">\textbf{w}_{pos}</script> 為 <em>positive example</em> ，而  <script type="math/tex">\textbf{w}_{neg}</script> 為 <em>negative example</em> 。通常，對於每筆 <script type="math/tex">\textbf{v}_I</script> 而言，會找一個 <em>positive example</em> 和多個 <em>negative example</em> ，因此用 <script type="math/tex">\sum</script> 將這些 <em>negative example</em> 算出的結果給加起來。</p>
+
+<p>先看這公式前半部的部分：</p>
+
+<script type="math/tex; mode=display">
+
+-\text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }})
+
+</script>
+
+<p>從以上公式得知，當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }} = 0</script> 時，  <script type="math/tex">J</script> 會趨近無限大，而當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }} = 1</script> 時 ，  <script type="math/tex">J</script> 會趨近 0 ，所以，降低 <script type="math/tex">J</script> 的值，會迫使  <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}</script> 接近 1 。</p>
+
+<p>再來看另一部分：</p>
+
+<script type="math/tex; mode=display">
+
+-\text{log}(1 - \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }})
+
+</script>
+
+<p>當 <script type="math/tex">\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }} = 1</script> 時 <script type="math/tex">J</script> 會趨近無限大，反之亦然，同理，降低 <script type="math/tex">J</script> 的值，會迫使  <script type="math/tex">1- \frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{neg} }}</script> 接近 0 。</p>
+
+<h2 id="backward-propagation">Backward Propagation</h2>
+
+<p>至於要怎麼調整 <script type="math/tex">\textbf{v}</script> 和  <script type="math/tex">\textbf{w}</script> 的值，才能讓 <script type="math/tex">J</script> 變小？ 就是要用到 <em>backward propagation</em> 。</p>
+
+<h3 id="positive-example">Positive Example</h3>
+
+<p>這邊先看 <em>positive example</em> 的部分， 輸入端為 <em>dog</em> ，輸出端為 <em>run</em> ，在進行偏微分公式推導之前，先定義一些符號，以便之後推導：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 
+\begin{align}
+
+& x_{13} = \textbf{v}_1 \cdot \textbf{w}_3 \\
+
+& y_{13} = \dfrac{1}{1+e^{-x_{13}}}  \\
+
+& J = - \text{log} (y_{13} )
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>這些符號，如下圖所示， <script type="math/tex">x_{13}</script> 是 <em>output layer</em> 在 <em>sigmoid</em> 之前的值， <script type="math/tex">y_{13} </script> 是通過 <em>sigmoid</em> 後的值， <script type="math/tex">J</script> 是針對這筆 <em>positive example</em> 所算出來的 <em>cost function</em> 。</p>
+
+<p><img src="/images/pic/pic_00188.png" alt="" /></p>
+
+<p>如果要更新 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> 的值，讓 <script type="math/tex">J</script> 變小，就要用 <em>gradient descent</em> 的方式，過程如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta \nabla_{\textbf{v}_1}  J  \\
+
+& \textbf{w}_3 \leftarrow \textbf{w}_3 - \eta \nabla_{\textbf{w}_1}  J   
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>想瞭解更多關於 <em>gradient descent</em> ，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Gradient Descent &amp; AdaGrad </a></p>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>learning rate</em> ，為一常數，就是決定每一步要走多大，至於 <script type="math/tex">\nabla_{\textbf{v}_1} J </script> 這項要怎麼算？</p>
+
+<p>先看看它每個維度上的值：</p>
+
+<script type="math/tex; mode=display">
+
+\nabla_{\textbf{v}_1} J = 
+
 \begin{bmatrix}
 
- &\text{The} &\text{little} &\text{yellow} &\text{dog} \\
+\frac{\partial J}{\partial v_{11}} \\
 
- &\text{DT} &\text{JJ} &\text{JJ} &\text{NN} \\
+\frac{\partial J}{\partial v_{12}} \\
 
- &\mathbf{NP}
+\frac{\partial J}{\partial v_{13}} \\
 
-\end{bmatrix}\mspace{10mu}
+\end{bmatrix}
 
-\begin{array}{c}
+</script>
 
- &\text{barked} &\text{at} \\
+<p>先看 <script type="math/tex">\frac{\partial J}{\partial v_{11}}</script> 這項，可以用 <em>chain rule</em> 把它拆開：</p>
 
- &\text{VBD} &\text{IN} \\
+<script type="math/tex; mode=display">
 
- &
+\frac{\partial J}{\partial v_{11} } = \frac{\partial J}{\partial y_{13}} \times \frac{\partial y_{13}}{\partial x_{13}}  \times \frac{\partial x_{13}}{\partial v_{11}}
 
-\end{array}\mspace{20mu}
+</script>
+
+<p>將 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> 拆成 <script type="math/tex">\frac{\partial J}{\partial y_{13}}</script> 、 <script type="math/tex">\frac{\partial y_{13}}{\partial x_{13}}</script> 和 <script type="math/tex">\frac{\partial x_{13}}{\partial v_{11}}</script> 這三項。而這三項的值可分別求出來：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \frac{\partial J}{\partial y_{13}} = \frac{\partial   - \text{log} (y_{13} )}{\partial y_{13}} = \frac{-1}{y_{13}} \\ 
+
+& \frac{\partial y_{13}}{\partial x_{13}} = \frac{\partial (\frac{1}{1+e^{-x_{13}}})}{\partial x_{13}} = \frac{1}{1+e^{-x_{13}}}( 1- \frac{1}{1+e^{-x_{13}}}) = y_{13} ( 1- y_{13}) \\
+
+& \frac{\partial x_{13}}{\partial v_{11}} = \frac{\partial \textbf{v}_{1} \cdot \textbf{w}_3} {\partial v_{11}} = w_{31}
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>代回這三項的結果到 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> ，得出：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial v_{11} } = \frac{-1}{y_{13}} \times y_{13} ( 1- y_{13}) \times  w_{31} = ( y_{13} - 1)  \times w_{31}
+
+</script>
+
+<p>而 <script type="math/tex">\frac{\partial J}{\partial v_{12}}</script> 和 <script type="math/tex">\frac{\partial J}{\partial v_{13}}</script> 也可用同樣方式得出其值， 如下：</p>
+
+<script type="math/tex; mode=display">
+
+\nabla_{\textbf{v}_1} J = 
 
 \begin{bmatrix}
 
- &\text{the} &\text{cat} \\
+\frac{\partial J}{\partial v_{11}} \\
 
- &\text{DT} &\text{NN} \\
+\frac{\partial J}{\partial v_{12}} \\
 
- &\mathbf{NP}
+\frac{\partial J}{\partial v_{13}} \\
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+
+ ( y_{13} - 1)  \times w_{31} \\
+
+ ( y_{13} - 1)  \times w_{32} \\
+
+ ( y_{13} - 1)  \times w_{33} \\
+
+ \end{bmatrix}
+
+ = 
+
+  ( y_{13} - 1)  \textbf{w}_3
+
+</script>
+
+<p>因此，可得出 <script type="math/tex">\textbf{v}_1</script> 要調整的量：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{v}_1 \leftarrow \textbf{v}_1 - \eta  ( y_{13} - 1)  \textbf{w}_3
+
+</script>
+
+<p>同理， <script type="math/tex">\textbf{w}_3</script> 要調整的量：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{w}_3 \leftarrow \textbf{w}_3 - \eta  ( y_{13} - 1)   \textbf{v}_1
+
+</script>
+
+<p>其中，可以把 <script type="math/tex">( y_{13} - 1)</script> 看成是，模型預測出來的，和我們所想要的值，差距多少。因為在 <em>positive example</em> 的情況下，我們希望模型輸出結果 <script type="math/tex">y_{13}</script> 為 1 。如果  <script type="math/tex">y_{13} = 1</script> 表示模型預測對了，則不需要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> ，如果  <script type="math/tex">y_{13} \neq 1</script> 時，才要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_3</script> 。</p>
+
+<p>還有，之所以把這過程，稱為 <em>backward propagation</em> ，是因為可以把 <em>chain rule</em> 拆解 <script type="math/tex">\nabla_{\textbf{v}_1} J </script> 的過程，看成是將 <script type="math/tex">\frac{\partial J}{\partial y_{13} }</script> 的值， 由 <em>output layer</em> 往前傳遞，如下圖：</p>
+
+<p><img src="/images/pic/pic_00189.png" alt="" /></p>
+
+<p>想瞭解更多關於 <em>backward propagation</em> 的推導，請參考： <a href="/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程 </a></p>
+
+<h3 id="negative-example">Negative Example</h3>
+
+<p>再來看看 <em>negative example</em> 的部分， 輸入端為 <em>dog</em> ，輸出端為 <em>fly</em> ，在進行偏微分公式推導之前，先定義一些符號，以便之後推導：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x_{14} = \textbf{v}_1 \cdot \textbf{w}_4 \\
+
+& y_{14} = \dfrac{1}{1+e^{-x_{14}}}  \\
+
+& J = - \text{log} (1 - y_{14} )
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>這些符號，如下圖所示， <script type="math/tex">x_{14}</script> 是 <em>output layer</em> 在 <em>sigmoid</em> 之前的值， <script type="math/tex">y_{14} </script> 是通過 <em>sigmoid</em> 後的值， <script type="math/tex">J</script> 是針對這筆 <em>positive example</em> 所算出來的 <em>cost function</em> 。</p>
+
+<p><img src="/images/pic/pic_00190.png" alt="" /></p>
+
+<p>同之前 <em>positive example</em> ，如果要更新 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> 的值，讓 <script type="math/tex">J</script> 變小，就要用 <em>gradient descent</em> 的方式：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta \nabla_{\textbf{v}_1}  J  \\
+
+& \textbf{w}_4 \leftarrow \textbf{w}_4 - \eta \nabla_{\textbf{w}_1}  J   
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>剩下的推導和 <em>positive example</em> 時，幾乎一樣，只有 <script type="math/tex">J</script> 不一樣。此處只需推導 <script type="math/tex">\frac{\partial J}{\partial y_{14}}</script> 的結果。</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial y_{14}} = \frac{\partial   - \text{log} (1 - y_{14} )}{\partial y_{14}} = \frac{1}{1 - y_{14}} 
+
+</script>
+
+<p>代回此結果到 <script type="math/tex">\frac{\partial J}{\partial v_{11} }</script> ，得出：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial v_{11} } = \frac{1}{ 1- y_{14}} \times y_{14} ( 1- y_{14}) \times  w_{41} = ( y_{14} - 0)  \times w_{41}
+
+</script>
+
+<p>於是可以得出要修正的量：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{v}_1 \leftarrow \textbf{v}_1 - \eta  ( y_{14} - 0)  \textbf{w}_4 \\ 
+
+& \textbf{w}_4 \leftarrow \textbf{w}_4 - \eta  ( y_{14} - 0)   \textbf{v}_1
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，可以把 <script type="math/tex">( y_{14} - 0)</script> 看成是，模型預測出來的，和我們所想要的值，差距多少。因為在 <em>negative example</em> 的情況下，我們希望模型輸出結果 <script type="math/tex">y_{14}</script> 為 0 。如果  <script type="math/tex">y_{13} = 0</script> 表示模型預測對了，則不需要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> ，如果  <script type="math/tex">y_{14} \neq 0</script> 時，才要修正 <script type="math/tex">\textbf{v}_1</script> 和 <script type="math/tex">\textbf{w}_4</script> 。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>關於如何從無到有，不使用任何自動微分的套件，實作一個 <em>word2vec</em> ，請看：<a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation">word2vec (part3)</a></p>
+
+<p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Word2vec (Part 1 : Overview)]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/"/>
+    <updated>2016-07-12T09:19:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>文字的語意可以用向量來表示，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，如果把每種字當成一個維度，假設總共有一萬總字，那向量就會有一萬個維度。有兩種方法可降低維度，分別是 <em>singular value decomposition</em> 和 <em>word2vec</em> 。</p>
+
+<p>本文講解 <em>word2vec</em> 的原理。 <em>word2vec</em> 流程，總結如下：</p>
+
+<p><img src="/images/pic/pic_00191.png" alt="" /></p>
+
+<p>首先，將文字做 <em>one-hot encoding</em> ，然後再用 <em>word2vec</em> 類神經網路計算，求出壓縮後（維度降低後）的語意向量。</p>
+
+<!--more-->
+
+<h2 id="one-hot-encoding">One-Hot Encoding</h2>
+
+<p>一開始，不知道哪個字和哪個字語意相近，所以就假設每個字的語意是不相干的。也就是說，每個字的向量都是互相垂直。</p>
+
+<p>這邊舉個比較簡單的例子，假設總字彙量只有 4 個， 分別為 <em>dog, cat, run, fly</em> ，那麼，經過 <em>one-hot encoding</em> 的結果如下：</p>
+
+<p><img src="/images/pic/pic_00192.png" alt="" /></p>
+
+<p>如上圖， <em>dog</em> 的向量為 (1,0,0,0) ，只有在第一個維度是 1 ，其他維度是 0 ，而 <em>cat</em> 的向量為 (0,1,0,0) 只有在第一個維度是 1 ，其他維度是 0 。</p>
+
+<p>也就是說，每個字都有一個代表它的維度，而它 <em>one hot encoding</em> 的結果，只有在那個維度上是 1 ，其他維度都是 0 。這樣的話，任意兩個 <em>one hot encoding</em> 的向量內積結果，都會是 0 ，內積結果為 0 ，表示兩向量是垂直的。</p>
+
+<p>註：實際應用中，字彙量即是語料庫中的單字種類，通常會有幾千個甚至一萬個以上。</p>
+
+<h2 id="word2vec">word2vec</h2>
+
+<p><em>word2vec</em> 的神經網路架構如下，總共有三層， <em>input layer</em> 和 <em>output layer</em> 一樣大，中間的 <em>hidden layer</em> 比較小。</p>
+
+<p><img src="/images/pic/pic_00193.png" alt="" /></p>
+
+<p>如上圖，總字彙量有 4 個，那麼 <em>input layer</em> 和 <em>output layer</em> 的維度為 4， 每個維度分別代表一個字。 如果想要把向量維度降至三維， <em>hidden layer</em> 的維度為 3。</p>
+
+<p>另外要注意的是， <em>hidden layer</em> 沒有非線性的 <em>activation funciton</em> ，而 <em>output layer</em> 的 <em>activation function</em> 是 <em>sigmoid</em> ，這兩點會有什麼影響，之後會提到。</p>
+
+<p>其中，在 <em>input layer</em> 和 <em>hidden layer</em> 之間， 有 <script type="math/tex">4 \times 3</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{V}</script> ，而在 <em>hidden layer</em> 到 <em>output layer</em> 之間， 有 <script type="math/tex">3 \times 4</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{W}</script> 。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\textbf{V}=
+
+\begin{bmatrix}
+
+    v_{11} & v_{12} & v_{13}  \\
+
+    v_{21} & v_{22} & v_{23}  \\
+
+    v_{31} & v_{32} & v_{33}  \\
+
+    v_{41} & v_{42} & v_{43}  \\
+
+\end{bmatrix}
+
+\mspace{30mu}
+
+\textbf{W}^T=
+
+\begin{bmatrix}
+
+    w_{11} & w_{12} & w_{13}  \\
+
+    w_{21} & w_{22} & w_{23}  \\
+
+    w_{31} & w_{32} & w_{33}  \\
+
+    w_{41} & w_{42} & w_{43}  \\
 
 \end{bmatrix}
 
  %]]&gt;</script>
 
-<p>根據以上結果得出, 名詞片語有 <em>The little yellow dog</em> 和 <em>the cat</em></p>
+<p>由於 <em>input</em> 是 <em>one hot encoding</em> 的向量，又因為 <em>hidden layer</em> 沒有 <em>sigmoid</em> 之類的非線性 <em>activation function</em>。 輸入到類神經網路後，在 <em>hidden layer</em> 所取得的值，即是 <script type="math/tex">\textbf{V}</script> 中某個橫排的值，如下：</p>
 
-<p><em>Chunking</em> 的演算法, 主要有兩種, 一種是 <em>Rule-Based</em>, 另一種是 <em>Machine-Learning-Based</em> , 本文的重點放在前者</p>
+<p><img src="/images/pic/pic_00194.png" alt="" /></p>
 
-<h2 id="rule-based-chunking">Rule-Based Chunking</h2>
+<p>例如，輸入的是 <em>dog</em> 的 <em>one hot encoding</em> ，只有在第 1 個維度是 1 ，與 <script type="math/tex">\textbf{V}</script> 作矩陣相乘後，在 <em>hidden layer</em> 取得的值是 <script type="math/tex">\textbf{V}</script> 中的第一個橫排： <script type="math/tex">(v_{11}, v_{12}, v_{13})</script> ，這個向量就是 <em>dog</em> 壓縮後的語意向量。運算過程如下：</p>
 
-<p><em>Rule-Based Chunking</em> 是根據事先定好的 <em>Rule</em> 來進行 <em>Chunking</em>, 例如以上例子, 定義好名詞片語的成份有哪些, 來尋找句子中哪些單字可以組成名詞片語</p>
+<script type="math/tex; mode=display">% &lt;![CDATA[
 
-<p>在 <em>python nltk</em> 裡, 可以用 <code>RegexpParser</code> 以 <em>regular expression</em> 來定義這些 <em>rule</em></p>
 
-<p>首先, 載入模組</p>
+\begin{bmatrix}
 
-<p>```python</p>
+1 & 0 & 0 & 0 
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk import RegexpParser</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+\end{bmatrix}
 
-<p>```</p>
+\begin{bmatrix}
 
-<p>以及例句</p>
+    v_{11} & v_{12} & v_{13}  \\
 
-<p>```python</p>
+    v_{21} & v_{22} & v_{23}  \\
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>sentence = [(“the”, “DT”), (“little”, “JJ”), (“yellow”, “JJ”), (“dog”, “NN”) \ 
-…            ,(“barked”, “VBD”), (“at”, “IN”),  (“the”, “DT”), (“cat”, “NN”)]</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+    v_{31} & v_{32} & v_{33}  \\
 
-<p>```</p>
+    v_{41} & v_{42} & v_{43}  \\
 
-<p>用 <em>Regular Expression</em> 定義好 <em>NP</em> 的 <em>Rule</em></p>
+\end{bmatrix}
 
-<p>```</p>
+= 
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>grammar = “NP: {&lt;DT&gt;?<jj>*<nn>}"</nn></jj></p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+\begin{bmatrix}
 
-<p>```</p>
+v_{11} & v_{12} & v_{13}
 
-<p>以上的 <em>rule</em> 表示, <em>NP</em> 是由 <em>0~1</em> 個 <em>DT</em> , <em>0</em> 個以上的 <em>JJ</em> 和 一個 <em>NN</em> 所組成的 </p>
+\end{bmatrix}
 
-<p>再來用 <code>RegexpParser</code> 進行 <em>Chunking</em>, 得出以下結果</p>
+ %]]&gt;</script>
 
-<p>```</p>
+<p>因此， <script type="math/tex">\textbf{V}</script> 中的某個橫排，就是某個字的語意向量。從反方向來看，由於 <em>output layer</em> 也是對應到字彙的 <em>one hot encoding</em> 因此， <script type="math/tex">\textbf{W}^T</script> 中的某個橫排，就是某個字的語意向量。</p>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>result = RegexpParser(grammar).parse(sentence)
-print result
-(S
-  (NP the/DT little/JJ yellow/JJ dog/NN)
-  barked/VBD
-  at/IN
-  (NP the/DT cat/NN))</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+<p>所以，一個字分別在 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 中各有一個語意向量。但通常會選擇 <script type="math/tex">\textbf{V}</script> 中的語意向量，作為 <em>word2vec</em> 的輸出結果。</p>
 
-<p>```</p>
+<h2 id="initializing-word2vec">Initializing word2vec</h2>
 
-<p>也可以把結果畫出來</p>
+<p>至於如何訓練這個類神經網路？ 訓練一個類神經網路的過程，第一步就是要先將 <em>weight</em> 作初始化。初始化即是隨機給每個 <em>weight</em> 不同的數值，這些數值介於 <script type="math/tex"> -N \sim N</script> 之間。</p>
 
-<p>```python</p>
+<p>因此，在還沒開始訓練之前，這些向量的方向都是隨機的，跟語意無關。</p>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>result.draw()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+<p>舉 <em>dog</em> 和 <em>cat</em> 在 <script type="math/tex">\textbf{V}</script> 中的向量，為 <script type="math/tex">\textbf{V}_1,\textbf{V}_2</script> ，以及 <em>run</em> 和 <em>fly</em> 在 <script type="math/tex">\textbf{W}</script> 中的向量 為 <script type="math/tex">\textbf{W}_3,\textbf{W}_4</script> ，為例：</p>
 
-<p>```</p>
+<p><img src="/images/pic/pic_00195.png" alt="" /></p>
 
-<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+<p>由於 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 都是隨機初始化的，因此 <script type="math/tex">\textbf{V}_1, \textbf{V}_2, \textbf{W}_3, \textbf{W}_4 </script> 這些向量的方向都是隨機的，跟語意無關，如下圖所示：</p>
 
-<p>如上圖顯示, <em>Chunking</em> 的結果, 把屬於 <em>NP</em> 的元素都歸到 <em>NP</em> 底下了</p>
+<p><img src="/images/pic/pic_00196.png" alt="" /></p>
 
-<h2 id="chinking">Chinking</h2>
+<h2 id="training-word2vec">Training word2vec</h2>
 
-<p>前文所提到的 <em>Chunking</em> 是先定義好, 哪個類別 <em>有</em> 哪些元素</p>
+<p>訓練 <em>word2vec</em> 的目的，是希望讓語意向量真的跟語意有關。，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，某字的語意，可從其上下文有哪些字來判斷。因此，可以用某字上下文的字，來做訓練，讓語意向量能抓到文字的語意。</p>
 
-<p>但有時候, 想要的取得的類別, 要一一列舉其中的元素, 列舉不完, 如果要用消去法的概念, 來定義哪些元素不包含在這個類別裡面, 就方便多了</p>
+<p>若 <em>dog</em> 的上下文中有 <em>run</em> ， 令 <em>dog</em> 為 <em>word2vec</em> 的 <em>input</em> ， <em>run</em> 為 <em>output</em> 則輸入類神經網路後，在 <em>run</em> 的位置，在經過 <em>sigmoid</em> 之前，得到的結果是 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積。經過了，<em>sigmoid</em> ，得到的值為：</p>
 
-<p>而 <em>Chinking</em> 的概念是用消去法, 定義哪個類別 <strong>沒有</strong> 哪些元素, 把那些沒有的元素排除, 而剩下來的就被分到該類別</p>
+<script type="math/tex; mode=display">
 
-<p>例如可以定義, <em>NP</em> 沒有 <em>VBD</em> 或 <em>IN</em> 這兩者, 如下</p>
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}}
 
-<p>```python</p>
+</script>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>grammar2 = r”””
-…   NP:
-…     {&lt;.*&gt;+}          # Chunk everything
-…     }&lt;VBD|IN&gt;+{      # Chink sequences of VBD and IN
-…   “””</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+<p>由於 <em>run</em> 出現在 <em>dog</em> 的上下文中，所以要訓練類神經網路，在 <em>run</em> 位置可以輸出 1，如下：</p>
 
-<p>```</p>
+<script type="math/tex; mode=display">
 
-<p>其中, <code>{&lt;.*&gt;+}</code> 是先把所有東西都包含進去, 再來的 <code>}&lt;VBD|IN&gt;+{ </code> 是用 <em>Chinking</em> 把 <em>VBD</em> 和 <em>IN</em> 這兩者排除, 執行結果如下</p>
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 1
 
-<p>```python</p>
+</script>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>result = RegexpParser(grammar2).parse(sentence)
-print result
-(S
-  (NP the/DT little/JJ yellow/JJ dog/NN)
-  barked/VBD
-  at/IN
-  (NP the/DT cat/NN))</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+<p>過程如下圖所示：</p>
 
-<p>```</p>
+<p><img src="/images/pic/pic_00197.png" alt="" /></p>
 
-<p>把結果畫出來</p>
+<p>根據上圖，如果要讓 <em>run</em> 的位置輸出為 1 ，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積要越大越好。</p>
 
-<p>```python</p>
+<p>內積要大，就是向量角度要越小，訓練過程中，會修正這兩個向量的角度，如下圖：</p>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>result.draw()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
+<p><img src="/images/pic/pic_00198.png" alt="" /></p>
 
-<p>```</p>
+<p>上圖左方為先正之前，各向量的方向，上圖右方為修正之後的方向，其中，深藍色為修正後的，淺藍色為修正前的，畫在一起以便作比較。修正完後， <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度又更接近了。</p>
 
-<p><img src="/images/pic/pic_00073.png" alt="ch1" /></p>
+<p>同理，若 <em>cat</em> 的上下文中有 <em>run</em> ，則用 <em>word2vec</em> 做同樣訓練，如下圖：</p>
 
-<p>得出結果和前文的 <em>Chunking</em> 相同</p>
+<p><img src="/images/pic/pic_00199.png" alt="" /></p>
 
-<h1 id="further-reading">Further Reading</h1>
+<p>修正向量的角度後，<script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度會更接近，結果如下圖：</p>
 
-<p>本文是對 <em>Rule-Based Chunking</em> 很簡單的介紹</p>
+<p><img src="/images/pic/pic_00200.png" alt="" /></p>
 
-<p>想要更深入了解, 請看</p>
+<p>不過，以上訓練方法有個問題，就是訓練完後， <em>所有的向量都會位於同一條直線上，而無法分辨出每個字語意的差異</em> 。如果要讓 <em>word2vec</em> 學會分辨語意的差異，就需要加入反例，也就是 <em>不是出現在上下文的字</em> 。</p>
 
-<p>Python nltk Documentation Chunking</p>
+<p>如果 <em>dog</em> 的上下文中，不會出現 <em>fly</em> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{W}_4</script> ，將 <em>dog</em> 輸入類神經網路後，在 <em>fly</em> 的位置，訓練其輸出結果為 0 ，如下：</p>
 
-<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch07.html#fig-chunk-segmentation</p>
+<script type="math/tex; mode=display">
 
-<p>Python nltk HOWTO chunk</p>
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 0
 
-<p>http://www.nltk.org/howto/chunk.html</p>
+</script>
+
+<p>如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00201.png" alt="" /></p>
+
+<p>如果要讓輸出結果接近 0，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_4</script> 的內積要越小越好，也就是說，它們之間的角度要越大越好。修正這兩個向量的角度，如下圖：</p>
+
+<p><img src="/images/pic/pic_00202.png" alt="" /></p>
+
+<p>同理，若 <em>cat</em> 的上下文中沒有 <em>fly</em> ，則訓練其輸出 0 ：</p>
+
+<p><img src="/images/pic/pic_00203.png" alt="" /></p>
+
+<p>修正  <script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_4</script> 的夾角，如下圖：</p>
+
+<p><img src="/images/pic/pic_00204.png" alt="" /></p>
+
+<p>訓練後，得出的這些語意向量，語意相近的，夾角越小，語意相差越遠的，夾角越大，如下圖：</p>
+
+<p><img src="/images/pic/pic_00205.png" alt="" /></p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<ol>
+  <li>
+    <p><em>word2vec</em> 的 <em>backward propagation</em> 公式要怎麼推導，請看：<a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation">word2vec (part2 : Backward Propagation)</a></p>
+  </li>
+  <li>
+    <p>如何從無到有，不使用任何自動微分的套件，實作一個 <em>word2vec</em> ，請看：<a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation">word2vec (part3 : Implementation)</a></p>
+  </li>
+</ol>
+
+<p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
 ]]></content>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Dependency Grammar]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar/"/>
-    <updated>2014-05-03T15:00:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/05/03/python-nltk-dependency-grammar</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+    <title type="html"><![CDATA[Vector Space of Semantics]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/"/>
+    <updated>2016-07-10T14:06:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
 
-<p>在自然語言處理中, <em>Phase-Structured Grammar</em> 這類的文法, 是把一個句子, 剖析成一個 <strong>完整的剖析樹</strong> , 它的重點是句子中各個成份的階層關係, 例如 <em>Context-Free Grammar</em></p>
+<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
 
-<p>而所謂的 <em>Dependenct Grammar</em> , 是著重在 <strong>字和字之間關係</strong> , 而非整個句子中各種成份階層關係, 例如 </p>
+<blockquote>
+  <p>The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird sleep.</p>
+</blockquote>
 
-<script type="math/tex; mode=display">
+<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
 
-\text{I shot an elephant in my pajamas.}
+<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
 
-</script>
+<script type="math/tex; mode=display">% &lt;![CDATA[
 
-<p>用<em>Depedenct Grammar</em> 可以表示成這樣</p>
 
-<p><img src="/images/pic/pic_00067.png" alt="d0" /></p>
+\begin{array}{c|c c c c c c c c c }
 
-<p>如上圖, 把詞語和詞語之間的關係, 用箭頭表示, 箭頭的起點為 <em>Head</em>, 終點為 <em>dependents</em> , 標示箭頭上的英文字代表 <em>Head</em> 和 <em>Dependent</em> 之間的 <em>relation</em></p>
+     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
+
+ dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
+
+ cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
+
+ bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
 
 <!--more-->
 
-<p><em>Head</em> 的意思是中心語, 就是比較重要的概念, 而 <em>Dependent</em> 則是用來修飾這個概念的詞語 , 例如 <em>an elephant</em> 這一小片段中, 重要的概念為 <em>elephant</em> , 而 <em>an</em> 是 <em>elephant</em> 的修飾語</p>
+<h2 id="vector-space-of-semantics">Vector Space of Semantics</h2>
 
-<p>通常會在句子中挑一個最重要的中心語, 通常是動詞, 當作 <em>ROOT</em> , 如上圖例子的 <em>ROOT</em> 為 <em>shot</em>, 而 <em>shot</em> 的 <em>Dependent</em> 有 <em>I</em> 和 <em>elephant</em> , 它們和 <em>shot</em> 之間的 <em>relation</em> 分別為 <em>SBJ</em> 和 <em>OBJ</em> , 以此類推</p>
+<p>有了向量就可以用 <em>cosine similarity</em> 來計算語意相近程度。</p>
 
-<p>相較於 <em>Phase-Structured Grammar</em> 需要整個句子都文法正確, 才可以得出剖析樹, 而 <em>Dependency Grammar</em> 不需要整個句子裡面的每個字都文法正確, 也可以得到剖析樹, 因為只需要注意字和字的關係即可</p>
+<p>給定兩向量 <script type="math/tex">A = (a_1,a_2,...,a_n)</script> 和<script type="math/tex">B = (b_1,b_2,...,b_n)</script> ，則這兩向量的 <em>cosine similarity</em> 為：</p>
 
-<h2 id="dependencygraph">2. DependencyGraph</h2>
+<script type="math/tex; mode=display">
 
-<p>在 <em>python nltk</em> 裡, 可以用 <code>DependencyGraph</code> 來載入 <em>Dependency Grammar</em></p>
+\frac{A \cdot B}{|A||B|}=  \frac{\sum a_i b_i}{\sqrt{\sum_i a_i^2}\sqrt{\sum_i b_i^2}}
 
-<p>首先載入模組</p>
+</script>
 
-<p>```python</p>
+<p><em>cosine similarity</em> 算出來的值，即是計算 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 兩向量的夾角的 <em>cosine</em> 值。 <em>cosine</em> 值越接近 1 ，表示兩向量夾角越小，表示兩向量的語意越接近。</p>
 
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk.parse import DependencyGraph</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著用以下的 <em>string</em> 來表示前例的 <em>Dependency Grammar</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dep_str= \
-… “””
-… I         NOUN  2    SBJ
-… shot      VERB  0    ROOT 
-… an        DET   4    DETMOD
-… elephant  NOUN  2    OBJ
-… in        PREP  4    NMOD
-… my        DET   7    DETMOD
-… pajamas   NOUN  5    PMOD
-… “””</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>其中, 每行可分成四個部份, 第一部份是句子中的單字, 第二部份是這個單字的 <em>Part of Speech(POS) Tagging</em> , 第三和第四部份是它的 <em>Head</em> 的 <em>index</em> 以及 <em>relation</em>, 例如 <em>I</em> 這個字, 它的 <em>POS Tagging</em> 為 <em>Noun</em> , 它的 <em>Head</em> 為 <em>shot</em>, <em>Head</em> 的 <em>index</em> 為 <em>shot</em> 在句子中的位置, 為 <em>2</em>, 而 <em>relation</em> 為 <em>SBJ</em> , 以此類推, 見下圖</p>
-
-<p><img src="/images/pic/pic_00068.png" alt="d1" /></p>
-
-<p>上圖將每個字標上 <em>index</em> , 以方便建構出 <em>Dependency Graph</em></p>
-
-<p>再來用 <code>DependencyGraph</code> 讀入這個 <code>dep_str</code></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dg = DependencyGraph(dep_str) </p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>可以把 <em>Dependency Graph</em> 轉成 <em>Syntax Tree</em> 印出來</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dg.tree().pprint()
-‘(shot I (elephant an (in (pajamas my))))’</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>或者畫出來</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dg.tree().draw()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>呈現如下圖</p>
-
-<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
-
-<p>由上圖可知, <em>Dependency Grammar</em> 所形成的 <em>syntax tree</em> , 和 <em>Phase-Structured Grammar</em> 最大的不同點在於, 每個 <em>Node</em> 是一個字, 而不是 <em>Non-Terminal</em> , <em>Node</em> 和 <em>Node</em> 之間的 <em>edge</em> 表示 <em>dependent relation</em> 而非 <em>production</em>. </p>
-
-<h2 id="dependency-parsing">3. Dependency Parsing</h2>
-
-<p>接著來談到如何把一個句子, 利用 <em>Dependency Grammar</em> 轉成 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
-
-<p>先載入模組</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk import parse_dependency_grammar</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>還有尚未剖析的 <em>Raw Sentence</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>sent = ‘I shot an elephant in my pajamas’.split()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著是 <em>Grammar</em> 的部份, 箭號左邊為 <em>head</em> , 右邊為 <em>dependent</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dep_grammar = parse_dependency_grammar(
-… “””
-… ‘shot’ -&gt; ‘I’ | ‘elephant’ | ‘in’
-… ‘elephant’ -&gt; ‘an’ | ‘in’
-… ‘in’ -&gt; ‘pajamas’
-… ‘pajamas’ -&gt; ‘my’
-… “””
-… )</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>在 <code>nltk</code> 裡面, 提供兩種方式, 分別為 <em>Projective Dependency</em> 和 <em>Non-Projective Dependency</em></p>
-
-<p>分別可以把 <em>Raw Sentence</em> 轉為 <em>Syntax Tree</em> 和 <em>Dependency Graph</em></p>
-
-<h3 id="projective-dependency-parsing">3.1 Projective Dependency Parsing</h3>
-
-<p><code>ProjectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>syntax tree</em></p>
-
-<p>載入以下模組</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk import ProjectiveDependencyParser</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著用 <code>ProjectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>trees = ProjectiveDependencyParser(dep_grammar).parse(sent)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>因為本例的文法為 <em>ambiguous grammar</em> , 也就是說, 可能的 <em>syntax tree</em> 超過一種以上</p>
-
-<p>程式會求出所有可能的 <em>syntax tree</em> , 如本例, 有兩個可能的 <em>syntax tree</em> </p>
-
-<p>```</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>trees[0].pprint()
-‘(shot I (elephant an (in (pajamas my))))’</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>trees[1].pprint()
-‘(shot I (elephant an) (in (pajamas my)))’</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>用以下方法畫出來</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>trees[0].draw()
-trees[1].draw()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="/images/pic/pic_00070.png" alt="d2" /></p>
-
-<p><img src="/images/pic/pic_00071.png" alt="d3" /></p>
-
-<h3 id="non-projective-dependency-parsing">3.2 Non-Projective Dependency Parsing</h3>
-
-<p><code>NonprojectiveDependencyParser</code> 可將 <em>Raw Sentence</em> 轉為 <em>dependency graph</em></p>
-
-<p>載入模組</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk import NonprojectiveDependencyParser</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著用 <code>NonprojectiveDependencyParser</code> 載入文法來剖析句子, 如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>dep_graphs = NonprojectiveDependencyParser(dep_grammar).parse(sent)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>本例也會得出兩個可能的結果, 可以用 <code>print</code> 印出 <em>dependency graph</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print dep_graphs[0]
-[{‘address’: 0, ‘deps’: 2, ‘rel’: ‘TOP’, ‘tag’: ‘TOP’, ‘word’: None},
- {‘address’: 1, ‘deps’: [], ‘word’: ‘I’},
- {‘address’: 2, ‘deps’: [1, 4], ‘word’: ‘shot’},
- {‘address’: 3, ‘deps’: [], ‘word’: ‘an’},
- {‘address’: 4, ‘deps’: [3, 5], ‘word’: ‘elephant’},
- {‘address’: 5, ‘deps’: [7], ‘word’: ‘in’},
- {‘address’: 6, ‘deps’: [], ‘word’: ‘my’},
- {‘address’: 7, ‘deps’: [6], ‘word’: ‘pajamas’}]</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print dep_graphs[1]
-[{‘address’: 0, ‘deps’: 2, ‘rel’: ‘TOP’, ‘tag’: ‘TOP’, ‘word’: None},
- {‘address’: 1, ‘deps’: [], ‘word’: ‘I’},
- {‘address’: 2, ‘deps’: [1, 4, 5], ‘word’: ‘shot’},
- {‘address’: 3, ‘deps’: [], ‘word’: ‘an’},
- {‘address’: 4, ‘deps’: [3], ‘word’: ‘elephant’},
- {‘address’: 5, ‘deps’: [7], ‘word’: ‘in’},
- {‘address’: 6, ‘deps’: [], ‘word’: ‘my’},
- {‘address’: 7, ‘deps’: [6], ‘word’: ‘pajamas’}]</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>其中 <code>address</code> 表示 <code>word</code> 的 <em>id</em> , <code>deps</code> 為這個 <code>word</code> 的 <em>dependent</em></p>
-
-<p><em>註：事實上,  Non-Projective 和 Projective 最主要的差異在於, Non-Projective 可以處理字詞順序可任意顛倒的語言, 在處理這種語言時, 產生出的 Syntax Tree 由於字詞顛倒, 會有交叉, 故通常用 Dependency Graph 來表示結果, 本文不探討這種現象, 若你想了解, 請看以下的 Further Reading</em> </p>
-
-<h2 id="furtuer-reading">Furtuer Reading</h2>
-
-<p>想要了解更多關於 <em>Dependency Grammar</em> 可以看以下兩篇 <em>python nltk</em> 的 <em>Documentation</em></p>
-
-<p>Python nltk HOWTO dependency</p>
-
-<p>http://www.nltk.org/howto/dependency.html</p>
-
-<p>Python nltk book ch08</p>
-
-<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch08.html</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[自然語言處理 -- Log-Linear Model]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model/"/>
-    <updated>2014-04-28T11:00:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
-
-<p>在機器學習中有一種用於分類的演算法, 叫作 <em>Logistic Regression</em> , 可以把東西分成兩類</p>
-
-<p>而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 <em>Part of speech Tagging</em> 就是把一個字詞分類到名詞, 動詞, 形容詞, 之類的問題</p>
-
-<p>如果二元分類的 <em>Logistic Regression</em> , 推廣到多種類別分類, 就可以處理這種分類問題</p>
-
-<p>首先, 把二元分類的 <em>Logistic Regression</em> 公式, 稍做調整, 如下  </p>
+<p>根據以上例子， <em>dog</em> ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) 和 <em>cat</em> ( 1, 0, 0, 0, 0, 0, 1, 1, 1, 2 )  的 <em>cosine similarity</em> 為：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 
 \begin{align}
 
-&p(y=true|X) = \frac{1}{1+e^{-W \cdot X }} 
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 1 \times 1 + 1 \times 1 + 1 \times 2 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 + 2^2} } \\
 
-= \frac{ e^{\frac{W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\[12pt]
+& = \frac{ 6 }{ \sqrt{ 8 } \sqrt{ 8} } 
 
-&p(y=false|X) = \frac{e^{-W \cdot X }}{1+e^{-W \cdot X }} 
-
-= \frac{ e^{\frac{-W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\
+= 0.75 
 
 \end{align}
 
  %]]&gt;</script>
 
-<p>針對多類別的  <em>Logistic Regression</em> , 叫作 <em>Multinomial logistic regression</em> , 如果總共有 <script type="math/tex">k</script> 的類別, 每個類別的 <em>label</em> 為 <script type="math/tex">c_{i} , i \in k </script> , 則公式如下</p>
-
-<!--more-->
+<p>而 <em>bird</em> 的向量為：( 1, 0, 0, 0, 0, 1, 0, 0, 1, 1 )  ，計算 <em>dog</em>  和  <em>bird</em> 的 <em>cosine similarity</em> ：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 
 \begin{align}
 
-&p(y=c_{1}|X) = \frac{ e^{W_{c_{1}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 0 \times 0 + 1 \times 0 + 1 \times 1 + 1 \times 1 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 0^2 + 0^2 + 1^2 + 1^2} }  \\
 
-&p(y=c_{2}|X) = \frac{ e^{W_{c_{2}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+& = \frac{ 4 }{ \sqrt{ 8 } \sqrt{ 4} } 
 
-&...\\[12pt]
-
-&p(y=c_{k}|X) = \frac{ e^{W_{c_{k}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\
-
+\approx 0.707106781187 
 
 \end{align}
 
  %]]&gt;</script>
 
-<p>在自然語言處理中, 由於 <em>feature value</em> , 也就是 <script type="math/tex">X</script> , 通常不是數字, 例如 <em>前面幾個字的 Tag</em> 之類的, 這時就要用 <em>feature function</em> 把 <em>feature value</em> 轉成數字</p>
+<p>由於 0.75 &gt; 0.707 ，因此 <em>dog</em> 和 <em>cat</em> 語意比較接近， <em>dog</em> 和 <em>bird</em> 語意比較不同。</p>
 
-<p>所謂的 <em>feature function</em> , 就像是一個檢查器, 去檢查 <em>input data</em> 是否滿足某個 <em>feature</em> , 滿足的話則輸出 <em>1</em> , 不滿足者輸出 <em>0</em> , 以下為一個<em>feature function</em> 的例子</p>
+<p>此種語意向量有個缺點，就是向量的維度等於總字彙量。例如英文單字種共有好幾萬種，那麼，向量就有好幾萬個維度，向量維度過大的缺點，會造成資料過度稀疏，以及占記憶體的空間。</p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
+<p>降低向量維度的方式，有兩種方法，分別是：</p>
 
+<ol>
+  <li>
+    <p><a href="https://ccjou.wordpress.com/2009/09/01/%E5%A5%87%E7%95%B0%E5%80%BC%E5%88%86%E8%A7%A3-svd/">singular value decompisition (SVD)</a></p>
+  </li>
+  <li>
+    <p><a href="http://blog.csdn.net/itplus/article/details/37969519">word2vec</a></p>
+  </li>
+</ol>
 
-f_{j}(c,x) =
+<p>本文先不詳細介紹這部分。</p>
 
-\begin{cases} 
+<h2 id="implementation">Implementation</h2>
 
-1 & \text{if}\mspace{15mu} tag_{i-1} = VB \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
-
-0 & \text{otherwise}
-
-\end{cases}
-
- %]]&gt;</script>
-
-<p>其中 , <script type="math/tex">tag_{i-1}</script> 是前一個字的 <em>Tag</em> , 而 <script type="math/tex">c</script> 為這個字的類別, 如果這個字的類別是 <script type="math/tex">NN</script> , 且前一個字的 <em>Tag</em> 為 <script type="math/tex">VB</script> , 則 <script type="math/tex">f_{j}=1</script> , 若不滿足這些條件, 則 <script type="math/tex">f_{j}=0</script></p>
-
-<p>加入 <em>feature function</em> 以後 , 原本的 <script type="math/tex">W_{c_{i}} \cdot X</script> 變為  <script type="math/tex">\sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x)</script> ,  <em>Multinomial logistic regression</em> 的公式變為這樣, 也就是所謂的 <em>Log-Linear Model</em></p>
-
-<script type="math/tex; mode=display">
-
-p(y=c_{i}|X) = \frac{ e^{ \sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x) } }{ \sum_{j=1}^{k} e^{\sum_{j=0}^{N}w_{c_{j}}f_{j}(c,x)} } \\[12pt]
-
-</script>
-
-<p>再來, 要怎麼訓練這個 <em>Model</em> 呢？</p>
-
-<p><em>Training</em> 是一個求最佳解的過程, 要找到一組 <em>Weight</em> 可以使得 <script type="math/tex">\sum_{i}p(Y^{(i)} \mid X^{(i)})</script> 為最大值, 公式為</p>
-
-<script type="math/tex; mode=display">
-
-\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  
-
-
-</script>
-
-<p>由於有時 <em>feature function</em> 的數量會太多, 容易導致 <em>Overfitting</em> , 為了避免此現象, 所以會減掉 <script type="math/tex">\alpha R(w)</script> 以進行 <em>Regularization</em></p>
-
-<script type="math/tex; mode=display">
-
-\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  -\alpha R(w)
-
-
-</script>
-
-<p>另外, 由於此最佳化後產生的結果, 會有最大的 <em>Entropy</em> , 故 <em>Log-Linear Model</em> 又稱為 <em>Maxmum Entropy Model</em> , 在此做不推導, 欲知詳情請看 <em>Berger et al. (1996). A maximum entropy approach to natural language processing.</em></p>
-
-<h2 id="example">2. Example</h2>
-
-<p>舉個例子, 如何用 <em>feature function</em> 算出 <em>Tagging</em> 的機率值</p>
-
-<p>假設現在要對以下句子進行 <em>Part of Speech Tagging</em> , 現在已經進行到了 <strong><em>race</em></strong> 這個字</p>
-
-<script type="math/tex; mode=display">
-
-\text{Secretariat/}NNP \text{ is/}BEZ \text{ expected/}VBN \text{ to/}TO \text{ race/}\textbf{??} \text{ tomorrow/} 
-
-</script>
-
-<p>總共用了以下六種 <em>feature function</em> </p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&f_{1}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
-
-0 & \text{otherwise} 
-
-\end{cases} \\[12pt]
-
-
-&f_{2}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
-
-0 & \text{otherwise} 
-
-\end{cases} \\[12pt]
-
-
-&f_{3}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} suffix(word_{i}) = \text{'ing'} \mspace{15mu}\text{and} \mspace{15mu} c=VBG \\
-
-0 & \text{otherwise} 
-
-\end{cases} \\[12pt]
-
-
-&f_{4}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} isLowerCase(word_{i}) \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
-
-0 & \text{otherwise} 
-
-\end{cases} \\[12pt]
-
-
-&f_{5}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
-
-0 & \text{otherwise} 
-
-\end{cases} \\[12pt]
-
-
-&f_{6}(c,x) =
-
-\begin{cases} 
-
-1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
-
-0 & \text{otherwise} 
-
-\end{cases} 
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>現在要求 <strong><em>race</em></strong> 這個字的 <em>Tag</em> 是 <em>NN</em> 還是 <em>VB</em> , 代入以上六個 <em>feature function</em> , 得出結</p>
-
-<p>果於下表</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-    \begin{array}{|c|c|} 
-
-    \hline
-
-		   &   & f1 & f2 & f3 & f4 & f5 & f6 \\ \hline
-
-    VB & f & 0  & 1  & 0  & 1  & 1  & 0  \\ \hline
-
-    VB & w & 0  & 0.8& 0  &0.01& 0.1& 0  \\ \hline
-
-    NN & f & 1  & 0  & 0  & 0  & 0  & 1  \\ \hline
-
-    NN & w &0.8 & 0  & 0  & 0  & 0  &-1.3  \\ \hline
-
-		\end{array}
-
- %]]&gt;</script>
-
-<p>其中 <script type="math/tex">f</script> 是 <em>feature function</em> 算出來的值, <script type="math/tex">w</script> 是 <em>weight</em> , 這個值通常是針對 <em>Training Data</em> 做最佳化得出來的值, <em>weight</em> 越大則表示 <em>feature</em> 所占的比重越重</p>
-
-<p>接著把 <script type="math/tex">w_{i}f_{i}(c,x)</script> 的值帶入公式</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&P(NN \mid x) = \frac{e^{0.8+(-1.3)}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.2 \\[12pt]
-
-&P(VB \mid x) = \frac{e^{0.8+0.01+0.1}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.8 \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>算出結果 <script type="math/tex">0.8>0.2</script> , 所以 <strong><em>race</em></strong> 的 <em>Tag</em> 為 <em>VB</em></p>
-
-<h2 id="implementation">3. Implementation</h2>
-
-<p>接著來實作用 <em>Log-Linear Mode</em> 進行 <em>Part of Speech Tagging</em></p>
-
-<p>這次要用 <em>python nltk</em>  的 <code>MaxentClassifier</code> 來實作</p>
-
-<p>首先, 開一個新的檔案 <em>loglinear.py</em> 貼上以下程式碼</p>
-
-<p>```python loglinear.py
-import nltk
-import operator</p>
-
-<p>class LogLinearTagger(nltk.TaggerI):</p>
-
-<pre><code>def __init__(self,training_corpus):
-    self.classifier = None
-    self.training_corpus = training_corpus
-
-def train(self):
-    self.classifier = nltk.MaxentClassifier.train(
-                reduce(operator.add, 
-                    map(lambda tagged_sent :
-                        self.sent_to_feature(tagged_sent)
-                        ,self.training_corpus)),algorithm='megam' )
-
-def sent_to_feature(self,tagged_sent):
-    return  map(lambda (i, elem) : 
-                    apply( lambda token , tag : 
-                         (self.extract_features(token, i, tag), elem[1])
-                        ,zip(*tagged_sent))
-                    ,enumerate(tagged_sent))
-
-def tag_sentence(self, sentence_tag):
-    if self.classifier == None:
-        self.train()
-    return apply (lambda sentence : 
-                zip(sentence,
-                reduce(lambda x,y:  
-                    apply(operator.add,
-                        [x,[self.classifier.classify(self.extract_features(sentence, y[0], x))]])
-                    , enumerate(sentence), []))
-                ,[map(operator.itemgetter(0),sentence_tag)])
-
-def evaluate(self,test_sents):
-    return apply(lambda result_list : 
-                sum(result_list)/float(len(result_list))
-                , [reduce(operator.add,
-                    map(lambda line:
-                        map(lambda tag : int(tag[0] == tag[1])
-                            , zip(map(operator.itemgetter(1),line),
-                                  map(operator.itemgetter(1),self.tag_sentence(line))))
-                       ,test_sents))])
-
-def extract_features(self, sentence, i, history):
-    features = {}
-    features["this-word"] =  sentence[i]
-    if i == 0:
-        features["prev-tag"] = "&lt;START&gt;"
-    else:
-        features["prev-tag"] = history[i-1]
-    return features     
-</code></pre>
-
-<p>```</p>
-
-<p>其中, <code>extract_features</code> 是用於把 <em>input sentence</em> 的 <em>feature</em> 取出來,  例如這次用到的 <em>feature</em> 有目前這個字是什麼 <code>"this-word"</code> ,和前一個字的 <em>Tag</em> 是什麼 <code>"prev-tag"</code> </p>
-
-<p>取出 <em>feature</em> 後 , <code>MaxentClassifier</code> 會自動根據這些 <em>feature</em> 產生 <em>feature function</em> </p>
-
-<p>接下來到 <em>python</em> 的 <em>interactive mode</em> 載入檔案</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from loglinear import LogLinearTagger</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>這次要用 <em>brown corpus</em> 的 <em>category</em> , <code>news</code> 的前 <em>100</em> 句來當作 <em>Tranining Data</em> ,第 <em>100~200</em> 句當作 <em>Test Data</em> , 先輸入以下程式碼</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from nltk.corpus import brown
-brown_tagged_sents = brown.tagged_sents(categories=’news’)
-train_sents = brown_tagged_sents[:100]
-test_sents = brown_tagged_sents[100:200]</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著用 <em>Training Data</em> 建立一個 <em>LogLinearTagger</em> 的 <em>class</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>classifier = LogLinearTagger(train_sents)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>在開始訓練之前, 我們先挑其中的一句, 看一下格式, 是已經 <em>Tag</em> 好的句子 , 我們以 <code>train_sents[31]</code> 為例</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>train_sents[31]
-[(‘His’, ‘PP$’), (‘petition’, ‘NN’), (‘charged’, ‘VBD’), (‘mental’, ‘JJ’), \
-(‘cruelty’, ‘NN’), (‘.’, ‘.’)]</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>看一下這句可以產生出哪些 <em>Feature</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>for x in classifier.sent_to_feature(train_sents[31]):
-…     print x
-… 
-({‘prev-tag’: ‘<start>', 'this-word': 'His'}, 'PP$')
-({'prev-tag': 'PP$', 'this-word': 'petition'}, 'NN')
-({'prev-tag': 'NN', 'this-word': 'charged'}, 'VBD')
-({'prev-tag': 'VBD', 'this-word': 'mental'}, 'JJ')
-({'prev-tag': 'JJ', 'this-word': 'cruelty'}, 'NN')
-({'prev-tag': 'NN', 'this-word': '.'}, '.')</start></p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>例如第一個字, <code>'His'</code> , 它的 <em>feature</em> 有 <code>'prev-tag': '&lt;START&gt;'</code> 和 <code>'this-word': 'His'</code> , <em>Tag</em> 的結果為 </p>
-
-<p><code>'PP$'</code> , 由於第一個字前面已經沒有字了, 也沒有 <em>Tag</em> 了, 所以我們用 <code>&lt;START&gt;</code> 來表示</p>
-
-<p>再來就是要訓練 <em>classifier</em>, 執行 <code>classifier.train()</code> 就可以開始訓練, 但要花一點時間</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>classifier.train()
-Scanning file…2268 train, 0 dev, 0 test, reading…done
-optimizing with lambda = 0
-it 1   dw 5.348e-01 pp 4.19728e+00 er 0.79850
-it 2   dw 3.179e+00 pp 3.32097e+00 er 0.82760
-it 3   dw 1.037e+00 pp 2.92326e+00 er 0.67549
-it 4   dw 9.602e-01 pp 2.72106e+00 er 0.63933
-it 5   dw 1.345e+00 pp 2.41257e+00 er 0.54012
-it 6   dw 1.378e+00 pp 2.16177e+00 er 0.46429
-……</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>如果出現以下錯誤訊息, 表示你沒安裝 <em>megan</em></p>
+<p>在此實作將文字轉成向量，並用 SVD 降為至二維，作視覺化</p>
 
 <p>```python
-    raise LookupError(‘\n\n%s\n%s\n%s’ % (div, msg, div))
-LookupError: </p>
+import numpy as np
+import matplotlib.pyplot as plt</p>
 
-<p>===========================================================================
-NLTK was unable to find the megam file!
-Use software specific configuration paramaters or set the MEGAM environment variable.</p>
+<p>text = [
+    [“the”, “dog”, “run”, ],
+    [“a”, “cat”, “run”, ],
+    [“a”, “dog”, “sleep”, ],
+    [“the”, “cat”, “sleep”, ],
+    [“a”, “dog”, “bark”, ],
+    [“the”, “cat”, “meows”, ],
+    [“the”, “bird”, “fly”, ],
+    [“a”, “bird”, “sleep”, ],
+]</p>
 
-<p>For more information, on megam, see:
-    <a href="http://www.cs.utah.edu/~hal/megam/">http://www.cs.utah.edu/~hal/megam/</a>
-===========================================================================</p>
+<p>def build_word_vector(text):
+    word2id = {w: i for i, w in enumerate(sorted(list(set(reduce(lambda a, b: a + b, text)))))}
+    id2word = {x[1]: x[0] for x in word2id.items()}
+    wvectors = np.zeros((len(word2id), len(word2id)))
+    for sentence in text:
+        for word1, word2 in zip(sentence[:-1], sentence[1:]):
+            id1, id2 = word2id[word1], word2id[word2]
+            wvectors[id1, id2] += 1
+            wvectors[id2, id1] += 1
+    return wvectors, word2id, id2word</p>
+
+<p>def cosine_sim(v1, v2):
+    return np.dot(v1, v2) / (np.sqrt(np.sum(np.power(v1, 2))) * np.sqrt(np.sum(np.power(v1, 2))))</p>
+
+<p>def visualize(wvectors, id2word):
+    np.random.seed(10)
+    fig = plt.figure()
+    U, sigma, Vh = np.linalg.svd(wvectors)
+    ax = fig.add_subplot(111)
+    ax.axis([-1, 1, -1, 1])
+    for i in id2word:
+        ax.text(U[i, 0], U[i, 1], id2word[i], alpha=0.3, fontsize=20)
+    plt.show()</p>
 
 <p>```</p>
 
-<p>請到 http://www.umiacs.umd.edu/~hal/megam/version0_91/ 下載 <em>megan</em></p>
+<p>本程式中， <code>text</code> 是輸入的文字， <code>build_word_vector</code> 將文字轉成向量：</p>
 
-<p>如果你是 <em>linux</em> 的使用者, 可直接下載執行檔, 放到 <code>/home/xxxxxx/bin/</code> 資料夾 ( 若你是使用 <em>Mac</em> 或 <em>Window$</em> , 則需要下載 <em>source code</em> 自行編譯</p>
-
-<p>或者你可以把 <em>loglinear.py</em> 中的 <code>MaxentClassifier</code> 的 ` algorithm=’megam’ ` 去掉 , 變成這樣</p>
-
-<p>```python loglinear.py
-        self.classifier = nltk.MaxentClassifier.train(
-                    reduce(operator.add, 
-                        map(lambda tagged_sent :
-                            self.sent_to_feature(tagged_sent)
-                            ,self.training_corpus)) )</p>
-
-<p>```</p>
-
-<p>但這會導致訓練速度變得很慢</p>
-
-<p>訓練好之後, 可以用 <em>Test Data</em> 看看結果如何 , 先挑一句, 以 <code>test_sents[10]</code> 為例</p>
-
-<p>```python</p>
+<p>```sh</p>
 
 <blockquote>
   <blockquote>
     <blockquote>
-      <p>test_sents[10]
-[(‘<code>', '</code>’), (‘You’, ‘PPSS’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
-(‘circulation’, ‘NN’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
-(‘dollars’, ‘NNS’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+      <p>wvectors, word2id, id2word = build_word_vector(text)</p>
     </blockquote>
   </blockquote>
 </blockquote>
 
 <p>```</p>
 
-<p>把這個句子放到訓練好的 <code>classifier</code> , 用它來 <em>Tag</em> , 比較一下跟原本的 <em>tag</em> 有何不同 </p>
+<p>其中， <code>wvectors</code> 是根據前後文統計後，得出各文字的向量：</p>
 
-<p>```python</p>
+<p>```sh</p>
 
 <blockquote>
   <blockquote>
     <blockquote>
-      <p>classifier.tag_sentence(test_sents[10])
-[(‘<code>', '</code>’), (‘You’, ‘VB’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
-(‘circulation’, ‘JJ’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
-(‘dollars’, ‘JJ’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+      <p>print wvectors
+[[ 0.  0.  1.  1.  2.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  1.  0.  0.  0.  0.  0.]
+ [ 1.  0.  0.  0.  0.  1.  0.  0.  1.  1.]
+ [ 1.  0.  0.  0.  0.  0.  1.  1.  1.  2.]
+ [ 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.]
+ [ 0.  0.  1.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  1.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  1.  1.  0.  0.  0.  0.  0.]
+ [ 0.  0.  1.  1.  1.  0.  0.  0.  0.  0.]
+ [ 0.  0.  1.  2.  1.  0.  0.  0.  0.  0.]]</p>
     </blockquote>
   </blockquote>
 </blockquote>
 
 <p>```</p>
 
-<p>先用肉眼觀察, 我們發現 <code>classifier</code> 所得出的 <em>Tag</em> 有些和原本的一樣, 有些不一樣, 表示 <code>classifier</code> 有些字 <em>Tag</em> 錯了</p>
+<p>每一橫排（或直排）代表著某個字的向量，但從它看不出是哪個字，所以 <code>word2id</code> 則是給定文字，找出是第幾個向量，而 <code>id2word</code> 則是給定第幾個向量，找出所對應的文字。</p>
 
-<p>可以用程式來算準確率, 用 <code>classifier.evaluate</code> ,  但注意的是, <em>input argument</em> 不是 <em>sentence</em> , 而是 <em>list of sentence</em> , 所以 <em>input argument</em> 要用 <code>[test_sents[10]]</code> , 如下</p>
-
-<p>```python</p>
+<p>```sh</p>
 
 <blockquote>
   <blockquote>
     <blockquote>
-      <p>classifier.evaluate([test_sents[10]])
+      <p>print word2id
+{‘a’: 0, ‘fly’: 5, ‘run’: 7, ‘the’: 9, ‘dog’: 4, ‘cat’: 3, 
+‘meows’: 6, ‘sleep’: 8, ‘bark’: 1, ‘bird’: 2}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print id2word
+{0: ‘a’, 1: ‘bark’, 2: ‘bird’, 3: ‘cat’, 4: ‘dog’, 5: ‘fly’, 
+6: ‘meows’, 7: ‘run’, 8: ‘sleep’, 9: ‘the’}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>例如 <em>dog</em> 是在 <code>wvectors</code> 中， 第 5 排的向量（註：index 從0開始算），用 <code>word2id</code> 可從 <code>wvector</code> 中，取出其對應向量：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print wvectors[word2id[“dog”]]
+[ 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>程式碼中的 <code>cosine_sim</code> ，則可計算兩向量間的 <em>cosine similarity</em> ，例如，</p>
+
+<p>計算 <em>dog</em> 和 <em>cat</em> 與 <em>dog</em> 和 <em>bird</em> 之間的  <em>cosine similarity</em>  ：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print cosine_sim(wvectors[word2id[“dog”]], wvectors[word2id[“cat”]])
 0.75</p>
     </blockquote>
   </blockquote>
 </blockquote>
 
-<p>```</p>
-
-<p>算出來後準確度是 <em>0.75</em> , 也就是說有 <em>75%</em> 的 <em>Tag</em> 是正確的</p>
-
-<p>再來把所有的 <em>Test Data</em> 都做 <em>Evaluation</em> 看看</p>
-
-<p>```python</p>
-
 <blockquote>
   <blockquote>
     <blockquote>
-      <p>classifier.evaluate(test_sents)
-0.6910327241818954</p>
+      <p>print cosine_sim(wvectors[word2id[“dog”]], wvectors[word2id[“bird”]])
+0.707106781187</p>
     </blockquote>
   </blockquote>
 </blockquote>
 
 <p>```</p>
 
-<p>得的準確率約為 <em>69.1%</em></p>
+<p>再來是用 <code>visualize</code> 將這些語意向量在平面上作視覺化：</p>
 
-<p>這樣的準確率不是很理想, 原因是因為 <em>100</em> 句的 <em>Training Data</em> 實在是太少了</p>
+<p>```sh</p>
 
-<p>有興趣者可以試試看, 取 <em>2000</em> 句的 <em>Training Data</em> , 準確度應該會大幅提昇, 但是要花很久的時間訓練</p>
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>visualize(wvectors, id2word)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
 
-<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+<p>```</p>
 
-<p>本文參考至這本教科書</p>
+<p>在平面上作視覺化的方法，是用 SVD 將語意向量降為至二維，就可以把這些向量所對應的字，畫在平面上，結果如下：</p>
 
-<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+<p><img src="/images/pic/pic_00186.png" alt="" /></p>
 
-<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+<p>此結果顯示，   <em>dog</em> 、 <em>cat</em> 和 <em>bird</em> 是語意相近的一群， <em>a</em> 和 <em>the</em> 語意相近，以此類推。</p>
 
+<h2 id="further-reading">Further Reading</h2>
+
+<p>Simple Word Vector representations</p>
+
+<p>http://cs224d.stanford.edu/lectures/CS224d-Lecture2.pdf</p>
 ]]></content>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[自然語言處理 -- Chart Parsing]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing/"/>
-    <updated>2014-04-26T03:41:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/04/26/natural-language-processing-chart-parsing</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+    <title type="html"><![CDATA[Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/"/>
+    <updated>2015-05-23T15:33:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
 
-<p>在自然語言處理中, 剖析 ( <em>Parsing</em>  ) 是根據定義好的文法, 把句子轉換成 <em>Syntax Tree</em> 的過程</p>
+<p>將類神經網路應用在自然語言處理領域的模型有<a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model">Neural Probabilistic Language Model(NPLM)</a>，但在實際應用時，運算瓶頸在於 <em>output layer</em> 的神經元個數，等同於總字彙量 <script type="math/tex">\mid V\mid </script> 。</p>
 
-<p><em>Chart Parsing</em> 是利用一種叫做 <em>Chart</em> 的資料結構, 來進行剖析的演算法</p>
+<p>每訓練一個字時，要讓 <em>output layer</em> 在那個字所對應的神經元輸出值為 <script type="math/tex">1</script> ，而其他 <script type="math/tex">\mid V\mid -1</script> 個神經元的輸出為 <script type="math/tex">0</script> ， 這樣總共要計算 <script type="math/tex">\mid V\mid </script> 次，會使得訓練變得沒效率。</p>
 
-<p><em>Chart</em> 的結構如下</p>
+<p>若要減少於 <em>output layer</em> 的訓練時間，可以把 <em>output layer</em> 的字作分類階層，先判別輸出的字是屬於哪類，再判斷其子類別，最後再判斷是哪個字。 </p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
+<h2 id="hierarchical-softmax">Hierarchical Softmax</h2>
 
+<p>給定訓練資料為<script type="math/tex">X</script> ，輸出字的集合為 <script type="math/tex">Y</script> 。當輸入的字串為 <script type="math/tex">x</script> ，輸出的字為 <script type="math/tex">y</script> 時，訓練的演算法要將機率 <script type="math/tex">P (Y=y \mid  X=x) </script> 最佳化。</p>
 
-\begin{array}{c}
+<p>如果 <script type="math/tex">Y</script> 有 <em>10000</em> 種字，若沒有分類階層，訓練時就要直接對 <script type="math/tex">P (Y = y \mid  X = x) </script> 做計算，即是對這 <em>10000</em>種字做計算，使 <script type="math/tex">y</script> 所對應的神經元輸出為 <em>1</em> ，其它 <em>9999</em> 個神經元輸出 <em>0</em> ，這樣要計算 <em>10000</em> 次，如下圖：</p>
 
-& <START> & \text{ some integer } \\
+<p><img src="/images/pic/pic_00079.png" alt="" /></p>
 
-& <FINISH> & \text{ some integer } \\
-
-& <LABEL> & \text{ some category } \\
-
-& <FOUND> & \text{ some category sequence } \\
-
-& <TOFIND> & \text{ some category sequence } \\
-
-\end{array}
-
- %]]&gt;</script>
-
-<p>以下為一個 <em>Chart</em> 的例子</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-<0,2,S \rightarrow NP * VP>
-
- %]]&gt;</script>
+<p>若在訓練前，就事先把 <script type="math/tex">Y</script> 中的字彙分類好，以 <script type="math/tex">C(y)</script> 代表字 <script type="math/tex">y</script> 的類別，則可以改成用以下機率做最佳化：</p>
 
 <!--more-->
-
-<p>其中, 前兩個數字分別是 <script type="math/tex">% &lt;![CDATA[
-<START> %]]&gt;</script> , <script type="math/tex">% &lt;![CDATA[
-<FINISH> %]]&gt;</script> , 數字後面的英文字是 <script type="math/tex">% &lt;![CDATA[
-<LABEL> %]]&gt;</script> , 而 <script type="math/tex">*</script> 符號左方的代表 <script type="math/tex">% &lt;![CDATA[
-<FOUND> %]]&gt;</script> , <script type="math/tex">*</script> 右方的代表 <script type="math/tex">% &lt;![CDATA[
-<TOFIND> %]]&gt;</script> .</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{array}{c}
-
-& <START> & \text{ 0 } \\
-
-& <FINISH> & \text{ 2 } \\
-
-& <LABEL> & \text{ S } \\
-
-& <FOUND> & \text{ <NP> } \\
-
-& <TOFIND> & \text{ <VP> } \\
-
-\end{array}
-
-
- %]]&gt;</script>
-
-<p>這樣講還不是很清楚, 這些數字文字代表什麼, 為什麼要這樣定義呢？</p>
-
-<p>舉個例子, 如果要用以下的 <em>Grammar</em> 來剖析 <em>I run .</em>  這個句子</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& S \rightarrow NP\mspace{10mu} VP \\
-
-& NP \rightarrow \text{I} \\
-
-& VP \rightarrow \text{run} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>如果我們現在要開始剖析 <script type="math/tex">S \rightarrow NP\mspace{10mu} VP</script> 這條 <em>Rule</em>,  剛開始時, <em>Chart</em> 的結構如下</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-<0,0,S \rightarrow * \mspace{10mu} NP \mspace{10mu} VP>
-
- %]]&gt;</script>
-
-<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>0</em> 結束, 還沒有 <em>FOUND</em> 任何一個 <em>category</em> , 而有兩個 <em>TOFIND</em> 的 <em>category</em> , 分別是 <em>NP</em> 和 <em>VP</em> , 如下圖</p>
-
-<p><img src="/images/pic/pic_00048.png" alt="status1" /></p>
-
-<p>接著,往右方尋找可以符合這條 <em>Rule</em> 的 <em>category</em> , 發現, 在位置 <em>0</em> 到 <em>1</em> 中間的 <em>category</em> 為 <em>NP</em> , 剛好符合這條 <em>Grammar</em> 的 <em>category</em>, 此時的 <em>Chart</em> 變為 </p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-<0,1,S \rightarrow NP \mspace{10mu} * \mspace{10mu} VP>
-
- %]]&gt;</script>
-
-<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>1</em> 結束, 有一個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , 還剩一個 <em>TOFIND</em> 的 <em>category</em> , 為 <em>VP</em> , 如下圖</p>
-
-<p><img src="/images/pic/pic_00049.png" alt="status2" /></p>
-
-<p>以上兩種情形, 由於 <em>TOFIND</em> 不為空集合, 表示還有東西要找, 這個時候的 <em>Chart</em> 稱為 <em>active edge</em></p>
-
-<p>再來, 從 <em>1</em> 繼續往下一個位置找, 到 <em>2</em> 結束, 這一段是 <em>VP</em> , 也和 <em>Rule</em> 符合 , 此時的 <em>Chart</em> 變成這樣</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-<0,1,S \rightarrow NP \mspace{10mu}   VP \mspace{10mu} *>
-
- %]]&gt;</script>
-
-<p>這表示, 這條 <em>Rule</em> 是從位置 <em>0</em> 開始, 到 <em>2</em> 結束, 有兩個 <em>FOUND</em> 的 <em>category</em> 為 <em>NP</em> , <em>VP</em> ,已經沒有個 <em>TOFIND</em> 的 <em>category</em> 了, 此時可把這個  <em>Chart</em> 稱為 <em>inactive edge</em> , 表示它已經完成了, 如下圖</p>
-
-<p><img src="/images/pic/pic_00050.png" alt="status3" /></p>
-
-<h2 id="implementation">2. Implementation</h2>
-
-<p>由於要寫完一個 <em>Chart Parser</em> 需要寫較多行程式碼, 故這次不打算重頭寫起, 而採用 <em>python nltk</em> 的套件 <code>nltk.parse.chart</code> 來操作 <em>Chart Parser</em> </p>
-
-<p>用以上的例句和 <em>Grammar</em> 來實作</p>
-
-<p>將以下程式碼貼到 <em>chart.py</em> 這個檔案</p>
-
-<p>```python chart.py
-from nltk.parse.chart import *
-from nltk.grammar import parse_cfg</p>
-
-<p>_Grammar = parse_cfg(“””
-S  -&gt; NP VP
-NP -&gt; “I”
-VP -&gt; “run”
-“””)</p>
-
-<p>_Sent = “I run”.split()</p>
-
-<p>def chart_parser(strategy):
-    Strategy={‘top-down’:TD_STRATEGY,’bottom-up’:BU_STRATEGY}
-    cp = ChartParser(_Grammar, Strategy[strategy], trace=1)
-    chart = cp.chart_parse(_Sent)
-    parses = chart.parses(_Grammar.start())</p>
-
-<p>```</p>
-
-<p>其中, <code>_Grammar</code> 是 <em>parsing</em> 所使用的 <em>Grammar</em> , <code>_Sent</code> 是例句 <em>I run.</em> </p>
-
-<p>而 <code>chart_parser(strategy)</code> 是 <em>Chart parsing</em> 的 <em>function</em> , 有兩種策略 , 分別是　<em>Top-Down</em> 和 <em>Bottom-Up</em> , 這兩者的差別在哪, 之後會介紹</p>
-
-<p>先到 <em>python interactve mode</em> 載入 <code>chart_parser</code></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from chart import chart_parser</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<h3 id="top-down-strategy">2.1 Top-Down Strategy</h3>
-
-<p>於 <code>chart_parser</code> 輸入 <em>argument</em> <code>'top-down'</code>　, 會印出 <em>Top-Down Strategy</em> 的整個過程, 如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>chart_parser(‘top-down’)
-|.       I       .      run      .|
-|[—————]               .| [0:1] ‘I’
-|.               [—————]| [1:2] ‘run’
-|&gt;               .               .| [0:0] S  -&gt; * NP VP
-|&gt;               .               .| [0:0] NP -&gt; * ‘I’
-|[—————]               .| [0:1] NP -&gt; ‘I’ *
-|[—————&gt;               .| [0:1] S  -&gt; NP * VP
-|.               &gt;               .| [1:1] VP -&gt; * ‘run’
-|.               [—————]| [1:2] VP -&gt; ‘run’ *
-|[===============================]| [0:2] S  -&gt; NP VP *</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>先來看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  其實就是 <em>Initalize</em> 的過程, 如下</p>
-
-<p><img src="/images/pic/pic_00059.png" alt="td1" /></p>
-
-<p>再來會開始所謂的  <em>Top-Down Strategy</em> , 就是會先從最上層的 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code>  開始</p>
-
-<p><img src="/images/pic/pic_00052.png" alt="td2" /></p>
-
-<p>由於這條 <em>Rule</em> 右邊的第一個 <em>category</em> 為 <em>NP</em> , 所以會先找 <em>NP</em> 開頭的 <em>Rule</em> , ` [0:0] NP -&gt; * ‘I’` 看看是否符合</p>
-
-<p><img src="/images/pic/pic_00053.png" alt="td3" /></p>
-
-<p>如果符合的話, 可以往下走一步, <code>[0:1] NP -&gt; 'I' *</code> </p>
-
-<p>當這條 <em>Rule</em> 變成 <em>inactive edge</em> 後, 再回到上一層 <em>Rule</em> <code>[0:0] S  -&gt; * NP VP</code></p>
-
-<p><img src="/images/pic/pic_00054.png" alt="td4" /></p>
-
-<p>如果也符合, 則上一層 <em>Rule</em> 往下走一步 <code>[0:1] S  -&gt; NP * VP</code> , 此時還是 <em>active edge</em> , 因為 <em>VP</em> 還沒走完</p>
-
-<p><img src="/images/pic/pic_00055.png" alt="td5" /></p>
-
-<p>這時就要往下一層找, 找到 <em>VP</em> 的 <em>Rule</em> <code>[1:1] VP -&gt; * 'run'</code></p>
-
-<p><img src="/images/pic/pic_00064.png" alt="td6" /></p>
-
-<p>這樣繼續下去…</p>
-
-<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 為  <em>inactive edge</em>,  如下</p>
-
-<p><img src="/images/pic/pic_00065.png" alt="td7" /></p>
-
-<p>這樣就大功告成了, 以下為動畫版</p>
-
-<p><img src="/images/pic/pic_00058.gif" alt="td_animation" /></p>
-
-<h3 id="bottom-up-strategy">2.2 Bottom-Up Strategy</h3>
-
-<p>在 <code>chart_parser</code> 輸入 <code>'bottom-up'</code>　, 會印出 <em>Bottom-Up Strategy</em> 的整個過程, 如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>chart_parser(‘bottom-up’)
-|.       I       .      run      .|
-|[—————]               .| [0:1] ‘I’
-|.               [—————]| [1:2] ‘run’
-|&gt;               .               .| [0:0] NP -&gt; * ‘I’
-|[—————]               .| [0:1] NP -&gt; ‘I’ *
-|&gt;               .               .| [0:0] S  -&gt; * NP VP
-|[—————&gt;               .| [0:1] S  -&gt; NP * VP
-|.               &gt;               .| [1:1] VP -&gt; * ‘run’
-|.               [—————]| [1:2] VP -&gt; ‘run’ *
-|[===============================]| [0:2] S  -&gt; NP VP *</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>再來仔細看看 <em>Bottom-Up Strategy</em>  和  <em>Top-Down Strategy</em> 的差異在哪</p>
-
-<p>看前兩步, ` [0:1] ‘I’<code> 和 </code> [1:2] ‘run’`  都是 <em>Initalize</em> 的過程, 都一樣</p>
-
-<p><img src="/images/pic/pic_00059.png" alt="bt1" /></p>
-
-<p>再來就是 <em>Bottom-Up Strategy</em>  了, 和 <em>Top-Down Strategy</em>  不一樣的地方在於, <em>Bottom-Up Strategy</em> 是先從最底層的 <em>Rule</em> <code>[0:0] NP -&gt; * 'I'</code>  開始找, 看看符不符合</p>
-
-<p><img src="/images/pic/pic_00060.png" alt="bt2" /></p>
-
-<p>如果符合的話, 往前走一步, 變為 <code>[0:1] NP -&gt; 'I' *</code> , 為 <em>inactive edge</em></p>
-
-<p><img src="/images/pic/pic_00061.png" alt="bt3" /></p>
-
-<p>然後再來找上一層的 <em>Rule</em> , <code>[0:0] S  -&gt; * NP VP</code>  看看是否符合</p>
-
-<p><img src="/images/pic/pic_00062.png" alt="bt4" /></p>
-
-<p>如果符合, 則往前走一步, 變為 <code>[0:1] S  -&gt; NP * VP</code> </p>
-
-<p><img src="/images/pic/pic_00063.png" alt="bt5" /></p>
-
-<p>再回到下層的 <em>VP</em> <em>Rule</em> , <code>[1:1] VP -&gt; * 'run'</code></p>
-
-<p><img src="/images/pic/pic_00064.png" alt="bt6" /></p>
-
-<p>這樣繼續下去…</p>
-
-<p>直到最上層的 <em>Rule</em> 走完, 變成 <code>[0:2] S  -&gt; NP VP *</code> , 如下</p>
-
-<p><img src="/images/pic/pic_00065.png" alt="bt7" /></p>
-
-<p>這樣就大功告成了, 以下為動畫版</p>
-
-<p><img src="/images/pic/pic_00066.gif" alt="bt_animation" /></p>
-
-<p>以上為 <em>Top-Down Strategy</em>  以及 <em>Bottom-Up Strategy</em>  很簡短的介紹 , 尚未考慮到 <em>Rule</em> 不符合的情形, 想了解這部份, 請看 <em>Furtuer Reading</em> </p>
-
-<h2 id="furtuer-reading">3. Furtuer Reading</h2>
-
-<p>本文參考至這本教科書</p>
-
-<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
-
-<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[自然語言處理 -- Pointwise Mutual Information]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/"/>
-    <updated>2014-04-25T17:58:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/04/25/natural-language-processing-pointwise-mutual-information</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
-
-<p>在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息</p>
-
-<p>例如, 在新聞報導中, 有 <em>New</em> , <em>York</em>  , 這兩個字一起出現, 可以代表一個地名 <em>New York</em>  , 所以當出現了 <em>New</em> 這個字, 則有可能出現 <em>York</em> </p>
-
-<p>這可以用 <em>Pointwise Mutual Information(PMI)</em> 計算</p>
-
-<p><em>Pointwise Mutual Information</em> 的公式如下：</p>
 
 <script type="math/tex; mode=display">
 
-pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
+P (Y = y | X = x) =
+
+P (Y = y | C = c(y), X) \times P (C = c(y) | X = x)
+
 
 </script>
 
-<!--more-->
+<p>根據以上公式，先判斷 <script type="math/tex">y</script> 是在哪類，要算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> 的值，再判斷 <script type="math/tex">y</script> 是 <script type="math/tex">c(y)</script> 中的哪個字，要算 <script type="math/tex">P (Y = y \mid  C = c(y), X) </script> 的值。</p>
 
-<p>其中, <script type="math/tex">P(x,y)</script> 代表文字 <em>x</em> 和文字 <em>y</em> 一起出現的機率, 而 <script type="math/tex">P(x)</script> 為文字 <em>x</em> 出現的機率 , <script type="math/tex">P(y)</script> 為文字 <em>y</em> 出現的機率</p>
+<p>若把它們分成 <em>100</em> 類，則每個類別有 <em>100</em> 種字。訓練時需要分成兩步來計算，第一步先計算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> ，此時只要對 <em>100</em> 種分類做計算，使 <script type="math/tex">C(y)</script> 所對應的神經元輸出 <em>1</em> ，其它 <em>99</em> 個神經元輸出 <em>0</em> 。第二步是算 <script type="math/tex">P (Y = y \mid  C = c(y), X)</script>，即是讓 <script type="math/tex">C(y)</script> 底下對應到 <script type="math/tex">y</script> 的神經元輸出 <em>1</em> ，其它<em>99</em> 個神經元輸出 <em>0</em> ，這樣只需要計算 <em>200</em> 次即可，所做的計算只有原本的 <script type="math/tex">\frac{1}{50}</script> ，如下圖：</p>
 
-<p>如果某兩個字的出現是獨立事件, 則 <em>PMI</em> 為 <em>0</em></p>
+<p><img src="/images/pic/pic_00080.png" alt="" /></p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
+<p>更進一步地，可以將 <em>output layer</em> 分成更多層，也就是說，將它用成樹狀結構，每一個節點代表一次分類，這樣一層層分下去，直到葉子節點，可分出是哪個字彙。分越多層，訓練時要計算的次數就會越小，分到最細的情況下，就變成二元分類樹，這樣所需的計算總量只有原本的 <script type="math/tex">\frac{log_{2}\mid V\mid }{\mid V\mid }</script> 倍。</p>
 
+<p>根據這個二元分類樹，可以把 <script type="math/tex">Y</script> 中的每一個字，對應到一個由 <em>0</em> 和 <em>1</em> 所組成的二元字串 <script type="math/tex">(b_{1}(y), . . . b_{m}(y))</script> ，若字串中第一個數字為 <em>0</em> ，則表示這個字在第一層神經元所計算出的值為 <em>0</em>，以此類推。若要用這個二元分類樹計算 <script type="math/tex">P (Y = y \mid  X = x) </script> 可用以下公式來計算：</p>
 
-\begin{align}
+<script type="math/tex; mode=display">
 
-& P(x,y) = P(x) \times P(y)\\
+P( Y = y | X = x) =
 
-& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} = log \frac{P(x) \times P(y)}{P(x) \times P(y)} =log1=0
+\prod_{j=1}^{m}P(b_{j}(y) | b_{j-1}(y),b_{j-2}(y),...,b_{1}(y), X=x)
 
-\end{align}
+</script>
 
- %]]&gt;</script>
+<p>其中， <script type="math/tex">（b_{j−1}(y),b_{j−2}(y),...,b_{1}(y))</script> 為長度小於 <script type="math/tex">m</script> 的二元字串，即是在二元分類樹中不是葉子也不是根的節點。</p>
 
-<p>若有兩個字出現的機率不是獨立事件, 某個字出現時提昇另一個字的出現的機率, 則 <em>PMI</em> 大於 <em>0</em></p>
+<p>例如字串 <script type="math/tex">( b_{1}=0, b_{2}=1 )</script>即表示先從根節點往 <em>0</em> 的分支走到子節點，再從這個子節點走到 <em>1</em> 的分支的子節點，此子節點可用字串 <em>01</em> 來表示。若要計算以上公式的條件機率，方法為，先給這些子節點有它們自己的語意向量，再用 <em>NPLM</em> 把子節點的語意向量和 <script type="math/tex">x</script> 當成輸入值一起輸入 <em>NPLM</em> 來計算。</p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
+<p>例如，假設詞庫裡總共有 <em>8</em> 個字， 則 <script type="math/tex">m=3</script> ，若字彙 <script type="math/tex">y</script> 的二元字串值 <script type="math/tex">b_{1} = 1, b_{2} =0, b_{3}=0 </script> ，則它在二元分類樹的位置如下圖所示：</p>
 
+<p><img src="/images/pic/pic_00081.png" alt="" /></p>
 
-\begin{align}
+<p>則 <script type="math/tex">P( Y = y \mid  X = x) </script> 為：</p>
 
-& P(x,y) > P(x) \times P(y)\\
+<script type="math/tex; mode=display">
 
-& pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)} > 0
+P(b_{1} = 1 | X=x) \times
 
-\end{align}
+P(b_{2} = 0 | b_{1} = 1, X=x) \times 
 
- %]]&gt;</script>
+P(b_{3} = 0| b_{2} = 0, b_{1} = 1, X=x)
 
-<p>也就是說, 如果這兩個字的出現越不是偶然, 則 <em>Pointwise Mutual Information</em> 算出來的值越高, 越有可能帶有某種訊息</p>
+</script>
 
-<p>舉個例子, 以下為一個表格, 統計一篇文章中, 某些字是否一起出現</p>
+<p>訓練時，將訓練資料 <script type="math/tex">x</script> 輸入到 <em>NPLM</em> 的類神經網路中，並以二元分類樹的節點來代替它的 <em>output layer</em> 。</p>
 
-<p>表格中的數字, 代表左方的字和上方的字, 一起出現的次數</p>
+<p>首先，先從根節點的神經元開始訓練，這一步是要算 <script type="math/tex">P(b_{1} = 1 \mid  , X=x) </script> 。由於 <script type="math/tex">b_{1} = 1 </script>，所以要以根節點的神經元輸出為 <em>1</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
+<p><img src="/images/pic/pic_00082.png" alt="" /></p>
 
+<p>再來，從根節點往左走，選 <em>1</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{2} = 0 \mid  b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1</script> 的條件機率，所以要用字串 <em>1</em> 所對應它的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{2} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
 
-    \begin{array}{|c|c|}
+<p><img src="/images/pic/pic_00083.png" alt="" /></p>
 
-    \hline            &  \text{computer}  &  \text{data}  & \text{pinch}  & \text{result}  & \text{sugar} \\
+<p>然後，從剛剛那個神經元的節點開始，選 <em>0</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{3} = 0\mid  b_{2} = 0, b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1 , b_{2} = 0 </script> 的條件機率，所以要先將字串 <em>10</em> 所對應的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{3} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
 
-\hline \text{aprocot}    &  0        &    0    &   1    &     0   &     1 \\
+<p><img src="/images/pic/pic_00084.png" alt="" /></p>
 
-\hline \text{pineapple}  &  0        &    0    &   1    &     0   &     1 \\
+<p>最後，選擇 <em>0</em> 的分支往下走，即可走到 <script type="math/tex">y</script> ，結束了針對 <script type="math/tex">x</script> 這筆資料的訓練過程。</p>
 
-\hline \text{digital}    &  2        &    1    &   0    &     1   &     0 \\
+<p><img src="/images/pic/pic_00085.png" alt="" /></p>
 
-\hline \text{information} &  1       &    6    &   0    &     4   &     0 \\
+<h2 id="hierarchical-clustering">Hierarchical Clustering</h2>
 
-\hline
+<p>在訓練之前，要先把字彙的階層分類給建立好。要建立這個分類階層，有很多種方式，例如，使用 <em>WordNet</em> 所建立的上下位關係，來建立階層，或者可以用 <em>Hierarchical Clustering</em> ，像是<a href="/blog/2014/10/25/natural-language-processing-brown-clustering">Brown Clustering</a>之類的，自動從訓練資料中建立分類階層。</p>
 
-	\end{array}
+<h2 id="conclusion">Conclusion</h2>
 
- %]]&gt;</script>
+<p>用 <em>Hierarchical Softmax</em> 來置換掉原本 <em>NPLM</em> 的 <em>output layer</em> ，可以使得原本要計算 <script type="math/tex">\mid V\mid </script> 次的訓練，縮減為 <script type="math/tex">log_{2}\mid V\mid </script> 次，大幅提升了訓練速度。因此， <em>Hierarchical Softmax</em> 被日後眾多種類神經網路相關的模型所採用，包括近年來很熱門的 <em>word2vec</em> 也是。</p>
 
-<p>如果這篇文章總共只有 <em>19</em> 個字, 來計算 <em>information</em> 和 <em>data</em> 這兩字的 <em>PMI</em> , 得出</p>
+<h2 id="reference">Reference</h2>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& P(x = information,y=data) 
-
-\mspace{5mu}=\mspace{5mu} \frac{6}{19} 
-
-\mspace{5mu}=\mspace{5mu} 0.32 \\
-
-& P(x = information ) 
-
-\mspace{5mu}=\mspace{5mu} \frac{6+4+1}{19} 
-
-\mspace{5mu}=\mspace{5mu} \frac{11}{19} 
-
-\mspace{5mu}=\mspace{5mu} 0.58 \\
-
-& P(y = data ) 
-
-\mspace{5mu}=\mspace{5mu} \frac{6+1}{19} 
-
-\mspace{5mu}=\mspace{5mu} \frac{7}{19}  
-
-\mspace{5mu}=\mspace{5mu} 0.37 \\[10pt]
-
-& pmi(x = information,y = data)  \\
-
-& \mspace{5mu}=\mspace{5mu} log\frac{P(x =information,y=data)}{P(x=information)\times P(y=data)} \\
-
-&\mspace{5mu}=\mspace{5mu} log1.49 \\
-
-&\mspace{5mu}=\mspace{5mu} 0.57  \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>算出來的數字大於 0 , 表示 <em>information</em> 和 <em>data</em> 這兩個字的出現, 不是獨立事件</p>
-
-<h2 id="implementation">2.Implementation</h2>
-
-<p>我們用 <code>python nltk</code> 的 <em>brown corpus</em> 新聞類別文章, 來計算 <em>New</em> , <em>York</em> 的 <em>PMI</em> 和 <em>New</em> , <em>The</em> 的 <em>PMI</em> , 並比較兩者差異</p>
-
-<p>將以下程式碼複製到 <em>pmi.py</em> 這個檔案</p>
-
-<p>```python pmi.py</p>
-
-<p>import nltk
-from nltk.corpus import brown
-from nltk import WordNetLemmatizer
-from math import log 
-wnl=WordNetLemmatizer()</p>
-
-<p>_Fdist = nltk.FreqDist([wnl.lemmatize(w.lower()) for w in brown.words(categories=’news’)])</p>
-
-<p>_Sents = [[wnl.lemmatize(j.lower()) for j in i] for i in brown.sents(categories=’news’)]</p>
-
-<p>def p(x):
-       return _Fdist[x]/float(len(_Fdist))</p>
-
-<p>def pxy(x,y):
-       return (len(filter(lambda s :  x in s and y in s ,_Sents))+1)/ float(len(_Sents) )</p>
-
-<p>def pmi(x,y):
-       return  log(pxy(x,y)/(p(x)*p(y)),2) </p>
-
-<p>```</p>
-
-<p>其中 <code>_Fdist </code> 是單字出現的頻率 , <code>_Sents</code> 是文章中所有的句子 , <code>p(x)</code> 計算單字 <em>x</em> 出現的機率,  ` pxy(x,y)<code> 計算單字 *x* 和單字 *y* 出現在同一個句子的機率, </code>pmi(x,y)` 計算單字 <em>x</em> 和單字 <em>y</em> 的 <em>Pointwise Mutual Information</em> </p>
-
-<p>到 <em>python</em> 的 <em>interactive mode</em> 載入這個檔案</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>from pmi import *</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>先來計算 <em>new</em> 和 <em>york</em> 各別出現的機率</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>p(‘new’)
-0.020265724857046755</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>p(‘york’)
-0.004372687521022536</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>計算 <em>new</em> , <em>york</em> 出現在同一句子的機率</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pxy(‘new’,’york’)
-0.011031797534068787</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>計算 <em>new</em> , <em>york</em> 的 <em>PMI</em></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pmi(‘new’,’york’)
-6.959890136179789</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>再來看看, <em>new</em> , <em>the</em> 出現在同一句子的機率</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pxy(‘new’,’the’)
-0.04023361453601557</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>比 <em>new</em> , <em>york</em> 出現在同一句子的機率還高, 但是因為 <em>the</em> 出現次數較多</p>
-
-<p>算一下 <em>the</em> 出現的機率</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>p(‘the’)
-0.5369996636394214</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>計算<em>new</em> , <em>the</em> 的 <em>PMI</em> , 還是沒有比 <em>new</em> , <em>york</em> 高</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pmi(‘new’,’the’)
-1.8863664858873235</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>以上結果顯示, <em>PMI</em> 可以得出, <em>new</em> 和 <em>york</em> 一起出現的情形, 比較不是偶然的事件, 表示這兩個詞一起出現可能帶有較多訊息</p>
-
-<p>雖然 <em>new</em> 和 <em>the</em> 出現的頻率比較多, 但同時 <em>the</em> 出現的頻率也比較多, 計算結果 <em>PMI</em> 可以把 <em>the</em> 的出現頻率除掉, 得出 <em>new</em> 和 <em>the</em> 的出現, 比較像是獨立事件</p>
-
-<h2 id="reference">3.Reference</h2>
-
-<p>本文參考至coursera線上課程</p>
-
-<h4 id="d-jurafsky-and-c-manning--natural-language-processing">D. Jurafsky, and C. Manning.  Natural Language Processing</h4>
-
-<p>https://www.coursera.org/course/nlp</p>
+<p>Frederic Morin , Yoshua Bengio. Hierarchical probabilistic neural network language model. 2005</p>
 ]]></content>
   </entry>
   

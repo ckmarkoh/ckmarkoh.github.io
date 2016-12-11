@@ -1,0 +1,2208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Optimization Methods | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/optimization-methods/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-11T15:32:34+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[AdaDelta]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/02/08/optimization-method-adadelta/"/>
+    <updated>2016-02-08T16:13:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/02/08/optimization-method-adadelta</id>
+    <content type="html"><![CDATA[<h2 id="adagrad">AdaGrad</h2>
+
+<p>本文接續 <a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad </a>。所提到的 <em>AdaGrad</em> ，及改良它的方法 – <em>AdaDelta</em> 。</p>
+
+<p>在機器學習最佳化過程中，用 <em>AdaGrad</em> 可以隨著時間來縮小 <em>Learning Rage</em> ，以達到較好的收斂效果。<em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} = \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>不過， <em>AdaGrad</em> 有個缺點，由於 <script type="math/tex">\textbf{g}_{n}^{2}</script> 恆為正，故 <script type="math/tex">\textbf{G}_{t} </script> 只會隨著時間增加而遞增，所以 <script type="math/tex">\frac{\eta}{\sqrt{\textbf{G}_{t}}} </script> 只會隨著時間增加而一直遞減，如果 <em>Learning Rate</em> <script type="math/tex">\eta</script>的值太小，則 <em>AdaGrad</em> 會較慢才收斂。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始點為 <script type="math/tex">(x,y) = (0.001,4)</script> ， <em>Learning Rate</em> <script type="math/tex">\eta=0.5</script> ，則整個最佳化的過程如下圖，曲面為目標函數，紅色的點為 <script type="math/tex">(x,y)</script> ：</p>
+
+<p><img src="/images/pic/pic_00157.png" alt="" /></p>
+
+<!--more-->
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00158.gif" alt="" /></p>
+
+<p>從上圖來看，一開始紅色點的下降速度很快，但越後面則越慢。</p>
+
+<p>為了解決此問題，在調整 <em>Learning Rate</em> 時，不要往前一直加到最初的時間點，而只要往前加到某段時間即可。</p>
+
+<p>但如果要從某段時間點的 <script type="math/tex">\textbf{g}_{t}</script> 開始累加，則需要儲存某個時間點之後開始的每個 <script type="math/tex">\textbf{g}_{t}</script> ，這樣會造成記憶體的浪費。有種較簡便的做法，即是用衰減係數 <script type="math/tex">\rho</script> ，將上一時間點的  <script type="math/tex">\textbf{G}_{t-1}</script> 乘上 <script type="math/tex"> \rho</script> ，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \rho \textbf{G}_{t-1} + (1 - \rho) \textbf{g}_{t}^{2} \\
+
+& 0 < \rho < 1 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>藉由衰減係數 <script type="math/tex">\rho</script> ，可讓較早期時間點累加的 <script type="math/tex">\textbf{g}_{t}^{2}</script> 衰減至 0 ，因此，不會使得 <em>Learning Rate</em> 只隨著時間而一直遞減。</p>
+
+<h2 id="correct-units-of-x">Correct Units of ΔX</h2>
+
+<p><em>Adagrad</em> 還有另一個問題，就是 <script type="math/tex">\textbf{x}</script> 的修正量– <script type="math/tex">\Delta{\textbf{x}}</script> 為 <script type="math/tex">\frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t}</script> ，假設它如果有「單位」的話，它的單位會與 <script type="math/tex">\textbf{x}</script> 不同。 因 <script type="math/tex">\Delta{\textbf{x}}</script>  的單位與 <script type="math/tex">\textbf{g}</script> 的單位相同，而會和 <script type="math/tex">\textbf{x}</script> 不同，因為：</p>
+
+<script type="math/tex; mode=display">
+
+   \text{ units of }\Delta{\textbf{x}}  \propto  \text{ units of } \textbf{g} \propto  \dfrac{\partial f}{\partial x } \propto \frac{1}{  \text{ units of } \textbf{x} }
+
+</script>
+
+<p>註：在此假設 <script type="math/tex">f</script> 無單位。</p>
+
+<p>相較之下， <a href="/blog/2016/01/25/optimization-method-newton"><em>Newton’s Method</em></a> 中， <script type="math/tex">\Delta{\textbf{x}} =  \eta   \textbf{H}^{-1} \textbf{g}</script>， <script type="math/tex">\Delta{\textbf{x}}</script> 的單位與 <script type="math/tex">\textbf{x}</script> 的單位相同，因為：</p>
+
+<script type="math/tex; mode=display">
+
+   \text{ units of }\Delta{\textbf{x}}  \propto  \text{ units of } \textbf{H}^{-1} \textbf{g} \propto 
+
+   \frac{
+
+   \dfrac{\partial f}{\partial x }
+
+   }
+
+   {   \dfrac{\partial^{2} f}{\partial x^{2} }
+
+   }
+
+   \propto   \text{ units of } \textbf{x} 
+
+
+</script>
+
+<p>但 <em>Newton’s Method</em> 的缺點是，二次微分 <em>Hessian</em> 矩陣的反矩陣 <script type="math/tex">\textbf{H}^{-1}</script> ，計算時間複雜度太高。如果只是為了要單位相同，是沒必要這樣算。</p>
+
+<p>想要簡易求出  <script type="math/tex">\textbf{H}^{-1}</script> 的單位，稍微整理一下以上公式，得出：</p>
+
+<script type="math/tex; mode=display">
+
+   \Delta{\textbf{x}}  \propto  \frac{\dfrac{\partial f}{\partial x } } {\dfrac{\partial^{2} f}{\partial x^{2}}} \Rightarrow  \textbf{H}^{-1} \propto \frac{1 } {\dfrac{\partial^{2} f}{\partial x^{2}}} 
+
+     \propto
+
+   
+
+   \dfrac{\Delta{x}}{\dfrac{\partial f}{\partial x }} \propto  \dfrac{\Delta{x}}{\textbf{g}}  
+
+
+</script>
+
+<p>因此，若要簡易求出  <script type="math/tex">\textbf{H}^{-1} </script> 的單位，只要算 <script type="math/tex">\dfrac{\Delta{x}}{\textbf{g}}  </script> 即可。</p>
+
+<p>註：如果看不懂這段在寫什麼，請參考<a href="http://arxiv.org/abs/1212.5701">Matthew D. Zeiler. ADADELTA: AN ADAPTIVE LEARNING RATE METHOD.</a></p>
+
+<h2 id="adadelta">AdaDelta</h2>
+
+<p><em>AdaDelta</em> 解決了 <em>AdaGrad</em> 會發生的兩個問題：</p>
+
+<p>(1) <em>Learning Rate</em> 只會隨著時間而一直遞減下去</p>
+
+<p>(2) <script type="math/tex">\Delta{\textbf{x}}</script> 與 <script type="math/tex">\textbf{x}</script> 的單位不同</p>
+
+<p><em>AdaDelta</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \rho \textbf{G}_{t-1} + (1 - \rho) \textbf{g}_{t}^{2} \\
+
+
+& \Delta \textbf{x}_{t} = - \frac{\sqrt{\textbf{D}_{t - 1}+\epsilon}}{\sqrt{\textbf{G}_{t}+\epsilon}} \textbf{g}_{t} \\
+
+
+& \textbf{D}_{t} = \rho \textbf{D}_{t-1} + (1 - \rho) \Delta \textbf{x}_{t}^{2} \\
+
+
+& \textbf{x}_{t+1} = \textbf{x}_{t} + \Delta{x}_{t} \\
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex">\rho</script> 和  <script type="math/tex">\epsilon</script> 為常數。 <script type="math/tex">\rho</script> 的作用為「衰減係數」，而 <script type="math/tex">\epsilon</script> 是為了避免 <script type="math/tex">\frac{\sqrt{\textbf{D}_{t - 1}+\epsilon}}{\sqrt{\textbf{G}_{t}+\epsilon}}</script> 的分母為 0 。</p>
+
+<p>此處的 <script type="math/tex"> \textbf{G}_{t} </script> 有點類似 <em>AdaGrad</em> 裡面的  <script type="math/tex"> \textbf{G}_{t} </script> ，但如前面所述，  <em>AdaDelta</em> 的不是直接把 <script type="math/tex">\textbf{g}_{t}^2</script> 直接累加上去，而是藉由衰減係數 <script type="math/tex">\rho</script> ，可讓較早期時間點累加的 <script type="math/tex">\textbf{g}_{t}^{2}</script> 衰減至 0 ，因此，不會使得 <em>Learning Rate</em> 只隨著時間一直遞減下去。</p>
+
+<p>而 <script type="math/tex">\textbf{D}_{t}</script> 的作用，則是使 <script type="math/tex">\Delta{\textbf{x}}</script> 與 <script type="math/tex">\textbf{x}</script> 有相同的單位，因為 <script type="math/tex"> \frac{\sqrt{\textbf{D}_{t - 1}+\epsilon}}{\sqrt{\textbf{G}_{t}+\epsilon}}</script> 與 <script type="math/tex">\textbf{H}^{-1}</script> 具有相同單位，如下：</p>
+
+<script type="math/tex; mode=display">
+
+ \frac{\sqrt{\textbf{D}_{t - 1}+\epsilon}}{\sqrt{\textbf{G}_{t}+\epsilon}} \propto  \dfrac{\Delta{x}}{\textbf{g}}  \propto  \textbf{H}^{-1}
+
+</script>
+
+<p>根據前一段的結果，若 <script type="math/tex">\Delta{\textbf{x}}  \propto   \textbf{H}^{-1} \textbf{g}</script>，則 <script type="math/tex">\Delta{\textbf{x}}</script> 與 <script type="math/tex">\textbf{x}</script> 的單位相同。</p>
+
+<p>另外，<script type="math/tex">\textbf{D}_{t}</script> 可累加過去時間點的 <script type="math/tex">\Delta{\textbf{x}}</script> ，這樣所造成的效果，有點類似  <a href="/blog/2016/01/16/optimization-method-momentum"><em>Gradient Descent with Momentum</em></a> ，使得現在時間點的 <script type="math/tex">\Delta{\textbf{x}}</script> ，具有過去時間點的動量。</p>
+
+<p>實際帶數字進去算一次 <em>AdaDelta</em> 。舉前述例子，假設 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，藍色點為起始點位置：</p>
+
+<p><img src="/images/pic/pic_00161.png" alt="" /></p>
+
+<p>用 <em>AdaDelta</em> 最佳化方法，初始值設 <script type="math/tex">\textbf{G}_{0} = [0,0 ]^{T}  </script> ， <script type="math/tex"> \textbf{D}_{0} = [0,0 ]^{T} </script> ，設參數 <script type="math/tex">\rho = 0.5</script> ， <script type="math/tex">\epsilon = 0.1 </script> ，更新 <script type="math/tex">x,y </script> 的值，如下，（註：以下的向量 <script type="math/tex">\textbf{G}</script> 、 <script type="math/tex">\textbf{D}</script> 、 <script type="math/tex">\Delta \textbf{x}</script> 等等的加減乘除運算，皆為 <em>Element-wise Operation</em> ）：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{g}_{1} = 
+
+\begin{bmatrix}
+
+-2x_{0} \\[0.3em]
+
+2y_{0} \\[0.3em]
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+
+-2 \times 0.001 \\[0.3em]
+
+2 \times 4 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+-0.002 \\[0.3em]
+
+8 \\[0.3em]
+
+\end{bmatrix} \\
+
+
+
+& \textbf{G}_{1} = 0.5 
+
+\begin{bmatrix}
+
+0  \\[0.3em]
+
+0  \\[0.3em]
+
+\end{bmatrix}
+
++ (1-0.5 ) 
+
+\begin{bmatrix}
+
+(-0.002)^{2}  \\[0.3em]
+
+8^{2}  \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+2 \times 10^{-6}  \\[0.3em]
+
+32  \\[0.3em]
+
+\end{bmatrix} \\
+
+
+& \Delta \textbf{x}_{1} = - 
+
+\frac{\sqrt{
+
+\begin{bmatrix}
+
+0   \\[0.3em]
+
+0 \\[0.3em]
+
+\end{bmatrix} 
+
++ 0.1}}
+
+{\sqrt{
+
+\begin{bmatrix}
+
+2 \times 10^{-6}  \\[0.3em]
+
+32 \\[0.3em]
+
+\end{bmatrix} 
+
+ + 0.1}}
+
+\begin{bmatrix}
+
+-0.002  \\[0.3em]
+
+8  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+0.00199998 \\[0.3em]
+
+-0.44651646 \\[0.3em]
+
+\end{bmatrix} \\
+
+
+& \textbf{D}_{1} = 0.5 
+
+\begin{bmatrix}
+
+0  \\[0.3em]
+
+0  \\[0.3em]
+
+\end{bmatrix}
+
++ (1-0.5 ) 
+
+\begin{bmatrix}
+
+0.00199998^{2}  \\[0.3em]
+
+(-0.44651646)^{2}  \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+1.99996 \times 10^{-6}  \\[0.3em]
+
+0.09968847  \\[0 .3em]
+
+\end{bmatrix} \\
+
+
+&
+
+\begin{bmatrix}
+
+x_{1} \\[0 .3em]
+
+y_{1} \\[0 .3em]
+
+\end{bmatrix}
+
+=
+
+\textbf{x}_{1} = 
+
+\begin{bmatrix}
+
+0.001 \\[0.3em]
+
+4 \\[0 .3em]
+
+\end{bmatrix}
+
++ 
+
+\begin{bmatrix}
+
+0.00199998 \\[0.3em]
+
+-0.44651646 \\[0.3em]
+
+\end{bmatrix}
+
+= 
+
+\begin{bmatrix} 
+
+0.00299998 \\[0.3em]
+
+3.55348354 \\[0.3em]
+
+\end{bmatrix}
+
+\end{align}
+
+
+ %]]&gt;</script>
+
+<p>更新 <script type="math/tex">x,y</script> 的值， <script type="math/tex">x,y = 0.00299998, 3.55348354 \approx 0.00300,3.55348  </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00160.png" alt="" /></p>
+
+<p>再往下走一步， 計算 <script type="math/tex">x,y</script> 的值，如下：  </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{g}_{2} = 
+
+\begin{bmatrix}
+
+-2x_{1} \\[0.3em]
+
+2y_{1} \\[0.3em]
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+
+-2 \times 0.00299998 \\[0.3em]
+
+2 \times 3.55348354 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+-0.00599996 \\[0.3em]
+
+7.10696708 \\[0.3em]
+
+\end{bmatrix} \\
+
+
+
+& \textbf{G}_{2} = 0.5 
+
+\begin{bmatrix}
+
+2 \times 10^{-6}  \\[0.3em]
+
+32  \\[0.3em]
+
+\end{bmatrix}
+
++ (1-0.5 ) 
+
+\begin{bmatrix}
+
+(-0.00599996)^{2}  \\[0.3em]
+
+7.10696708^{2}  \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+1.89997600 \times 10^{-5}  \\[0.3em]
+
+41.25449057  \\[0.3em]
+
+\end{bmatrix} \\
+
+
+
+& \Delta \textbf{x}_{2} = - 
+
+\frac{\sqrt{
+
+\begin{bmatrix}
+
+1.99996 \times 10^{−6}   \\[0.3em]
+
+0.09968847 \\[0.3em]
+
+\end{bmatrix} 
+
++ 0.1}}
+
+{\sqrt{
+
+\begin{bmatrix}
+
+1.89997600 \times 10^{-6}  \\[0.3em]
+
+41.25449057 \\[0.3em]
+
+\end{bmatrix} 
+
+ + 0.1}}
+
+\begin{bmatrix}
+
+-0.00599996 \\[0.3em]
+
+7.10696708 \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+0.00599945 \\[0.3em]
+
+-0.49385501\\[0.3em]
+
+\end{bmatrix} \\
+
+
+& \textbf{D}_{2} = 0.5 
+
+\begin{bmatrix}
+
+1.99996 \times 10^{−6}  \\[0.3em]
+
+0.09968847  \\[0.3em]
+
+\end{bmatrix}
+
++ (1-0.5 ) 
+
+\begin{bmatrix}
+
+0.00599945^{2}  \\[0.3em]
+
+(-0.49385501)^{2}  \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+1.89966806 \times 10^{-5}  \\[0.3em]
+
+0.17179062  \\[0 .3em]
+
+\end{bmatrix} \\
+
+
+&
+
+\begin{bmatrix}
+
+x_{2} \\[0 .3em]
+
+y_{2} \\[0 .3em]
+
+\end{bmatrix}
+
+=
+
+\textbf{x}_{2} = 
+
+\begin{bmatrix}
+
+0.00299998 \\[0.3em]
+
+3.55348354 \\[0 .3em]
+
+\end{bmatrix}
+
++ 
+
+\begin{bmatrix}
+
+0.00599945 \\[0.3em]
+
+−0.49385501 \\[0.3em]
+
+\end{bmatrix}
+
+= 
+
+\begin{bmatrix} 
+
+0.00899943 \\[0.3em]
+
+3.05962853 \\[0.3em]
+
+\end{bmatrix}
+
+\end{align}
+
+
+ %]]&gt;</script>
+
+<p>更新 <script type="math/tex">x,y</script> 的值， <script type="math/tex">x,y = 0.00899943, 3.05962853 \approx 0.00900,3.05963  </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00161.png" alt="" /></p>
+
+<p>重複以上循環，整個過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00162.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00163.gif" alt="" /></p>
+
+<p>將 <em>Gradient Descent</em> （綠） ， <em>AdaGrad</em> （紅） 和 <em>AdaDelta</em> （藍） 畫在同一張圖上比較看看： </p>
+
+<p><img src="/images/pic/pic_00164.gif" alt="" /></p>
+
+<p>從上圖可看出， <em>AdaDelta</em> 的 <em>Learning Rate</em> 會隨著坡度而適度調整，不會一直遞減下去，也不會像 <em>Gradient Descent</em> 一樣，容易卡在 <em>saddle point</em> （請見<a href="/blog/2015/12/23/optimization-method-adagrad"> Optimization Method – Gradient Descent &amp; AdaGrad </a>）。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分</p>
+
+<p>首先，開啟新的檔案 adadelta.py 並貼上以下程式碼：</p>
+
+<p>```python adadelta.py
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import numpy as np
+from math import sqrt</p>
+
+<p>XT = 0.001
+YT = 4</p>
+
+<p>def func(x,y):
+  return (y<strong>2-x</strong>2)</p>
+
+<p>def func_grad(x,y):
+  return (-2<em>x, 2</em>y)</p>
+
+<p>def plot_func(xt,yt,c=’r’):
+  fig = plt.figure()
+  ax = fig.gca(projection=’3d’,
+        elev=35., azim=-30)
+  X, Y = np.meshgrid(np.arange(-5, 5, 0.25), np.arange(-5, 5, 0.25))
+  Z = func(X,Y) 
+  surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, 
+    cmap=cm.coolwarm, linewidth=0.1, alpha=0.3)
+  ax.set_zlim(-50, 50)
+  ax.scatter(xt, yt, func(xt,yt),c=c, marker=’o’ )
+  ax.set_title(“x=%.5f, y=%.5f, f(x,y)=%.5f”%(xt,yt,func(xt,yt))) 
+  plt.show()
+  plt.close()</p>
+
+<p>def run_adagrad():
+  xt, yt = XT, YT
+  eta = 0.5 
+  Gxt, Gyt = 0, 0
+  plot_func(xt,yt,’r’)
+  for i in range(20):
+    gxt, gyt = func_grad(xt, yt)
+    Gxt += gxt<strong>2
+    Gyt += gyt</strong>2
+    xt -= eta<em>(1./(Gxt<strong>0.5))*gxt
+    yt -= eta*(1./(Gyt</strong>0.5))</em>gyt
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’r’)</p>
+
+<p>def run_adadelta():
+  xt, yt = XT, YT
+  epsilon = 0.1
+  rho = 0.5
+  Gxt, Gyt = 0., 0.
+  Dxt, Dyt = 0., 0.
+  plot_func(xt,yt,’b’)
+  for i in range(20):
+    gxt, gyt = func_grad(xt, yt)
+    Gxt, Gyt = rho * Gxt + (1-rho) * (gxt<strong>2) , rho * Gyt + (1-rho) * (gyt</strong>2)
+    dxt, dyt  = -(sqrt(Dxt + epsilon) / sqrt(Gxt + epsilon)) * gxt , \
+                -(sqrt(Dyt + epsilon) / sqrt(Gyt + epsilon)) * gyt
+    Dxt, Dyt =  rho * Dxt + (1-rho) * (dxt<strong>2) , rho * Dyt + (1-rho) * (dyt</strong>2)
+    xt += dxt
+    yt += dyt
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’b’)</p>
+
+<p>```</p>
+
+<p>其中， <code>func(x,y)</code> 為目標函數， <code>func_grad(x,y)</code> 為目標函數的 gradient ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_adagrad()</code> 用來執行 <em>AdaGrad</em> ， <code>run_adadelta()</code> 用來執行 <em>AdaDelta</em> 。</p>
+
+<p>到 python console 執行：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import adadelta</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>執行 <em>AdaGrad</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adadelta.run_adagrad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00165.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00166.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00167.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>AdaDelta</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adadelta.run_adadelta()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00168.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00169.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00170.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<p><a href="http://arxiv.org/abs/1212.5701">Matthew D. Zeiler. ADADELTA: AN ADAPTIVE LEARNING RATE METHOD.</a></p>
+
+<p><a href="http://imgur.com/a/Hqolp">Visualizing Optimization Algos</a></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Newton's Method for Optimization]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton/"/>
+    <updated>2016-01-25T16:56:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/01/25/optimization-method-newton</id>
+    <content type="html"><![CDATA[<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>機器學習中，用 <em>Gradient Descent</em> 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ，在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時， <em>Gradient Descent</em>  走的方向為  <script type="math/tex">  -\nabla f(\textbf{x})</script> 。也就是，用泰勒展開式展開後，用一次微分 <script type="math/tex">f(\textbf{x})</script> 來趨近的方向，如下圖：</p>
+
+<p><img src="/images/pic/pic_00144.png" alt="" /></p>
+
+<p>註：考慮到 <script type="math/tex">\textbf{x}</script> 為向量的情形，故一次微分寫成  <script type="math/tex">\nabla f(\textbf{x})</script> 。 </p>
+
+<p>其中， <script type="math/tex">f(\textbf{x})</script> 為原本的 <em>Cost function</em> ，而 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為泰勒展開式取一次微分逼近的。 而 <em>Gradient Descent</em> 走的方向為 <script type="math/tex"> - \nabla f(\textbf{x}) </script> ，為沿著 <script type="math/tex">\tilde{f}(\textbf{x})</script> 的方向。</p>
+
+<!--more-->
+
+<p>這會有個問題，如果原本的 <em>Cost function</em> 為較高次函數，只用一次項來逼近是不夠的，有時候，失真情形很嚴重，例如， <em>Cost function</em> 為橢圓 <script type="math/tex">f(x,y) = x^{2}+9y^{2} </script>， 此函數的等高線圖，如下圖：</p>
+
+<p><img src="/images/pic/pic_00145.png" alt="" /></p>
+
+<p>如果起始點為 <script type="math/tex">(x,y) = (-4,2.5)</script> ，沿著 <script type="math/tex"> - \nabla f(x) </script> 的方向走，也就是說，走梯度最陡的方向（即與等高線垂直的方向），可能會需要多次折返，才能走到最小值，如下圖：</p>
+
+<p><img src="/images/pic/pic_00146.gif" alt="" /></p>
+
+<h2 id="second-order-taylor-approximation">Second-Order Taylor Approximation</h2>
+
+<p>根據前面的例子得知，只考慮一次微分項，是不夠的，現在要來考慮二次微分項。</p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ， 在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時，用泰勒展開式展開後，分別用一次微分與二次微分來逼近，如下圖：</p>
+
+<p><img src="/images/pic/pic_00147.png" alt="" /></p>
+
+<p>其中，橘色的 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為只用了一次微分的逼近，而紫色的 <script type="math/tex">\hat{f}(\textbf{x})</script> 為用了一次與二次微分向的逼近，由此可見， <script type="math/tex">\hat{f}(\textbf{x})</script>  較 <script type="math/tex">\tilde{f}(\textbf{x})</script> 接近原本的 <script type="math/tex">f(\textbf{x})</script></p>
+
+<p>如果要求 <script type="math/tex">f(\textbf{x})</script> 的最小值，可以往 <script type="math/tex">\hat{f}(\textbf{x})</script> 為最小值的方向，一步一步走下去。要找出 <script type="math/tex">\hat{f}(\textbf{x})</script> 的最小值，即：</p>
+
+<script type="math/tex; mode=display">
+
+\min_{x} \hat{f} (\textbf{x})  =  \min_{\textbf{x}}  f(\textbf{x}_{t}) + \nabla f(\textbf{x}_{t})^{T}\textbf{x} + \frac{1}{2} \textbf{x}^{T} \nabla^{2}f(\textbf{x}_{t}) \textbf{x} 
+
+</script>
+
+<p>將 <script type="math/tex">\hat{f}(\textbf{x})</script> 對 <script type="math/tex">\textbf{x}</script> 微分，令微分結果為 <script type="math/tex">0</script> ，得：</p>
+
+<script type="math/tex; mode=display">
+
+0 =  \nabla f(\textbf{x}_{t}) +  \nabla^{2}f(\textbf{x}_{t}) \textbf{x} 
+
+</script>
+
+<p>得 </p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x} = -  \nabla^{2}f(\textbf{x}_{t})^{-1} \nabla f(\textbf{x}_{t}) 
+
+</script>
+
+<p>可以用此 <script type="math/tex">\textbf{x}</script> ，來當作位於 <script type="math/tex">\textbf{x}=\textbf{x}_{t}</script> 時，想走往 <script type="math/tex">f(\textbf{x})</script> 的最小值，要走的方向（與距離）。用一次與二次微分所得出的方向，一步步走下去，最後走到最小值，這種方法即為 <em>Newton’s Method</em> 。</p>
+
+<h2 id="newtons-method-for-optimization">Newton’s Method for Optimization</h2>
+
+<p><em>Newton’s Method</em> 即是考慮二次微分的 <em>Gradient Descent</em> 方法，公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta   \textbf{H}_{t}^{-1} \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex"> \eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex"> \textbf{H}_{t} = \nabla^{2}f(\textbf{x}_{t}) </script> （ 稱為 <em>Hessian</em> ）， <script type="math/tex">\textbf{g}_{t}=\nabla f(\textbf{x}_{t}) </script> （ 稱為 <em>Gradient</em> ）。</p>
+
+<p>再來看看用 <em>Newton’s Method</em> 來解決 <em>Cost function</em> 為橢圓 <script type="math/tex">f(x,y) = x^{2}+9y^{2} </script> 的情形。首先，畫出起始點 <script type="math/tex">(-4, 2.5) </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00148.png" alt="" /></p>
+
+<p>先來算 <script type="math/tex">\textbf{g}</script> 和 <script type="math/tex">\textbf{H}^{-1}</script> ，分別為：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{g} = 
+
+\begin{bmatrix}
+
+  \dfrac{ \partial f(x,y) }{\partial x}  \\[0.3em]
+
+  \dfrac{\partial f(x,y) } {\partial y}  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  2x  \\[0.3em]
+
+  18y \\[0.3em]
+
+\end{bmatrix} 
+
+</script>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\textbf{H}^{-1} = 
+
+\begin{bmatrix}
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial x^{2}}  &  
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial xy}
+
+  \\[0.3em]
+
+  \dfrac{ \partial^{2} f(x,y) } {\partial xy} &
+
+  \dfrac{ \partial^{2} f(x,y) }{\partial y^{2}}   
+
+  \\[0.3em]
+
+\end{bmatrix} ^{-1}
+
+= 
+
+\begin{bmatrix}
+
+  2  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  18 
+
+  \\[0.3em]
+
+\end{bmatrix} ^{-1}
+
+=
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+ %]]&gt;</script>
+
+<p>設 <script type="math/tex"> \eta = 0.5 </script> ，代入起始點  <script type="math/tex">(x_{0},y_{0}) = (-4, 2.5) </script> 、 <script type="math/tex">\textbf{g}</script> 和 <script type="math/tex">\textbf{H}^{-1}</script> 到 <em>Newton’s Method</em> 的公式： <script type="math/tex">\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta   \textbf{H}_{t}^{-1} \textbf{g}_{t}</script> ，得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{1}
+
+  \\[0.3em]
+
+  y_{1} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -4 
+
+  \\[0.3em]
+
+  2.5  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 0.5 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-4)  \\[0.3em]
+
+  18 \times 2.5 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  -2  
+
+  \\[0.3em]
+
+  1.25
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]&gt;</script>
+
+<p>更新圖上的點， <script type="math/tex">(x_{1},y_{1}) = (-2, 1.25) </script> ，如下圖：</p>
+
+<p><img src="/images/pic/pic_00155.png" alt="" /></p>
+
+<p>再往下走一步，求 <script type="math/tex">(x_{2},y_{2})</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{2}
+
+  \\[0.3em]
+
+  y_{2} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -2 
+
+  \\[0.3em]
+
+  1.25  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 0.5 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-2)  \\[0.3em]
+
+  18 \times 1.25 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  -1  
+
+  \\[0.3em]
+
+  0.625
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]&gt;</script>
+
+<p><img src="/images/pic/pic_00150.png" alt="" /></p>
+
+<p>從以上過程發現，  <em>Newton’s Method</em>  方向不需要一直折返，可以直接往最小值處走下去 ，整個過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00151.gif" alt="" /></p>
+
+<p>註：事實上，由於本例的 <em>Cost function</em> <script type="math/tex">f(x,y)</script> 為二次函數，如果是用二次的泰勒展開式逼近，則可以完全貼合 <script type="math/tex">f(x,y)</script> 。所以用  <em>Newton’s Method</em> 的話， 位於 <script type="math/tex">\textbf{x}_{t}</script> 時， <script type="math/tex"> -  \nabla^{2}f(\textbf{x}_{t})^{-1} \nabla f(\textbf{x}_{t}) </script> 即是泰勒展開式最小值的 <script type="math/tex">\textbf{x}</script> 解，也是 <script type="math/tex">f(x,y)</script> 的最小值解，如果設 <script type="math/tex"> \eta = 1 </script> ，只要走一步就可以走到最小值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{bmatrix}
+
+  x_{1}
+
+  \\[0.3em]
+
+  y_{1} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+= 
+
+\begin{bmatrix}
+
+  -4 
+
+  \\[0.3em]
+
+  2.5  
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+- 
+
+\begin{bmatrix}
+
+  \frac{1}{2}  &  
+
+  0
+
+  \\[0.3em]
+
+  0 &
+
+  \frac{1}{18} 
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+\begin{bmatrix}
+
+  2 \times (-4)  \\[0.3em]
+
+  18 \times 2.5 \\[0.3em]
+
+\end{bmatrix} 
+
+=
+
+\begin{bmatrix}
+
+  0
+
+  \\[0.3em]
+
+  0
+
+  \\[0.3em]
+
+\end{bmatrix} 
+
+
+ %]]&gt;</script>
+
+<p>過程如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00152.png" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分</p>
+
+<p>首先，開啟新的檔案 newtons.py 並貼上以下程式碼：</p>
+
+<p>```python newtons.py
+import numpy as np
+import matplotlib.pyplot as plt</p>
+
+<p>A = 1
+B = 9</p>
+
+<p>def obj_func(x, y):
+    z = A*(x<strong>2) + B*(y</strong>2)
+    return z</p>
+
+<p>def obj_func_grad(x, y):
+    return np.array([2<em>A</em>x, 2<em>B</em>y])</p>
+
+<p>def obj_func_hessian(x, y):
+    return np.array([[2<em>A, 0],
+                     [0, 2</em>B]
+                     ])</p>
+
+<p>def plot_func(xts, yts, c):
+    delta = 0.1
+    x = np.arange(-5.0, 5.0, delta)
+    y = np.arange(-3.0, 3.0, delta)
+    X, Y = np.meshgrid(x, y)
+    Z = obj_func(X, Y)
+    plt.figure(figsize=(10, 5))
+    CS = plt.contour(X, Y, Z, colors=’gray’)
+    plt.plot(xts, yts, c=’r’)
+    for xt, yt in zip(xts, yts):
+            plt.scatter(xt, yt, c=’r’)
+    plt.title(“x=%.5f, y=%.5f, f(x, y)=%.5f”%(xts[-1], yts[-1], obj_func(xts[-1], yts[-1])))
+    plt.clabel(CS, inline=1, fontsize=10)
+    plt.show()</p>
+
+<p>def run_gd():
+    xy = np.array([-4, 2.5])
+    eta = 0.1
+    xts = [xy[0]]
+    yts = [xy[1]]
+    plot_func(xts, yts, ‘r’)
+    for i in range(1, 20):
+        gxy = obj_func_grad(xy[0], xy[1])
+        xy -= eta * gxy
+        xts.append(xy[0])
+        yts.append(xy[1])
+        plot_func(xts, yts, ‘r’)</p>
+
+<p>def run_newtons():
+    xy = np.array([-4, 2.5])
+    eta = 0.5
+    xts = [xy[0]]
+    yts = [xy[1]]
+    plot_func(xts, yts, ‘b’)
+    for i in range(1, 20):
+        gxy = obj_func_grad(xy[0], xy[1])
+        hxy = obj_func_hessian(xy[0], xy[1])
+        deltax = np.dot(np.linalg.inv(hxy), gxy)
+        xy -= eta * deltax
+        xts.append(xy[0])
+        yts.append(xy[1])
+        plot_func(xts, yts, ‘b’)</p>
+
+<p>```</p>
+
+<p>其中， <code>obj_func(x,y)</code> 為目標函數， <code>obj_func_grad(x,y)</code> 為 <script type="math/tex">\textbf{g}</script> ， <code>obj_func_hessian(x,y)</code>  <script type="math/tex">\textbf{H}</script> ，而 <code>plot_function(xt,yt,c='r')</code> 可畫出目標函數的等高線圖， <code>run_gd()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_newtons()</code> 用來執行 <em>Newton’s Method</em> 。 <code>xy</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import newtons</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>newtons.run_gd()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00153.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00154.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Newton’s Method</em> ，指令如下：</p>
+
+<p>```</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>netons.run_newtons()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00155.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00156.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="comment">Comment</h2>
+
+<p><em>Newton’s Method</em> 需要計算二次微分 <em>Hessian</em> 矩陣的反矩陣，如果 <em>variable</em> 為高維度向量，則計算這個矩陣的時間複雜度會很高，而且很占記憶體空間，因此有人提出一些 <em>Hessian</em> 矩陣的近似求法，例如 <a href="https://en.wikipedia.org/wiki/Limited-memory_BFGS"><em>L-BFGS</em></a> 。但如果用在像是 <em>Deep Learning</em> 這種有超多 <em>variable</em> 的模型，近似求法仍然太慢，因此解 <em>Deep Learning</em> 問題，通常只會用一次微分的方法，例如 <a href="/blog/2015/12/23/optimization-method-adagrad"><em>Adagrad</em></a>之類的。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至以下教科書：</p>
+
+<p>Stephen Boyd &amp; Lieven Vandenberghe. Convex Optimization. Chapter 5 Duality.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Gradient Descent With Momentum]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum/"/>
+    <updated>2016-01-16T08:01:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/01/16/optimization-method-momentum</id>
+    <content type="html"><![CDATA[<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>在機器學習的過程中，常需要將 Cost Function 的值減小，通常用 Gradient Descent 來做最佳化的方法來達成。但是用 Gradient Descent 有其缺點，例如，很容易卡在 Local Minimum。</p>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>關於Gradient Descent的公式解說，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<h2 id="getting-stuck-in-local-minimum">Getting Stuck in Local Minimum</h2>
+
+<p>舉個例子，如果 Cost Function 為 <script type="math/tex">0.3y^{3}+y^{2}+0.3x^{3}+x^{2}</script> ，有 Local Minimum <script type="math/tex">(x=0,y=0)</script> ，畫出來的圖形如下：</p>
+
+<p><img src="/images/pic/pic_00131.png" alt="" /></p>
+
+<!--more-->
+
+<p>當執行 Gradient Descent 的時候，則會卡在 Local Minimum，如下圖：</p>
+
+<p><img src="/images/pic/pic_00132.gif" alt="" /></p>
+
+<p>解決卡在 Local Minimum 的方法，可加入 Momentum ，使它在 Gradient 等於零的時候，還可繼續前進。</p>
+
+<h2 id="gradient-descent-with-momentum">Gradient Descent with Momentum</h2>
+
+<p>Momentum 的概念如下： 當一顆球從斜坡上滾到平地時，球在平地仍會持續滾動，因為球具有動量，也就是說，它的速度跟上一個時間點的速度有關。</p>
+
+<p>模擬 Momentum的方式很簡單，即是把上一個時間點用 Gradient 得出的變化量也考慮進去。</p>
+
+<p><em>Gradient Descent with Momentum</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \Delta_{\textbf{x},t+1 } \leftarrow  \beta \Delta_{\textbf{x},t } +  (1-\beta) \eta \textbf{g}_{t} 
+
+& \text{, where }  0 <  \beta < 1 \\
+
+\\
+
+& \textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \Delta_{\textbf{x},t+1 } 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中 <script type="math/tex"> \Delta_{\textbf{x},t +1} </script> 為 <script type="math/tex">t+1</script> 時間點，修正 <script type="math/tex">\textbf{x}</script> 值所用的變化量，而 <script type="math/tex">\Delta_{\textbf{x},t }</script> 則是 <script type="math/tex">t</script> 時間點的修正量，而 <script type="math/tex"> \beta </script> 則是用來控制在 <script type="math/tex">t+1</script> 時間點中的 <script type="math/tex">\Delta_{\textbf{x},t+1}</script> 具有上個時間點的 <script type="math/tex">\Delta_{\textbf{x},t}</script> 值的比例。 好比說，在 <script type="math/tex">t+1</script> 時間點時，球的速度會跟 <script type="math/tex">t</script> 時間點有關。 而 <script type="math/tex">(1-\beta)</script> ，則是 <script type="math/tex">t+1</script> 時間點算出之 Gradient <script type="math/tex">\textbf{g}_{t}</script> 乘上 Learning Rate <script type="math/tex">\eta</script> 後，在 <script type="math/tex">\Delta_{\textbf{x},t+1}</script> 中所占的比例。</p>
+
+<p>舉前述例子，若起始參數為 <script type="math/tex">(x=3,y=3)</script>  ，畫出目標函數，藍點為起始點 <script type="math/tex">(x,y)</script> 的位置：</p>
+
+<p><img src="/images/pic/pic_00141.png" alt="" /></p>
+
+<p>用 Gradient Descent with Momentum 來更新 <script type="math/tex">x,y</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,t+1 } \leftarrow  \beta \Delta_{x,t } +  (1-\beta) \eta \dfrac{\partial f(x_{t},y_{t})}{\partial x_{t}} \\
+
+& \Delta_{y,t+1 } \leftarrow  \beta \Delta_{y,t } +  (1-\beta) \eta \dfrac{\partial f(x_{t},y_{t})}{\partial y_{t}} \\
+
+& x_{t+1} \leftarrow x_{t} - \Delta_{x,t+1 }  \\
+
+& y_{t+1} \leftarrow y_{t} - \Delta_{y,t+1 } 
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>化減後得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,t+1 } \leftarrow  \beta \Delta_{x,t } +  (1-\beta) \eta (0.9 x_{t}^{2} + 2x_{t} ) \\
+
+& \Delta_{y,t+1 } \leftarrow  \beta \Delta_{y,t } +  (1-\beta) \eta (0.9 y_{t}^{2} + 2y_{t} ) \\
+
+& x_{t+1} \leftarrow x_{t} - \Delta_{x,t+1 }  \\
+
+& y_{t+1} \leftarrow y_{t} - \Delta_{y,t+1 } 
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>設初始化值 <script type="math/tex">  \Delta_{x} = 0,  \Delta_{y} = 0 </script> ，參數 <script type="math/tex">\beta = 0.9, \eta = 0.2 </script> ，代入 <script type="math/tex"> x=3,y=3 </script> ，則：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,1 } =  0.9 \times  0 +  (1-0.9)\times 0.2 \times (0.9\times 3^{2}+2\times 3) = 0.282 \\
+
+& \Delta_{y,1 } =  0.9 \times  0 +  (1-0.9)\times 0.2 \times (0.9\times 3^{2}+2\times 3) = 0.282 \\
+
+& x_{1} = 3 - \Delta_{x,1 } = 3 - 0.282 = 2.718 \\
+
+& y_{1} = 3 - \Delta_{y,1 } = 3 - 0.282 = 2.718
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00142.png" alt="" /></p>
+
+<p>再往下走一步， <script type="math/tex"> x,y </script>  的值如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \Delta_{x,2 } =  0.9 \times  0.282 +  (1-0.9)\times 0.2 \times (0.9\times 2.718^{2}+2\times 2.718) = 0.4955 \\
+
+& \Delta_{y,2 } =  0.9 \times  0.282 +  (1-0.9)\times 0.2 \times (0.9\times 2.718^{2}+2\times 2.718) = 0.4955\\
+
+& x_{2} = 3 - \Delta_{x,2 } = 2.718  - 0.4955 = 2.2225 \\
+
+& y_{2} = 3 - \Delta_{y,2 } = 2.718  - 0.4955 = 2.2225
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00143.png" alt="" /></p>
+
+<p>在以上兩步中，可發現 <script type="math/tex"> \Delta_{x }, \Delta_{y }</script> 的值逐漸變大。由於一開始 <script type="math/tex"> \Delta_{x }, \Delta_{y }</script> 都是零，它會跟前一個時間點的值有關，所以看起來就好像是球從斜坡上滾下來時，慢慢加速，而在球經過 Local Minimum時，也會慢慢減速，不會直接卡在 Local Minimum 。整個過程如下圖：</p>
+
+<p><img src="/images/pic/pic_00136.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00137.gif" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分</p>
+
+<p>首先，開啟新的檔案 momentum.py 並貼上以下程式碼：</p>
+
+<p>```python momentum.py
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import numpy as np</p>
+
+<p>def func(x,y):
+  return (0.3<em>y<strong>3+y</strong>2+0.3</em>x<strong>3+x</strong>2)</p>
+
+<p>def func_grad(x,y):
+  return (0.9<em>x<strong>2+2*x, 0.9*y</strong>2+2</em>y )</p>
+
+<p>def plot_func(xt,yt,c=’r’):
+  fig = plt.figure()
+  ax = fig.gca(projection=’3d’,
+        elev=7., azim=-175)
+  X, Y = np.meshgrid(np.arange(-5, 5, 0.25), np.arange(-5, 5, 0.25))
+  Z = func(X,Y) 
+  surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, 
+    cmap=cm.coolwarm, linewidth=0.1, alpha=0.3)
+  ax.set_zlim(-20, 100)
+  ax.scatter(xt, yt, func(xt,yt),c=c, marker=’o’ )
+  ax.set_title(“x=%.5f, y=%.5f, f(x,y)=%.5f”%(xt,yt,func(xt,yt))) 
+  plt.show()
+  plt.close()</p>
+
+<p>def run_grad():
+  xt = 3 
+  yt = 3 
+  eta = 0.1
+  plot_func(xt,yt,’r’)
+  for i in range(20):
+    gxt, gyt = func_grad(xt,yt)
+    xt = xt - eta * gxt
+    yt = yt - eta * gyt
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’r’)</p>
+
+<p>def run_momentum():
+  xt = 3 
+  yt = 3 
+  eta = 0.2
+  beta = 0.9
+  plot_func(xt,yt,’b’)
+  delta_x = 0
+  delta_y = 0
+  for i in range(20):
+    gxt, gyt = func_grad(xt,yt)
+    delta_x = beta * delta_x + (1-beta)<em>eta</em>gxt
+    delta_y = beta * delta_y + (1-beta)<em>eta</em>gyt
+    xt = xt - delta_x
+    yt = yt - delta_y 
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’b’)</p>
+
+<p>```</p>
+
+<p>其中， <code>func(x,y)</code> 為目標函數，<code>func_grad(x,y)</code> 為目標函數的 <em>gradient</em> ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_grad()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_momentum()</code> 用來執行 <em>Gradient Descent with Momentum</em> 。 <code>xt</code> 和 <code>yt</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈，而 <code>if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5</code> 表示，如果 <code>xt</code> 和 <code>yt</code> 超出邊界，則會先結束迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import momentum</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>momentum.run_grad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00138.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00139.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00140.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Gradient Descent with Momentum</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>momentum.run_momentum()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00141.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00142.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00143.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
+
+<p>http://imgur.com/a/Hqolp</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Gradient Descent & AdaGrad]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/"/>
+    <updated>2015-12-23T17:14:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>在機器學習的過程中，常需要將 <em>Cost Function</em> 的值減小，需由最佳化的方法來達成。本文介紹 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 兩種常用的最佳化方法。</p>
+
+<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex">\textbf{x} </script> 為最佳化時要調整的參數， <script type="math/tex">\textbf{g}</script> 為最佳化目標函數對 <script type="math/tex">\textbf{x}</script> 的梯度。 <script type="math/tex">\textbf{x}_{t}</script> 為調整之前的 <script type="math/tex">\textbf{x} </script> ，<script type="math/tex">\textbf{x}_{t+1}</script> 為調整之後的 <script type="math/tex">\textbf{x} </script> 。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，紅色的點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<!--more-->
+
+<p>可藉由改變 <script type="math/tex">(x,y)</script> 來讓 <script type="math/tex">f(x,y)</script> 的值減小。 <em>Gradient Descent</em> 所走的方向為梯度最陡的方向，若 <script type="math/tex">eta=0.3</script> 則 ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \dfrac{\partial f(x,y)}{\partial x}  \\
+
+&  y \leftarrow  y - \eta  \dfrac{\partial f(x,y)}{\partial y} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>求出微分後得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \times (-2x)  \\
+
+&  y \leftarrow  y - \eta  \times 2y \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>代入數值，得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 - 0.3 \times (-2) \times 0.001 = 0.0016 \\
+
+& y = 4 - 0.3 \times 2 \times 4 = 1.6 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新完後的結果如下：</p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>從上圖可看出，紅點移動到比較低的地方，即 <script type="math/tex">f(x,y)</script> 變小了。</p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，紅點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00118.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00119.gif" alt="" /></p>
+
+<p>從上圖可發現，紅色的點會卡在 <script type="math/tex">(0,0)</script> 附近（也就是Saddle Point），過了一陣子後才會繼續往下滾。</p>
+
+<h2 id="adagrad">AdaGrad</h2>
+
+<p><em>Gradient Descent</em> 的缺點有：</p>
+
+<p>(1) <em>Learning Rate</em> 不會隨著時間而減少</p>
+
+<p>(2) <em>Learning Rate</em> 在每個方向是固定的</p>
+
+<p>以上的(1)會使得在越接近近目標函數最小值時，越容易走過頭，(2)則會容易卡在目標函數的Saddle Point。</p>
+
+<p>因為 <em>Gradient Descent</em> 只考慮目前的 <em>Gradient</em> ，如果可以利用過去時間在各個方向的 <em>Gradient</em> ，來調整現在時間點在各個方向的 <em>Learning Rate</em> ，則可避免以上兩種情型發生。</p>
+
+<p><em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，<script type="math/tex"> \textbf{G}_{t} </script> 為過去到現在所有時間點所有的 <script type="math/tex">\textbf{g}</script> 的平方和。由於  <script type="math/tex">\textbf{x}</script> ， <script type="math/tex">\textbf{g}</script>和 <script type="math/tex">\textbf{G}</script> 皆為向量，設 <script type="math/tex">x_{i}</script> ， <script type="math/tex">g_{i}</script> 和 <script type="math/tex">G_{i}</script> 各為其元素，則公式可寫成：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& G_{i,t} = \sum_{n=0}^{t} g_{i,n}^{2} \\
+
+& x_{i,t+1} \leftarrow x_{i,t} - \frac{\eta}{\sqrt{G_{i,t}}} g_{i,t} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>這公式可修正以上兩個 <em>Gradient Descent</em> 的缺點：</p>
+
+<p>1.若時間越久，則 <em>Gradient</em> 平方和越大，使得 <em>Learning Rate</em> 越小，這樣就可以讓 <em>Learning Rate</em> 隨著時間減少，而在接近目標函數的最小值時，比較不會走過頭。</p>
+
+<p>2.若某方向從過去到現在時間點 <em>Gradient</em> 平方和越小，則 <em>Learning Rate</em> 要越大。（直覺上來講，過去時間點 <em>Gradient</em> 越小的方向，在未來可能越重要，這種概念有點類似<a href="/blog/2014/04/14/natural-language-processing-tf-idf">tf-idf</a>，在越少文檔中出現的詞，可能越重要。）由於各方向的 <em>Learning Rate</em> 不同，比較不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>前述例子，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，藍點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p>用 <em>AdaGrad</em> 來更新 <script type="math/tex">(x,y)</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial x_{n}} )^{2} }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial x_{t}}  \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial y_{n}} )^{2}  }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial y_{t}} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>化簡後得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( -2x_{n} )^{2} }} 
+
+( -2x_{t} ) \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( 2y_{n} )^{2} }} 
+
+( 2y_{t} ) \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>由於 <em>AdaGrad</em> 的 <em>Learning Rate</em> 會隨時間減小，所以初始化時可以給它較大的值，此例中，設 <script type="math/tex">\eta = 1.0</script></p>
+
+<p>代入 <script type="math/tex">(x,y)</script> 的數值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  }} \times (-2) \times 0.001 = 1.001 \\
+
+& x = 4 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2  }} \times 2 \times 4 = 3 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p>再往下走一步， <script type="math/tex">(x,y)</script> 的值如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 1.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  + ( (-2) \times 1.001 )^2 }} \times (-2) \times 1.001 = 2.001 \\
+
+& x = 3 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2 +  ( 2 \times 3 )^2  }} \times 2 \times 3 = 2.4 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，藍點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00123.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00124.gif" alt="" /></p>
+
+<p>由此可以發現， <em>AdaGrad</em> 不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>將 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 畫在同一張圖上，比較兩者差異：</p>
+
+<p><img src="/images/pic/pic_00125.gif" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分：</p>
+
+<p>首先,開啟新的檔案 adagrad.py 並貼上以下程式碼</p>
+
+<p>```python adagrad.py
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import numpy as np</p>
+
+<p>def func(x,y):
+  return (y<strong>2-x</strong>2)</p>
+
+<p>def func_grad(x,y):
+  return (-2<em>x, 2</em>y)</p>
+
+<p>def plot_func(xt,yt,c=’r’):
+  fig = plt.figure()
+  ax = fig.gca(projection=’3d’,
+        elev=35., azim=-30)
+  X, Y = np.meshgrid(np.arange(-5, 5, 0.25), np.arange(-5, 5, 0.25))
+  Z = func(X,Y) 
+  surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, 
+    cmap=cm.coolwarm, linewidth=0.1, alpha=0.3)
+  ax.set_zlim(-50, 50)
+  ax.scatter(xt, yt, func(xt,yt),c=c, marker=’o’ )
+  ax.set_title(“x=%.5f, y=%.5f, f(x,y)=%.5f”%(xt,yt,func(xt,yt))) 
+  plt.show()
+  plt.close()</p>
+
+<p>def run_grad():
+  xt = 0.001 
+  yt = 4 
+  eta = 0.3 
+  plot_func(xt,yt,’r’)
+  for i in range(20):
+    gx, gy = func_grad(xt, yt)
+    xt = xt - eta<em>gx
+    yt = yt - eta</em>gy
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’r’)</p>
+
+<p>def run_adagrad():
+  xt = 0.001
+  yt = 4 
+  eta = 1.0 
+  Gxt = 0
+  Gyt = 0
+  plot_func(xt,yt,’b’)
+  for i in range(20):
+    gxt,gyt = func_grad(xt, yt)
+    Gxt += gxt<strong>2
+    Gyt += gyt</strong>2
+    xt = xt - eta<em>(1./(Gxt<strong>0.5))*gxt
+    yt = yt - eta*(1./(Gyt</strong>0.5))</em>gyt
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’b’)</p>
+
+<p>```</p>
+
+<p>其中， <code>func(x,y)</code> 為目標函數，<code>func_grad(x,y)</code> 為目標函數的 <em>gradient</em> ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_grad()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_adagrad()</code> 用來執行 <em>AdaGrad</em> 。 <code>xt</code> 和 <code>yt</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈，而 <code>if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5</code> 表示，如果 <code>xt</code> 和 <code>yt</code> 超出邊界，則會先結束迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import adagrad</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adagrad.run_grad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Adagrad</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adagrad.run_adagrad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<h4 id="notes-on-adagrad">Notes on AdaGrad</h4>
+
+<p>http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf</p>
+
+<h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
+
+<p>http://imgur.com/a/Hqolp</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Duality & KKT Conditions in Convex Optimization]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/"/>
+    <updated>2015-11-05T13:18:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>在解「 <strong>有條件的最佳化問題</strong> 」時，有時需要把原本的問題轉換成對偶問題(Dual Problem)後，會比較好解。</p>
+
+<p>如果對偶問題有最佳解，原本問題也有最佳解，且這兩個最佳解相同，則必須要滿足 <em>Karush-Kuhn-Tucker (KKT) Conditions</em>：</p>
+
+<ol>
+  <li>
+    <p>Primal Feasibility </p>
+  </li>
+  <li>
+    <p>Dual Feasibility</p>
+  </li>
+  <li>
+    <p>Complementary Slackness</p>
+  </li>
+  <li>
+    <p>Stationarity</p>
+  </li>
+</ol>
+
+<p>至於這四項到底是什麼？講起來有點複雜。本文會先從對偶問題的概念開始介紹，再來講解這四個條件。</p>
+
+<h2 id="the-lagrange-dual-function">The Lagrange dual function</h2>
+
+<p>首先，講解一下什麼是對偶問題。</p>
+
+<p>通常，有條件的最佳化問題，可寫成 <a name="eq1">＜公式一＞</a> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{aligned}
+
+& \textbf{minimize} & f_{0}(x) & \\
+
+& \textbf{subject to } & f_{i}(x) \leq 0 ,& i=1, ... ,m \\
+
+& & h_{j}(x) = 0 , &j=1, ... ,p \\
+
+\end{aligned}
+
+ %]]&gt;</script>
+
+<!--more-->
+
+<p>其中, <script type="math/tex">f_{0}(x)</script> 是目標函數，而 <script type="math/tex"> f_{i}(x) \leq 0</script> 為不等式的條件限制， <script type="math/tex">h_{j}(x) = 0</script> 為等式的條件限制。也就是說，最佳化的目標是要求出 <script type="math/tex">x</script> 讓 <script type="math/tex">f_{0}(x)</script> 得出最小值，而這個 <script type="math/tex">x</script> ，必須滿足 <script type="math/tex"> f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0</script> 所限定的條件。若滿足這兩項條件，則表示這個最佳化問題有解，即為滿足 <strong>primal feasibility</strong> 。</p>
+
+<p>此最佳化問題可以轉換成對偶問題，如下：</p>
+
+<script type="math/tex; mode=display">
+
+L(x, \lambda, \nu) = f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x)
+
+</script>
+
+<p>其中，我們把 <script type="math/tex">L(x, \lambda, \nu)</script> 稱為 <em>Lagrangian</em> ，<script type="math/tex"> \lambda_{i} </script> 和 <script type="math/tex">\nu_{j}</script> 稱為 <em>Lagrange multiplier</em> 。</p>
+
+<p>所謂的對偶函數( <em>Lagrange dual function</em> )，即是在給定了 <em>Lagrange multiplier</em> 之下，改變 <script type="math/tex">x</script> 來得出 <em>Lagrangian</em> 最小值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) )
+
+</script>
+
+<p>其中， <script type="math/tex">g(\lambda, \nu) </script> 為對偶函數，而 <script type="math/tex">\inf_{x}</script> 即是在改變 <script type="math/tex">x</script> 的情況下，找出最小值。</p>
+
+<h2 id="lower-bounds-on-optimal-value">Lower bounds on optimal value</h2>
+
+<p>接著來證明，對偶函數可當作原本問題的 <em>Lower Bound</em> 。設原本問題<a href="#eq1">公式一</a>的最佳解為 <script type="math/tex">p^{\star}</script> ，則在所有 <script type="math/tex"> \lambda_{i} \geq 0 </script> （記作 <script type="math/tex">\lambda \succeq 0 </script> ）和  <script type="math/tex">\nu_{j}</script> 為任意數的情況下，會滿足以下條件：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda, \nu) \leq p^{\star}
+
+</script>
+
+<p>此性質不難證明，對於所有滿足 <script type="math/tex"> f_{i}(\tilde{x}) \leq 0</script> 和 <script type="math/tex">h_{j}(\tilde{x}) = 0</script> 這兩個條件的 <script type="math/tex">\tilde{x}</script> ，必滿足：</p>
+
+<script type="math/tex; mode=display">
+
+\sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \leq 0
+
+</script>
+
+<p>則：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{aligned}
+
+& g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) ) \\
+
+& \leq L(\tilde{x}, \lambda, \nu) =  f_{0}(\tilde{x}) + \sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \\
+
+&\leq  f_{0}(\tilde{x})
+
+\end{aligned}
+
+ %]]&gt;</script>
+
+<p>設原本問題<a href="#eq1">公式一</a>最佳解時的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，由於 <script type="math/tex">x^{\star}</script> 必須滿足 滿足 <script type="math/tex"> f_{i}(x^{\star}) \leq 0</script> 和 <script type="math/tex">h_{j}(x^{\star}) = 0</script> 這兩個條件，又因 <script type="math/tex">\lambda \succeq 0 </script> ，故 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 成立。</p>
+
+<p>舉個例子，下圖中，黑色的實線為目標函數 <script type="math/tex">f_{0}(x)</script> ，此最佳化問題有一個不等式條件限制 <script type="math/tex">f_{1}(x)</script> ，用綠色虛線表示，而滿足於  <script type="math/tex">f_{1}(x) \leq 0 </script> 的 <script type="math/tex">x</script> 範圍落在 <script type="math/tex">[-0.46~0.46]</script> 之間，範圍用兩條鉛直的紅色虛線表示。 紫色的圓圈為最佳解的點 <script type="math/tex">x^{\star} = -0.46, p^{\star} = 1.54</script> 。此最佳化問題沒有等式條件，故沒有 <script type="math/tex">h_{j}</script> 及  <script type="math/tex">\nu_{j}</script> 。則此問題的 <em>Lagrangian</em> 為 <script type="math/tex">L(x, \lambda)</script> 。藍色的點為 <script type="math/tex">\lambda = 0.1, 0.2, ... , 1.0 </script> 所畫出來的 <em>Lagrangian</em> 圖形。 </p>
+
+<p><img src="/images/pic/pic_00114.png" alt="" /></p>
+
+<p>在上圖中，兩條紅色虛線之間的範圍內，即 <script type="math/tex">x</script> 滿足不等式的條件限制 <script type="math/tex">f_{1}(x) \leq 0</script> ，此時藍色的虛線皆位於黑色線的下方，滿足 <script type="math/tex">L(x, \lambda) \leq f_{0}(x)</script> 。 </p>
+
+<p>下圖畫出改變不同 <script type="math/tex">\lambda</script> 值時，對偶函數 <script type="math/tex"> g(\lambda) = \inf_{x}( L(x, \lambda) ) </script> 的值，其中，黑色的實線為 <script type="math/tex"> g(\lambda) </script> ，紫色的虛線為 <script type="math/tex">p^{\star}</script> 的值（<script type="math/tex">p^{\star} = 1.54</script> ）。</p>
+
+<p><img src="/images/pic/pic_00115.png" alt="" /></p>
+
+<p>根據此圖，黑色的線恆在紫色的虛線下方，滿足 <script type="math/tex">g(\lambda) \leq p^{\star}</script> 。</p>
+
+<h2 id="the-lagrange-dual-problem">The Lagrange dual problem</h2>
+
+<p>所謂的對偶問題（Lagrange dual problem）即是把原本的問題轉成對偶函數之後，來解最佳化問題。</p>
+
+<p>從前面結論可得知，對偶函數若滿足 <script type="math/tex">\lambda \succeq 0 </script> （也就是所有的 <script type="math/tex">\lambda_{i}</script> 都滿足 <script type="math/tex">\lambda_{i} \geq 0</script> ）的條件，則必足 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 。如果想找出最接近 <script type="math/tex">p^{\star}</script> 的對偶函數解，則可藉由改變 <script type="math/tex">\lambda, \nu</script> ，來找出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值。此對偶問題如下 <a name="eq2">＜公式二＞</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{aligned}
+
+& \textbf{maximize} & g(\lambda, \nu) & \\
+
+& \textbf{subject to } & \lambda \succeq 0 \\
+
+\end{aligned}
+
+ %]]&gt;</script>
+
+<p>如果可以找出一組解，滿足 <script type="math/tex">\lambda \succeq 0 </script> ，可得出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值 <script type="math/tex">d^{\star}</script> ，則此問題滿足 <strong>dual feasibility</strong>。</p>
+
+<p>根據對偶問題的解 <script type="math/tex">d^{\star}</script> 和原本問題的解 <script type="math/tex">p^{\star}</script> 的關係，可將對偶性質分為 <em>weak duality</em> 和  <em>strong duality</em> 兩類：</p>
+
+<h4 id="weak-duality">Weak duality</h4>
+
+<p>若對偶問題的解，小於或等於原本問題的解，即滿足 <em>weak duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+d^{\star} \leq p^{\star} 
+
+</script>
+
+<p>根據前面段落 <em>Lower bounds on optimal value</em> 所推導的結論， <em>Weak duality</em> 必定成立。</p>
+
+<h4 id="strong-duality">Strong duality</h4>
+
+<p>若對偶問題的解，等於原本問題的解，即滿足 <em>strong duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+d^{\star} = p^{\star} 
+
+</script>
+
+<p>這個條件不一定會成立，如果要成立的話，原本問題<a href="#eq1">公式一</a>的中的 <script type="math/tex">f_{0}(x)</script> 和 <script type="math/tex">f_{i}(x)</script> 要是凸函數，但即使滿足此條件，仍須滿足其他條件才能使 <em>strong duality</em> 成立，這講起來比較複雜，在此先不提。</p>
+
+<h2 id="complementary-slackness">Complementary Slackness</h2>
+
+<p>設原本問題最佳解的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，對偶問題最佳解的 <script type="math/tex">(\lambda, \nu)</script> 為 <script type="math/tex">(\lambda^{\star}, \nu^{\star}) </script> ，根據對偶函數 <script type="math/tex">g(\lambda^{\star}, \nu^{\star})</script> 的定義，和前面段落 <em>Lower bounds on optimal value</em> 所推導出的結論，可得出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{aligned}
+
+& g(\lambda^{\star}, \nu^{\star}) = \inf_{x}( L(x, \lambda^{\star}, \nu^{\star}) ) \\
+
+& \leq f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star})  \\
+
+& \leq f_{0}(x^{\star}) 
+
+\end{aligned}
+
+ %]]&gt;</script>
+
+<p>若對偶問題滿足 <em>strong duality</em> ：</p>
+
+<script type="math/tex; mode=display">
+
+g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  
+
+</script>
+
+<p>則須滿足：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{aligned}
+
+& \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star})  = 0 \mspace{40mu} \text{(a)} \\
+
+& \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star}) = 0 \mspace{40mu} \text{(b)}
+
+\end{aligned}
+
+ %]]&gt;</script>
+
+<p>由於 <script type="math/tex">h_{j}(x^{\star}) = 0 </script> 為原本問題的等式條件限制，故 <strong>(b)</strong> 必會成立，若 <strong>(a)</strong> 要成立的話，須滿足：</p>
+
+<script type="math/tex; mode=display">
+
+\lambda_{i}^{\star} f_{i}(x^{\star})  = 0  \mspace{20mu} \textbf{for } i=1,2,...m
+
+</script>
+
+<p>也就是說，<script type="math/tex">f_{i}(x^{\star}) </script> 和  <script type="math/tex">\lambda_{i}^{\star}</script> 的其中一項必須為零，不可以兩項都不為零。這種情形稱為 <strong>complementary slackness</strong> ，也就是林軒田教授在<a href="https://www.coursera.org/course/ntumltwo">機器學習技法</a>課程中所提到的：</p>
+
+<blockquote>
+  <p>哈利波特和佛地魔，其中一個必須死掉。</p>
+</blockquote>
+
+<h2 id="karush-kuhn-tucker-kkt-conditions">Karush-Kuhn-Tucker (KKT) conditions</h2>
+
+<p><em>KKT conditions</em> 即為下四個條件：</p>
+
+<ol>
+  <li>
+    <p>Primal Feasibility：即滿足原本問題<a href="#eq1">公式一</a>的限制條件 <script type="math/tex">f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0 </script>  ，使原本問題有解。</p>
+  </li>
+  <li>
+    <p>Dual Feasibility：即滿足對偶問題<a href="#eq2">公式二</a>的限制條件： <script type="math/tex"> \lambda \succeq 0 </script> ，使對偶問題有解。</p>
+  </li>
+  <li>
+    <p>Complementary Slackness：即滿足 <em>strong duality</em> ：<script type="math/tex"> g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  </script> ，使原本問題和對偶問題有相同解。</p>
+  </li>
+  <li>
+    <p>Stationarity（gradient of Lagrangian with respect to x vanishes）：</p>
+  </li>
+</ol>
+
+<script type="math/tex; mode=display">
+
+\nabla f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i} \nabla f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j} \nabla h_{j}(x^{\star}) = 0
+
+</script>
+
+<p>第四項雖然前面沒提到，但很容易理解，也就是說，在得出最佳解 <script type="math/tex">x^{\star}</script> 的時候， <em>Lagrangian</em> 對於 <script type="math/tex">x^{\star}</script> 的 <em>gradient</em> 要等於 0 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至以下教科書，本文中的圖片也取自於以下教科書：</p>
+
+<p>Stephen Boyd &amp; Lieven Vandenberghe. Convex Optimization. Chapter 5 Duality.</p>
+]]></content>
+  </entry>
+  
+</feed>

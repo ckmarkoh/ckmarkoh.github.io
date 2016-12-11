@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Semantics | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/semantics/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,692 @@
 
   
   <entry>
-    <title type="html"><![CDATA[形式語意學 -- Davidsonian Event Semantics]]></title>
+    <title type="html"><![CDATA[Vector Space of Semantics]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics/"/>
+    <updated>2016-07-10T14:06:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/07/10/nlp-vector-space-semantics</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
+
+<blockquote>
+  <p>The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird sleep.</p>
+</blockquote>
+
+<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
+
+<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c|c c c c c c c c c }
+
+     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
+
+ dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
+
+ cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
+
+ bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
+
+<!--more-->
+
+<h2 id="vector-space-of-semantics">Vector Space of Semantics</h2>
+
+<p>有了向量就可以用 <em>cosine similarity</em> 來計算語意相近程度。</p>
+
+<p>給定兩向量 <script type="math/tex">A = (a_1,a_2,...,a_n)</script> 和<script type="math/tex">B = (b_1,b_2,...,b_n)</script> ，則這兩向量的 <em>cosine similarity</em> 為：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{A \cdot B}{|A||B|}=  \frac{\sum a_i b_i}{\sqrt{\sum_i a_i^2}\sqrt{\sum_i b_i^2}}
+
+</script>
+
+<p><em>cosine similarity</em> 算出來的值，即是計算 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 兩向量的夾角的 <em>cosine</em> 值。 <em>cosine</em> 值越接近 1 ，表示兩向量夾角越小，表示兩向量的語意越接近。</p>
+
+<p>根據以上例子， <em>dog</em> ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) 和 <em>cat</em> ( 1, 0, 0, 0, 0, 0, 1, 1, 1, 2 )  的 <em>cosine similarity</em> 為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 1 \times 1 + 1 \times 1 + 1 \times 2 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 + 2^2} } \\
+
+& = \frac{ 6 }{ \sqrt{ 8 } \sqrt{ 8} } 
+
+= 0.75 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>而 <em>bird</em> 的向量為：( 1, 0, 0, 0, 0, 1, 0, 0, 1, 1 )  ，計算 <em>dog</em>  和  <em>bird</em> 的 <em>cosine similarity</em> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \frac{ 2 \times 1 + 1 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 0 + 0 \times 1 + 0 \times 0 + 1 \times 0 + 1 \times 1 + 1 \times 1 }{ \sqrt{ 2^2 + 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 1^2 + 1^2 } \sqrt{ 1^2 + 0^2 + 0^2 + 0^2 + 0^2 + 1^2 + 0^2 + 0^2 + 1^2 + 1^2} }  \\
+
+& = \frac{ 4 }{ \sqrt{ 8 } \sqrt{ 4} } 
+
+\approx 0.707106781187 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>由於 0.75 &gt; 0.707 ，因此 <em>dog</em> 和 <em>cat</em> 語意比較接近， <em>dog</em> 和 <em>bird</em> 語意比較不同。</p>
+
+<p>此種語意向量有個缺點，就是向量的維度等於總字彙量。例如英文單字種共有好幾萬種，那麼，向量就有好幾萬個維度，向量維度過大的缺點，會造成資料過度稀疏，以及占記憶體的空間。</p>
+
+<p>降低向量維度的方式，有兩種方法，分別是：</p>
+
+<ol>
+  <li>
+    <p><a href="https://ccjou.wordpress.com/2009/09/01/%E5%A5%87%E7%95%B0%E5%80%BC%E5%88%86%E8%A7%A3-svd/">singular value decompisition (SVD)</a></p>
+  </li>
+  <li>
+    <p><a href="http://blog.csdn.net/itplus/article/details/37969519">word2vec</a></p>
+  </li>
+</ol>
+
+<p>本文先不詳細介紹這部分。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>在此實作將文字轉成向量，並用 SVD 降為至二維，作視覺化</p>
+
+<p>```python
+import numpy as np
+import matplotlib.pyplot as plt</p>
+
+<p>text = [
+    [“the”, “dog”, “run”, ],
+    [“a”, “cat”, “run”, ],
+    [“a”, “dog”, “sleep”, ],
+    [“the”, “cat”, “sleep”, ],
+    [“a”, “dog”, “bark”, ],
+    [“the”, “cat”, “meows”, ],
+    [“the”, “bird”, “fly”, ],
+    [“a”, “bird”, “sleep”, ],
+]</p>
+
+<p>def build_word_vector(text):
+    word2id = {w: i for i, w in enumerate(sorted(list(set(reduce(lambda a, b: a + b, text)))))}
+    id2word = {x[1]: x[0] for x in word2id.items()}
+    wvectors = np.zeros((len(word2id), len(word2id)))
+    for sentence in text:
+        for word1, word2 in zip(sentence[:-1], sentence[1:]):
+            id1, id2 = word2id[word1], word2id[word2]
+            wvectors[id1, id2] += 1
+            wvectors[id2, id1] += 1
+    return wvectors, word2id, id2word</p>
+
+<p>def cosine_sim(v1, v2):
+    return np.dot(v1, v2) / (np.sqrt(np.sum(np.power(v1, 2))) * np.sqrt(np.sum(np.power(v1, 2))))</p>
+
+<p>def visualize(wvectors, id2word):
+    np.random.seed(10)
+    fig = plt.figure()
+    U, sigma, Vh = np.linalg.svd(wvectors)
+    ax = fig.add_subplot(111)
+    ax.axis([-1, 1, -1, 1])
+    for i in id2word:
+        ax.text(U[i, 0], U[i, 1], id2word[i], alpha=0.3, fontsize=20)
+    plt.show()</p>
+
+<p>```</p>
+
+<p>本程式中， <code>text</code> 是輸入的文字， <code>build_word_vector</code> 將文字轉成向量：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>wvectors, word2id, id2word = build_word_vector(text)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>其中， <code>wvectors</code> 是根據前後文統計後，得出各文字的向量：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print wvectors
+[[ 0.  0.  1.  1.  2.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  0.  1.  0.  0.  0.  0.  0.]
+ [ 1.  0.  0.  0.  0.  1.  0.  0.  1.  1.]
+ [ 1.  0.  0.  0.  0.  0.  1.  1.  1.  2.]
+ [ 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.]
+ [ 0.  0.  1.  0.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  1.  0.  0.  0.  0.  0.  0.]
+ [ 0.  0.  0.  1.  1.  0.  0.  0.  0.  0.]
+ [ 0.  0.  1.  1.  1.  0.  0.  0.  0.  0.]
+ [ 0.  0.  1.  2.  1.  0.  0.  0.  0.  0.]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>每一橫排（或直排）代表著某個字的向量，但從它看不出是哪個字，所以 <code>word2id</code> 則是給定文字，找出是第幾個向量，而 <code>id2word</code> 則是給定第幾個向量，找出所對應的文字。</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print word2id
+{‘a’: 0, ‘fly’: 5, ‘run’: 7, ‘the’: 9, ‘dog’: 4, ‘cat’: 3, 
+‘meows’: 6, ‘sleep’: 8, ‘bark’: 1, ‘bird’: 2}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print id2word
+{0: ‘a’, 1: ‘bark’, 2: ‘bird’, 3: ‘cat’, 4: ‘dog’, 5: ‘fly’, 
+6: ‘meows’, 7: ‘run’, 8: ‘sleep’, 9: ‘the’}</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>例如 <em>dog</em> 是在 <code>wvectors</code> 中， 第 5 排的向量（註：index 從0開始算），用 <code>word2id</code> 可從 <code>wvector</code> 中，取出其對應向量：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print wvectors[word2id[“dog”]]
+[ 2.  1.  0.  0.  0.  0.  0.  1.  1.  1.]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>程式碼中的 <code>cosine_sim</code> ，則可計算兩向量間的 <em>cosine similarity</em> ，例如，</p>
+
+<p>計算 <em>dog</em> 和 <em>cat</em> 與 <em>dog</em> 和 <em>bird</em> 之間的  <em>cosine similarity</em>  ：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print cosine_sim(wvectors[word2id[“dog”]], wvectors[word2id[“cat”]])
+0.75</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>print cosine_sim(wvectors[word2id[“dog”]], wvectors[word2id[“bird”]])
+0.707106781187</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來是用 <code>visualize</code> 將這些語意向量在平面上作視覺化：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>visualize(wvectors, id2word)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在平面上作視覺化的方法，是用 SVD 將語意向量降為至二維，就可以把這些向量所對應的字，畫在平面上，結果如下：</p>
+
+<p><img src="/images/pic/pic_00186.png" alt="" /></p>
+
+<p>此結果顯示，   <em>dog</em> 、 <em>cat</em> 和 <em>bird</em> 是語意相近的一群， <em>a</em> 和 <em>the</em> 語意相近，以此類推。</p>
+
+<h2 id="further-reading">Further Reading</h2>
+
+<p>Simple Word Vector representations</p>
+
+<p>http://cs224d.stanford.edu/lectures/CS224d-Lecture2.pdf</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Viterbi Algorithm]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/06/natural-language-processing-viterbi-algorithm/"/>
+    <updated>2014-04-06T18:21:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/06/natural-language-processing-viterbi-algorithm</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>本文接續先前提到的 <em>Hidden Markov Model</em></p>
+
+<p><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models">Natural Language Processing – Hidden Markov Model</a></p>
+
+<p>繼續探討 <em>part of speech tagging</em> 的演算法</p>
+
+<p>先前提到, 如果要在 <em>Hidden Markov Model</em> 找出一個機率最大的 <em>tagging sequence</em></p>
+
+<p>則必須把每一個序列都列出來, 看哪一個是機率最大的</p>
+
+<p>但如果 <em>Tag</em> 有 <script type="math/tex">N</script> 種, 那麼長度為 <script type="math/tex">T</script> 的序列, 就有 <script type="math/tex">N^{T}</script> 種可能的 <em>tagging sequence</em></p>
+
+<p>由此可知, 暴力列舉的演算法非常沒有效率</p>
+
+<!--more-->
+
+<h2 id="viterbi-algorithm">2.Viterbi Algorithm</h2>
+
+<p>那麼, 來看看暴力列舉法, 到底出了什麼問題</p>
+
+<p>在計算這些序列的機率時, 假設目前已經計算到了第 <script type="math/tex">t</script> 個字 <script type="math/tex">o_{t}</script> , 這個字的 <em>tag</em> 為 <script type="math/tex">r</script> 時, 上一個字的 <em>tag</em>  為 <script type="math/tex">s</script> , 則此種情況發生的機率為</p>
+
+<script type="math/tex; mode=display">
+
+P(q_{t}=r \mid q_{t-1} = s)\times P(X_{t}=o_{t} \mid q_{t} = r)=a_{s,r}\times b_{r}(o_{t}),\mspace{10mu} s \in {i,j,k}
+
+</script>
+
+<p>其中, <script type="math/tex">s</script> 有三種可能, 分別是 <script type="math/tex">i</script> , <script type="math/tex">j</script> ,<script type="math/tex">k</script> </p>
+
+<p>假設在 <script type="math/tex">t-1</script> 之前的序列為 <script type="math/tex">C_{i} , C_{j} , C_{k}</script> ,且在 <script type="math/tex">i,j,k</script> 這三個 <em>state</em> 的機率分別為 <script type="math/tex">c_{i} , c_{j} , c_{k}</script></p>
+
+<p>若是使用暴力列舉法, 要分別計算 <script type="math/tex">C_{i}ir</script> , <script type="math/tex">C_{j}jr</script> , <script type="math/tex">C_{k}kr</script> 這三個序列的機率, 如下圖</p>
+
+<p><img src="/images/pic/pic_00012.png" alt="viterbi1" /></p>
+
+<p>由上圖可知 , 在 <script type="math/tex">r</script> 這個 <em>state</em> ,就多增加了 3 個序列傳遞下去, 之後每個 <em>state</em>  都會因為前面有 <em>N</em> 種不同的 <em>state</em> , 而增加 <em>N</em> 種不同的序列, 這樣一直增加, 序列的數量呈指數函數成長, 最後再一起比誰的機率比較大</p>
+
+<p>這就是造成暴力列舉法沒效率的原因</p>
+
+<p>其實, 可以用 <em>Dynamic Programming</em> 的概念, 在計算每個 <em>state</em>  的機率時, 就直接比較序列的機率大小, </p>
+
+<p>只保留機率最大的一條序列, 傳遞下去, 如下圖</p>
+
+<p><img src="/images/pic/pic_00013.png" alt="viterbi2" /></p>
+
+<p>這樣每一個 <em>state</em> 就只會傳遞一個序列下去, 不會使序列數量呈指數成長</p>
+
+<p>這就是所謂的 <em>Viterbi Algorithm</em></p>
+
+<h2 id="example">3.Example</h2>
+
+<p>舉個例子, </p>
+
+<p>有個研究者, 想根據某地人們生活日記中, 記載每天吃冰淇淋的數量, 來推斷當時的天氣變化如何</p>
+
+<p>在某個地點有兩種天氣, 分別是 <em>Hot</em> 和 <em>Cold</em> , 而當地的人們會記錄他們每天吃冰淇淋的數量, 數量分別為 <em>1</em> , <em>2</em> 或 <em>3</em> , </p>
+
+<p>則可以把天氣變化的機率, 以及天氣吃冰淇淋數量的關係, 用 <em>Hidden Markov Model</em> 表示,</p>
+
+<p>由於天氣是未知的, 為 <em>hidden state</em> , 天氣的集合為 <script type="math/tex">Weather=\{HOT,COLD\}</script></p>
+
+<p>而冰淇淋數量是已知的, 為 <em>observable</em> , 冰淇淋數量的集合為 <script type="math/tex">Icecream=\{1,2,3\}</script></p>
+
+<p>天氣的 <em>Transition Matrix</em> , <script type="math/tex">A</script> , 以及天氣變化對於冰淇淋數量的 <em>Output Matrix</em> , <script type="math/tex">B</script> 如下</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    A:\begin{array}{c|c}
+
+     _{Day_{t}}\setminus _{Day_{t+1}} & HOT  & COLD \\\hline
+
+    \hline HOT & 0.7 & 0.3 \\
+
+    \hline COLD & 0.4 & 0.6 \\
+
+		\end{array}\mspace{50mu}
+
+    B:\begin{array}{c|c}
+
+     _{Weather}\setminus _{Icecream} & 1  & 2 & 3 \\\hline
+
+    \hline HOT & 0.2 & 0.4 & 0.4 \\
+
+    \hline COLD & 0.5 & 0.4 & 0.1\\
+
+		\end{array}
+
+
+ %]]&gt;</script>
+
+<p>如果冰淇淋的記錄 <script type="math/tex">(3,1,1)</script> , 用 <em>Viterbi Algorithm</em> 計算看看可能的天氣序列是什麼</p>
+
+<p>首先, 從 <em>initial state</em> 開始, 計算第一個 <em>state</em> 是 <script type="math/tex">H</script> 以及 <script type="math/tex">C</script> 的機率</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(X_{1}=3 , q_{1} = H) =  P(q_{1}=H)\times P(X_{1}=3 \mid q_{1} = H) = 0.8 \times 0.4 = 0.32 \\
+
+&P(X_{1}=3 , q_{1} = C) = P(q_{1}=C)\times P(X_{1}=3 \mid q_{1} = C) = 0.2 \times 0.1 = 0.02
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>計算結果如下圖</p>
+
+<p><img src="/images/pic/pic_00014.png" alt="p1" /></p>
+
+<p>再來, 我們來計算第二個 <em>state</em> 是 <script type="math/tex">H</script> 的機率, 我們分別要算序列 <script type="math/tex">CH</script> 和 <script type="math/tex">HH</script> 的序列</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& P(X_{1}=3 , q_{1} = H) \times P(q_{2}=H \mid q_{1}=H)\times P(X_{2}=1 \ mid q_{2} = H) 
+
+=0.32 \times 0.7 \times 0.2 = 0.0448 \\
+
+& P(X_{1}=3 , q_{1} = C) \times P(q_{2}=H \mid q_{1}=C)\times P(X_{2}=1 \ mid q_{2} = H) 
+
+=0.02 \times 0.4 \times 0.2 = 0.0016
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>結果如下圖：</p>
+
+<p><img src="/images/pic/pic_00015.png" alt="p2" /></p>
+
+<p>用 <em>Viterbi Algorithm</em> , 在同一個 <em>state</em> 只需要保留機率最大的序列即可</p>
+
+<script type="math/tex; mode=display">
+
+	max( 0.0448, 0.0016 ) = 0.0448
+
+</script>
+
+<p>因此我們在 <em>state</em> <script type="math/tex">H</script> 上, 只需要保留機率為 <script type="math/tex">0.048</script> 的序列 <script type="math/tex">HH</script> , 傳遞下去, 如下圖</p>
+
+<p><img src="/images/pic/pic_00016.png" alt="p3" /></p>
+
+<p>就用這樣的概念, 之後的每一個 <em>state</em> 都這樣計算, 就會得到每個 <em>state</em> 的機率值, 如下圖</p>
+
+<p><img src="/images/pic/pic_00017.png" alt="p4" /></p>
+
+<p>全部算完後, 再比較序列的最後一個 <em>state</em>, 哪一個機率比較大, 較大者可以傳遞到 <em>end state</em> (也就是最後的答案)</p>
+
+<p>然後, 從 <em>end state</em> 回溯之前保留下來的序列, 如下圖</p>
+
+<p><img src="/images/pic/pic_00018.png" alt="p6" /></p>
+
+<p>得出最有可能的序列是 <em>HCC</em></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00019.gif" alt="p7" /></p>
+
+<h2 id="implementation">4.Implementation</h2>
+
+<p>接著我們來實作一下, 先前提到的暴力列舉法, 以及 <em>Viterbi</em> 演算法</p>
+
+<p>並比較這兩者的performance差異</p>
+
+<p>新增一個python script檔案, 檔名為 <code>viterbi.py</code> ,並加入以下程式碼</p>
+
+<p>1.前例中的Model, 和必要模組</p>
+
+<p>```python viterbi.py
+import timeit
+_STATE=[‘H’,’C’]
+_PI={‘H’:.8, ‘C’:.2}
+_A={ ‘H’:{‘H’:.7, ‘C’:.3 }, ‘C’:{‘H’:.4,’C’:.6} }
+_B={‘H’:{1:.2,2:.4,3:.4}, ‘C’:{1:.5,2:.4,3:.1} }</p>
+
+<p>def p_aij(i, j):
+    return _A[i][j]</p>
+
+<p>def p_bik(i, k):
+    return _B[i][k]</p>
+
+<p>def p_pi(i):
+    return _PI[i]</p>
+
+<p>```</p>
+
+<p>其中, <code>timeit</code> 是用來計時的模組, 用於比較演算法所花的時間, </p>
+
+<p>而 <code>_STATE</code> , <code>_PI</code> 是 <em>state</em> 的種類和 <em>initial state</em> 的機率, </p>
+
+<p><code>_A</code> 和 <code>_B</code> 是 <em>Transition Matrix</em> 和 *Output Matrix’, </p>
+
+<p><code>p_aij(i, j)</code> , <code>p_bik(i, k)</code> , <code>p_pi(i)</code> 分別是 <script type="math/tex">P(q_{t+1} = j \mid q_{t} = i)</script>  ,  <script type="math/tex">P(X_{t} = k , q_{t} = i)</script> 和  <script type="math/tex">\pi_{i}</script></p>
+
+<p>2.暴力列舉法的function: <code>brute_force_algo(obs_init, print_seq=False)</code> </p>
+
+<p>```python viterbi.py
+def brute_force_algo(obs_init, print_seq=False):
+    start = timeit.default_timer()
+    seq_val=[]; 
+    def rec(obs, val_pre, qseq_pre):
+        if len(obs) &gt;0:
+            for q in _STATE:
+                if len(qseq_pre) == 0 :
+                    val = val_pre * p_pi(q) * p_bik(q, obs[0])
+                else:
+                    q_pre = qseq_pre[-1]
+                    val = val_pre * p_aij(q_pre,q) * p_bik(q, obs[0])
+                qseq = qseq_pre + [q]
+                rec(obs[1:], val, qseq)
+        else:
+            seq_val.append((qseq_pre, val_pre))
+    rec(obs_init, 1, [])
+    if print_seq:
+        for (seq,val) in seq_val:
+            print ‘seq : %s , value : %s’%(seq, val)
+    print ‘result of brute_force_algo:’
+    stop = timeit.default_timer()
+    print ‘max_seq : %s  max_val : %s’%( 
+          reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, seq_val))
+    print ‘runtime : %s’%(stop - start )</p>
+
+<p>```</p>
+
+<p>其中, input argument <code>obs_init</code> 是 <em>observable</em> , </p>
+
+<p><code>print_seq</code> 是用來控制是否要印出計算過程中產生的序列, 或者只印出最後結果</p>
+
+<p>演算法用 recursive function 的方式實現, 詳細內容在此不詳述, </p>
+
+<p>3.viterbi演算法的function: <code>viterbi_algo(obs_init, print_seq=False)</code></p>
+
+<p>```python viterbi.py
+def viterbi_algo(obs_init, print_seq=False):
+    start = timeit.default_timer()
+    state_snapshot=[]
+    def rec(obs, val_pre, qseq_pre):
+        if len(obs) &gt; 0:
+            val = {}
+            qseq = {}
+            for q in _STATE:
+                if len(val_pre) == 0:
+                    val.update({ q:p_pi(q) * p_bik(q, obs[0]) })
+                    qseq.update({q:[]})
+                    state_snapshot.append(([q],val[q]))
+                else:
+                    val_temp = [( qseq_pre[q_pre]+[q_pre], 
+                                val_pre[q_pre] * p_aij(q_pre,q) * p_bik(q, obs[0] )) 
+                                for q_pre in _STATE ] 
+                    max_q_seq = reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, val_temp)
+                    state_snapshot.append((max_q_seq[0]+[q],max_q_seq[1]))
+                    val.update({ q:max_q_seq[1]  })
+                    qseq.update({ q:max_q_seq[0] })
+            return rec(obs[1:],val,qseq)
+        else:
+            val_temp =[( qseq_pre[q]+[q] , val_pre[q] ) for q in _STATE ] 
+            max_q_seq = reduce(lambda x1,x2: x2 if x2[1] &gt; x1[1] else x1, val_temp)
+            return max_q_seq  <br />
+    seq,val = rec(obs_init, {},[])
+    if print_seq:
+        for (seq,val) in state_snapshot:
+            print ‘seq : %s , value : %s’%(seq, val)
+    print ‘result of viterbi_algo:’
+    print ‘max_seq : %s , max_value : %s’%(seq, val)
+    stop = timeit.default_timer()
+    print ‘runtime : %s’%(stop - start )     </p>
+
+<p>```</p>
+
+<p>其中, 所使用的參數, 和暴力列舉法一樣</p>
+
+<p>唯演算法部份改用 <em>Viterbi algorithm</em> , 但也是以 recursive function 的形式寫成, 在此不詳述</p>
+
+<p>接著到interactive mode 載入 viterbi.py</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import viterbi</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先來看一下暴力列舉法</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.brute_force_algo([3,1,1],True)
+seq : [‘H’, ‘H’, ‘H’] , value : 0.006272
+seq : [‘H’, ‘H’, ‘C’] , value : 0.00672
+seq : [‘H’, ‘C’, ‘H’] , value : 0.00384
+seq : [‘H’, ‘C’, ‘C’] , value : 0.0144
+seq : [‘C’, ‘H’, ‘H’] , value : 0.000224
+seq : [‘C’, ‘H’, ‘C’] , value : 0.00024
+seq : [‘C’, ‘C’, ‘H’] , value : 0.00048
+seq : [‘C’, ‘C’, ‘C’] , value : 0.0018
+result of brute_force_algo:
+max_seq : [‘H’, ‘C’, ‘C’]  max_val : 0.0144
+runtime : 0.000172138214111</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>暴力列舉法會列出所有的序列, 並找出機率最大的序列</p>
+
+<p>再來是 <em>viterbi algorithm</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.viterbi_algo([3,1,1],True)
+seq : [‘H’] , value : 0.32
+seq : [‘C’] , value : 0.02
+seq : [‘H’, ‘H’] , value : 0.0448
+seq : [‘H’, ‘C’] , value : 0.048
+seq : [‘H’, ‘H’, ‘H’] , value : 0.006272
+seq : [‘H’, ‘C’, ‘C’] , value : 0.0144
+result of viterbi_algo:
+max_seq : [‘H’, ‘C’, ‘C’] , max_value : 0.0144
+runtime : 0.000169038772583</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p><em>Viterbi algorithm</em> 不會把每個序列都列出來, 而是用 <em>Dynamic Programming</em> 的方式, 保留下比較有可能的 <em>subsequence</em> , 最後也可以得出正確結果 , 且runtime比暴力列舉法快</p>
+
+<p>再來, 增加一下input sequence的長度, 讓這兩種演算法的差異突顯出來, </p>
+
+<p>為了避免印出過多序列, 第二個參數輸入 <code>False</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.brute_force_algo([3,1,1,2]*4,False)
+result of brute_force_algo:
+max_seq : [‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘C’]  max_val : 2.83168745718e-11
+runtime : 0.245212078094</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>viterbi.viterbi_algo([3,1,1,2]*4,False)
+result of viterbi_algo:
+max_seq : [‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘H’, ‘H’, ‘C’, ‘C’, ‘C’] , max_value : 2.83168745718e-11
+runtime : 0.000442981719971</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>比較一下, 暴力列舉法的 <em>runtime</em> 呈指數函數成長, 而 <em>viterbi algorithm</em> 的是呈多項式函數成長</p>
+
+<h2 id="reference">5. Reference</h2>
+
+<p>本文參考至兩本教科書</p>
+
+<p><a href="http://www.amazon.com/Foundations-Statistical-Natural-Language-Processing/dp/0262133601">Foundations of Statistical Natural Language Processing</a></p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Davidsonian Event Semantics]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/"/>
     <updated>2014-04-04T17:13:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/04/04/formal-semantics-davidsonian-event-semantics</id>
@@ -366,7 +1051,7 @@ True</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Logic 4 : Model and Satisfiability]]></title>
+    <title type="html"><![CDATA[NLTK Logic 4 : Model and Satisfiability]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4/"/>
     <updated>2014-03-29T15:39:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/29/python-nltk-logic-4</id>
@@ -706,7 +1391,7 @@ False</p>
   </entry>
   
   <entry>
-    <title type="html"><![CDATA[Python Nltk -- Logic 3 : Discourse Representation Theory]]></title>
+    <title type="html"><![CDATA[NLTK Logic 3 : Discourse Representation Theory]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3/"/>
     <updated>2014-03-21T03:58:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/03/21/python-nltk-logic-3</id>
@@ -1046,332 +1731,6 @@ exists x y.(woman(x) &amp; walks(x) &amp; (y = x) &amp; smokes(y))</p>
 <p>以及這本書：</p>
 
 <p><em>Hans Kamp, Josef van Genabith, Uwe Reyle. Discourse Representation Theory</em></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Python Nltk -- Logic 2 : Lambda Calculus]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/03/13/python-nltk-logic-2/"/>
-    <updated>2014-03-13T14:09:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/03/13/python-nltk-logic-2</id>
-    <content type="html"><![CDATA[<p>本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus</p>
-
-<h2 id="introduction">1.introduction</h2>
-
-<p>邏輯語意學在語意推導方面,通常會用到 <script type="math/tex">\lambda -calculus</script></p>
-
-<p>使用<script type="math/tex">\lambda -calculus</script>就可以把一個句子的語意,從個別單字中推導出來</p>
-
-<p>至於<script type="math/tex">\lambda -calculus</script> 是什麼呢？</p>
-
-<p>簡而言之,lambda calculus是一種數學運算,由以下三種元素組成</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-
-& v  & (a)\\
-
-& \lambda x.f(x)  & (b)\\
-
-& \lambda x.f(x)(v) & (c)\\
-
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><script type="math/tex">(a)</script> 是 <script type="math/tex">variable</script></p>
-
-<p><script type="math/tex">(b)</script> 是 <script type="math/tex">astraction</script> ,就是把function中的variable拿到前面,加個 <script type="math/tex">\lambda</script></p>
-
-<p><script type="math/tex">(c)</script> 是將另一個 <script type="math/tex">variable</script> 放到 <script type="math/tex">astraction</script> 後面</p>
-
-<p>然後可以進行一種運算,叫做 <script type="math/tex">\beta-reduction</script> ,如下</p>
-
-<script type="math/tex; mode=display">
-
-\lambda x.f(x)(v)
-
-\Rightarrow f(v)
-
-</script>
-
-<p>還有另一種運算叫做 <script type="math/tex">\alpha-conversion</script> ,其實就是更改變數名稱而已</p>
-
-<script type="math/tex; mode=display">
-
-\lambda x.f(x)
-
-\Rightarrow \lambda y.f(y)
-
-</script>
-
-<!--more-->
-
-<p><script type="math/tex">\lambda -calculus</script> 也是計算理論的一種,和Turing Machine等價</p>
-
-<p>實際上以 <script type="math/tex">\lambda -calculus</script> 實現的程式語言有Functional Programming,例如Lisp或Haskell</p>
-
-<h2 id="lambda-expression">2. lambda expression</h2>
-
-<p>接著來實作untyped lambda calculus,</p>
-
-<p>首先,載入模組 <code>nltk.sem.logic</code> 和 <code>LogicParser</code></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>import nltk.sem.logic as logic
-lgp = logic.LogicParser()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>再看看 <script type="math/tex">\lambda</script> 要用哪個符號</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>logic.binding_ops()
-existential    	exists
-universal      	all
-lambda         	\</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>要表示lambda <script type="math/tex">\lambda</script> 符號,要用 <code>\</code> 字串</p>
-
-<p>然後,用<code>LogicParser</code>來輸入這個式子：<script type="math/tex">e1=\lambda x.P(x)</script></p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e1 = lgp.parse(r’\x.P(x)’)
-print e1
-\x.P(x)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<h2 id="alpha-conversion">3. alpha conversion</h2>
-
-<p>再來試試看<script type="math/tex">\alpha-conversion</script> : <script type="math/tex">\exists x.P(x) \Rightarrow \exists z.P(z)</script></p>
-
-<p>從以下結果得知,<script type="math/tex">\alpha-conversion</script> 轉換前和轉換後,在邏輯上是相等</p>
-
-<p>因為只是更改變數名稱而已</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e2 = e1.alpha_convert(logic.Variable(‘z’))
-print e2
-\z.P(z)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e1 == e2
-True</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<h2 id="beta-reduction">4. beta reduction</h2>
-
-<p>接著,來看看 <script type="math/tex">\beta-reduction</script> </p>
-
-<p>舉一個自然語言的例子,例如 <em>Gary walks.</em> 這個句子,用邏輯語意可以表示成</p>
-
-<script type="math/tex; mode=display">
-
-walks(Gary)
-
-</script>
-
-<p>根據Principle of Compositionality,</p>
-
-<p>句子的語意是由單字的語意所組成的(但實際上還是有例外,例如片語)</p>
-
-<p>推導出這個句子的語意,可由單字的語意推導出來,</p>
-
-<p><em>walks</em> 的語意是 <script type="math/tex">\lambda x.walk(x)</script></p>
-
-<p><em>Gary</em> 的語意是 <script type="math/tex">Gary</script></p>
-
-<p>則 <em>Gary walks</em> 的語意是</p>
-
-<script type="math/tex; mode=display">
-
-\lambda x.walks(x) (Gary)\Rightarrow walks(Gary)
-
-</script>
-
-<p>接著來實作看看</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e3 = lgp.parse(r’\x.walks(x)(Gary)’)
-e4 = e3.simplify()
-print e4
-walks(Gary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>再舉一個例子,例如 <em>Gary sees Mary.</em> 這個句子, <em>sees</em> 是及物動詞</p>
-
-<p>及物動詞,是表示一個主詞和受詞的關係,</p>
-
-<p>可用 <em>First Order Logic</em> 的 <em>Relation</em> 來表示</p>
-
-<p><em>sees</em> 的語意為 <script type="math/tex">\lambda x \lambda y .see(x,y)</script></p>
-
-<p>而 <em>Gary sees Mary.</em> 的語意是</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \lambda x \lambda y.see(x,y) (Gary) (Mary) \\
-
-& \Rightarrow \lambda y(Gary,y) (Mary) \\
-
-& \Rightarrow see(Gary,Mary)
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>接著,輸入nltk看看</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e5 = lgp.parse(r’\x \y.see(x,y)(Gary)(Mary)’)
-print e5
-((\x y.see(x,y))(Gary))(Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print e5.simplify()
-see(Gary,Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>還有其他的輸入方式,結果都一樣</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e6 = lgp.parse(r’\x \y.see(x,y)(Gary,Mary)’)
-e7 = lgp.parse(r’\x y.see(x,y)(Gary,Mary)’)
-e8 = lgp.parse(r’\x y.see(x,y)(Gary)(Mary)’)
-e9 = lgp.parse(r’(\x y.see(x,y)(Gary))(Mary)’)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>結果如下：</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print e6
-((\x y.see(x,y))(Gary))(Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print e7
-((\x y.see(x,y))(Gary))(Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print e8
-((\x y.see(x,y))(Gary))(Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>print e9
-((\x y.see(x,y))(Gary))(Mary)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>e6 == e7 == e8 == e5
-True</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<h2 id="further-reading">5.further reading</h2>
-
-<p>想要瞭解 <script type="math/tex">\lambda -calculus</script>, 請參考http://en.wikipedia.org/wiki/Lambda_calculus</p>
-
-<p>想要看看 nltk 裡面的 <script type="math/tex">\lambda -calculus</script> , 請至http://www.nltk.org/howto/logic.html</p>
-
-<p>還有關於邏輯語意的研究,可以參考這本書 <em>Blackburn &amp; Bos’  Representation and Inference for Natural Language</em></p>
 ]]></content>
   </entry>
   

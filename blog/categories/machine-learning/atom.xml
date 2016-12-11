@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: Machine_learning | Mark Chang's Blog]]></title>
+  <title><![CDATA[Category: Machine Learning | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/machine-learning/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T12:13:27+08:00</updated>
+  <updated>2016-12-11T15:32:34+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,1499 @@
 
   
   <entry>
-    <title type="html"><![CDATA[機器學習 -- Model Selection]]></title>
+    <title type="html"><![CDATA[Gradient Descent & AdaGrad]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad/"/>
+    <updated>2015-12-23T17:14:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2015/12/23/optimization-method-adagrad</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>在機器學習的過程中，常需要將 <em>Cost Function</em> 的值減小，需由最佳化的方法來達成。本文介紹 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 兩種常用的最佳化方法。</p>
+
+<h2 id="gradient-descent">Gradient Descent</h2>
+
+<p><em>Gradient Descent</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \eta \textbf{g}_{t}
+
+</script>
+
+<p>其中， <script type="math/tex">\eta</script> 為 <em>Learning Rate</em> ， <script type="math/tex">\textbf{x} </script> 為最佳化時要調整的參數， <script type="math/tex">\textbf{g}</script> 為最佳化目標函數對 <script type="math/tex">\textbf{x}</script> 的梯度。 <script type="math/tex">\textbf{x}_{t}</script> 為調整之前的 <script type="math/tex">\textbf{x} </script> ，<script type="math/tex">\textbf{x}_{t+1}</script> 為調整之後的 <script type="math/tex">\textbf{x} </script> 。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，紅色的點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<!--more-->
+
+<p>可藉由改變 <script type="math/tex">(x,y)</script> 來讓 <script type="math/tex">f(x,y)</script> 的值減小。 <em>Gradient Descent</em> 所走的方向為梯度最陡的方向，若 <script type="math/tex">eta=0.3</script> 則 ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \dfrac{\partial f(x,y)}{\partial x}  \\
+
+&  y \leftarrow  y - \eta  \dfrac{\partial f(x,y)}{\partial y} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>求出微分後得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x \leftarrow  x - \eta  \times (-2x)  \\
+
+&  y \leftarrow  y - \eta  \times 2y \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>代入數值，得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 - 0.3 \times (-2) \times 0.001 = 0.0016 \\
+
+& y = 4 - 0.3 \times 2 \times 4 = 1.6 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新完後的結果如下：</p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>從上圖可看出，紅點移動到比較低的地方，即 <script type="math/tex">f(x,y)</script> 變小了。</p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，紅點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00118.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00119.gif" alt="" /></p>
+
+<p>從上圖可發現，紅色的點會卡在 <script type="math/tex">(0,0)</script> 附近（也就是Saddle Point），過了一陣子後才會繼續往下滾。</p>
+
+<h2 id="adagrad">AdaGrad</h2>
+
+<p><em>Gradient Descent</em> 的缺點有：</p>
+
+<p>(1) <em>Learning Rate</em> 不會隨著時間而減少</p>
+
+<p>(2) <em>Learning Rate</em> 在每個方向是固定的</p>
+
+<p>以上的(1)會使得在越接近近目標函數最小值時，越容易走過頭，(2)則會容易卡在目標函數的Saddle Point。</p>
+
+<p>因為 <em>Gradient Descent</em> 只考慮目前的 <em>Gradient</em> ，如果可以利用過去時間在各個方向的 <em>Gradient</em> ，來調整現在時間點在各個方向的 <em>Learning Rate</em> ，則可避免以上兩種情型發生。</p>
+
+<p><em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} \leftarrow \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，<script type="math/tex"> \textbf{G}_{t} </script> 為過去到現在所有時間點所有的 <script type="math/tex">\textbf{g}</script> 的平方和。由於  <script type="math/tex">\textbf{x}</script> ， <script type="math/tex">\textbf{g}</script>和 <script type="math/tex">\textbf{G}</script> 皆為向量，設 <script type="math/tex">x_{i}</script> ， <script type="math/tex">g_{i}</script> 和 <script type="math/tex">G_{i}</script> 各為其元素，則公式可寫成：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& G_{i,t} = \sum_{n=0}^{t} g_{i,n}^{2} \\
+
+& x_{i,t+1} \leftarrow x_{i,t} - \frac{\eta}{\sqrt{G_{i,t}}} g_{i,t} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>這公式可修正以上兩個 <em>Gradient Descent</em> 的缺點：</p>
+
+<p>1.若時間越久，則 <em>Gradient</em> 平方和越大，使得 <em>Learning Rate</em> 越小，這樣就可以讓 <em>Learning Rate</em> 隨著時間減少，而在接近目標函數的最小值時，比較不會走過頭。</p>
+
+<p>2.若某方向從過去到現在時間點 <em>Gradient</em> 平方和越小，則 <em>Learning Rate</em> 要越大。（直覺上來講，過去時間點 <em>Gradient</em> 越小的方向，在未來可能越重要，這種概念有點類似<a href="/blog/2014/04/14/natural-language-processing-tf-idf">tf-idf</a>，在越少文檔中出現的詞，可能越重要。）由於各方向的 <em>Learning Rate</em> 不同，比較不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>前述例子，起始參數為 <script type="math/tex">(x,y) = (0.001,4)</script> ，則畫出來的圖形如下圖，曲面為目標函數，藍點為起始參數：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p>用 <em>AdaGrad</em> 來更新 <script type="math/tex">(x,y)</script> 的值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial x_{n}} )^{2} }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial x_{t}}  \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+(\dfrac{\partial f(x_{n},y_{n})}{\partial y_{n}} )^{2}  }} 
+
+\dfrac{\partial f(x_{t},y_{t})}{\partial y_{t}} \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>化簡後得：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& 	x_{t+1} \leftarrow  x_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( -2x_{n} )^{2} }} 
+
+( -2x_{t} ) \\
+
+
+&  y_{t+1} \leftarrow  y_{t} - \frac{\eta}{\sqrt{\sum_{n=0}^{t}  
+
+( 2y_{n} )^{2} }} 
+
+( 2y_{t} ) \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>由於 <em>AdaGrad</em> 的 <em>Learning Rate</em> 會隨時間減小，所以初始化時可以給它較大的值，此例中，設 <script type="math/tex">\eta = 1.0</script></p>
+
+<p>代入 <script type="math/tex">(x,y)</script> 的數值，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 0.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  }} \times (-2) \times 0.001 = 1.001 \\
+
+& x = 4 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2  }} \times 2 \times 4 = 3 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p>再往下走一步， <script type="math/tex">(x,y)</script> 的值如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& x = 1.001 -  \frac{1.0}{\sqrt{  ( (-2) \times 0.001 )^2  + ( (-2) \times 1.001 )^2 }} \times (-2) \times 1.001 = 2.001 \\
+
+& x = 3 -  \frac{1.0}{\sqrt{  ( 2 \times 4 )^2 +  ( 2 \times 3 )^2  }} \times 2 \times 3 = 2.4 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新圖上的藍點，如下圖：</p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>經過了數次改變 <script type="math/tex">(x,y)</script> 值的循環之後，<script type="math/tex">f(x,y)</script> 的值會越變越小，藍點移動的路徑如下圖所示：</p>
+
+<p><img src="/images/pic/pic_00123.png" alt="" /></p>
+
+<p>動畫版：</p>
+
+<p><img src="/images/pic/pic_00124.gif" alt="" /></p>
+
+<p>由此可以發現， <em>AdaGrad</em> 不會卡在 <em>Saddle Point</em> 。</p>
+
+<p>將 <em>Gradient Descent</em> 和 <em>AdaGrad</em> 畫在同一張圖上，比較兩者差異：</p>
+
+<p><img src="/images/pic/pic_00125.gif" alt="" /></p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來進入實作的部分：</p>
+
+<p>首先,開啟新的檔案 adagrad.py 並貼上以下程式碼</p>
+
+<p>```python adagrad.py
+from mpl_toolkits.mplot3d import Axes3D
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import numpy as np</p>
+
+<p>def func(x,y):
+  return (y<strong>2-x</strong>2)</p>
+
+<p>def func_grad(x,y):
+  return (-2<em>x, 2</em>y)</p>
+
+<p>def plot_func(xt,yt,c=’r’):
+  fig = plt.figure()
+  ax = fig.gca(projection=’3d’,
+        elev=35., azim=-30)
+  X, Y = np.meshgrid(np.arange(-5, 5, 0.25), np.arange(-5, 5, 0.25))
+  Z = func(X,Y) 
+  surf = ax.plot_surface(X, Y, Z, rstride=1, cstride=1, 
+    cmap=cm.coolwarm, linewidth=0.1, alpha=0.3)
+  ax.set_zlim(-50, 50)
+  ax.scatter(xt, yt, func(xt,yt),c=c, marker=’o’ )
+  ax.set_title(“x=%.5f, y=%.5f, f(x,y)=%.5f”%(xt,yt,func(xt,yt))) 
+  plt.show()
+  plt.close()</p>
+
+<p>def run_grad():
+  xt = 0.001 
+  yt = 4 
+  eta = 0.3 
+  plot_func(xt,yt,’r’)
+  for i in range(20):
+    gx, gy = func_grad(xt, yt)
+    xt = xt - eta<em>gx
+    yt = yt - eta</em>gy
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’r’)</p>
+
+<p>def run_adagrad():
+  xt = 0.001
+  yt = 4 
+  eta = 1.0 
+  Gxt = 0
+  Gyt = 0
+  plot_func(xt,yt,’b’)
+  for i in range(20):
+    gxt,gyt = func_grad(xt, yt)
+    Gxt += gxt<strong>2
+    Gyt += gyt</strong>2
+    xt = xt - eta<em>(1./(Gxt<strong>0.5))*gxt
+    yt = yt - eta*(1./(Gyt</strong>0.5))</em>gyt
+    if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5:
+      break
+    plot_func(xt,yt,’b’)</p>
+
+<p>```</p>
+
+<p>其中， <code>func(x,y)</code> 為目標函數，<code>func_grad(x,y)</code> 為目標函數的 <em>gradient</em> ，而 <code>plot_func(xt,yt,c='r')</code> 可畫出目標函數的曲面， <code>run_grad()</code> 用來執行 <em>Gradient Descent</em> ， <code>run_adagrad()</code> 用來執行 <em>AdaGrad</em> 。 <code>xt</code> 和 <code>yt</code> 對應到前例的 <script type="math/tex">(x,y)</script> ，而 <code>eta</code> 為 <em>Learning Rate</em> 。 <code>for i in range(20)</code> 表示最多會跑20個迴圈，而 <code>if xt &lt; -5 or yt &lt; -5 or xt &gt; 5 or yt &gt; 5</code> 表示，如果 <code>xt</code> 和 <code>yt</code> 超出邊界，則會先結束迴圈。</p>
+
+<p>到 python console 執行：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import adagrad</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>執行 <em>Gradient Descent</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adagrad.run_grad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00126.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00127.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<p>執行 <em>Adagrad</em> ，指令如下：</p>
+
+<p>```sh</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>adagrad.run_adagrad()</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>則程式會逐一畫出整個過程：</p>
+
+<p><img src="/images/pic/pic_00128.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00129.png" alt="" /></p>
+
+<p><img src="/images/pic/pic_00130.png" alt="" /></p>
+
+<p>以此類推</p>
+
+<h2 id="reference">Reference</h2>
+
+<h4 id="notes-on-adagrad">Notes on AdaGrad</h4>
+
+<p>http://www.ark.cs.cmu.edu/cdyer/adagrad.pdf</p>
+
+<h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
+
+<p>http://imgur.com/a/Hqolp</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Brown Clustering]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/10/25/natural-language-processing-brown-clustering/"/>
+    <updated>2014-10-25T13:31:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/10/25/natural-language-processing-brown-clustering</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p><em>Clustering</em> 是一種非監督式的機器學習方法。所謂非監督式的學習方法，即是不需要事先提供人工標記好的語料庫給機器學習的演算法。可以直接從未標示的語料庫中，根據既有的特徵來做分類。</p>
+
+<p>例如，可以根據某字的前面或後面有哪些字，來決定哪些字屬於同一類。給一語料庫如下：</p>
+
+<blockquote>
+
+</blockquote>
+
+<p>The dog runs.</p>
+
+<p>A dog jumps.</p>
+
+<p>The dog jumps.</p>
+
+<p>A cat runs.</p>
+
+<p>The cat jumps.</p>
+
+<p>The cat runs.</p>
+
+<blockquote>
+
+</blockquote>
+
+<p>根據這些例句，可以把 <em>cat</em> 和 <em>dog</em> 歸在同一類，因為它們前面的字是 <em>the</em> 或 <em>a</em> ，同理，也可以把 <em>run</em> 和 <em>jump</em> 歸在同一類。</p>
+
+<h2 id="defining-the-formulation">Defining the Formulation</h2>
+
+<p>現在來定義一下，進行這種分類所需要的數學公式。</p>
+
+<!--more-->
+
+<p>假設總共有 <script type="math/tex">V</script> 個字彙， <script type="math/tex">V=\{w_{1},w_{2},...,w_{t}\}</script> ，和一個分類函數 <script type="math/tex">C:V \rightarrow \{1,2,...k\}</script> 。 <script type="math/tex">C</script> 把 <script type="math/tex">V</script> 中的單字分類成 <script type="math/tex">k</script> 類， <script type="math/tex">k \leq t</script> 。</p>
+
+<p>例如， <script type="math/tex">w_{1}</script> 被分類到類別 <script type="math/tex">3</script> ，則 <script type="math/tex">C(w_{1}) = 3</script> 。</p>
+
+<p>給定語料庫中的句子 <script type="math/tex">S = w_{1}, w_{2}, ... ,w_{n} </script> ，則可以計算這個句子出現的機率，為：</p>
+
+<script type="math/tex; mode=display">
+
+p(w_{1},w_{2},...,w_{n}) = \prod_{i=1}^{n}  e(w_{i}\mid C(w_{i})) \times q(C(w_{i}) \mid C(w_{i-1}))
+
+
+</script>
+
+<p>其中，<script type="math/tex">e(w_{i}\mid C(w_{i}))</script>  為，在類別 <script type="math/tex"> C(w_{i}) </script> 中，出現 <script type="math/tex">w_{i}</script> 的機率。 </p>
+
+<p>而 <script type="math/tex">q(C(w_{i}) \mid C(w_{i-1}))</script> 為，若此字的類別為 <script type="math/tex"> C(w_{i}) </script> ，則前一個字的類別為 <script type="math/tex">C(w_{i-1})</script> 的機率。</p>
+
+<p>根據先前例子中的語料庫，假設已經分類完成，分類 <script type="math/tex">(1)</script> 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&  C(\text{the})=C(\text{a})=1, \mspace{10mu}
+
+ C(\text{dog})=C(\text{cat})=2, \mspace{10mu}
+
+ C(\text{run})=C(\text{jump})=3 \mspace{10mu} & (1)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>並且，可計算出 <script type="math/tex">e(w_{i}\mid C(w_{i}))</script> 和 <script type="math/tex">q(C(w_{i}) \mid C(w_{i-1}))</script> 的機率。 例如， <script type="math/tex">e(\text{the}\mid C(\text{the}) )</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+e(\text{the}\mid C(\text{the}) )= 
+
+e(\text{the}\mid 1 )= 
+
+\frac{count(\text{the})}{count(\text{the})+count(\text{a})} = 
+
+\frac{4}{4+2} = \frac{2}{3}
+
+</script>
+
+<p>其中，<script type="math/tex">count(\text{the})</script> 為 <em>the</em> 在語料庫中出現的次數。 而 <script type="math/tex">q(C(\text{dog}) \mid C(\text{the}))</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+
+q(C(\text{dog}) \mid C(\text{the})) = q(2 \mid 1) = \frac{count(1, 2 )}{count(1)} = \frac{6}{6} = 1
+
+
+</script>
+
+<p>其中，<script type="math/tex">count(1,2)</script> 為，類別為 <script type="math/tex">2</script> 的字，出現在類別為 <script type="math/tex">1</script> 的字後面的機會。</p>
+
+<p>給定語料庫中的句子 <em>The dog runs</em> ，那麼可以算出此句的機率為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& p(\text{the}, \text{dog}, \text{run}) \\
+
+& = e(the \mid C(\text{the})) \times e(dog \mid C(\text{dog})) \times e(run \mid C(\text{run})) \\ 
+
+& \times q(C(\text{the}) \mid 0 ) \times q(C(\text{dog}) \mid C(\text{the}) )  \times q(C(\text{run}) \mid C(\text{dog}) ) \\
+
+& = e(the \mid 1) \times e(dog \mid 2) \times e(run \mid 3)  \times q(1 \mid 0 ) \times q(2 \mid 1 )  \times q( 3 \mid 2 ) \\
+
+& = \frac{2}{3} \times \frac{1}{2} \times \frac{1}{2}  \times 1  \times 1  \times 1  \\
+
+& = \frac{1}{6}
+
+\end{align} 
+
+ %]]&gt;</script>
+
+<p>其中，把第一個字 <em>the</em> 的前一個字，歸類為第 <script type="math/tex">0</script> 類，即可求出 <script type="math/tex">q(C(\text{the}) \mid 0 ) = 1</script> 。</p>
+
+<p>再給一個分類，分類 <script type="math/tex">(2)</script>，這次隨便分，把 <em>the</em> 和 <em>dog</em> 分成一類，把 <em>a</em> 和 <em>cat</em> 分成一類，再把 <em>run</em> 和 <em>jump</em> 分成一類，分類如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& C(\text{the})=C(\text{dog})=1, \mspace{10mu}
+
+ C(\text{a})=C(\text{cat})=2, \mspace{10mu}
+
+ C(\text{run})=C(\text{jump})=3 \mspace{10mu} & (2)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>給定語料庫中的句子 <em>The dog runs</em> ，那麼可以算出此句的機率為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& p(\text{the}, \text{dog}, \text{run}) \\
+
+& = e(the \mid C(\text{the})) \times e(dog \mid C(\text{dog})) \times e(run \mid C(\text{run})) \\ 
+
+& \times q(C(\text{the}) \mid 0 ) \times q(C(\text{dog}) \mid C(\text{the}) )  \times q(C(\text{run}) \mid C(\text{dog}) ) \\
+
+& = e(the \mid 1) \times e(dog \mid 1) \times e(run \mid 3)  \times q(1 \mid 0 ) \times q(1 \mid 1 )  \times q( 3 \mid 1 ) \\
+
+& = \frac{4}{7} \times \frac{3}{7} \times \frac{1}{2}  \times \frac{4}{6}  \times \frac{2}{7}  \times \frac{1}{2}  \\
+
+& = \frac{4}{343}
+
+\end{align} 
+
+ %]]&gt;</script>
+
+<p>從以上例子得知，用語料庫的句子  <em>The dog runs</em> 來算機率，分類 <script type="math/tex">(1)</script> 得出的機率比分類 <script type="math/tex">(2)</script> 高。若要得到較理想的分類，可以用語料庫的句子算出的機率，做最佳化，機率較高者，為較理想的分類。</p>
+
+<p>至於，把語料庫中 <script type="math/tex">t</script> 個單字 分組成 <script type="math/tex">k</script> 個類別的過程如何？</p>
+
+<p>首先，把 <script type="math/tex">t</script> 個單字個別分成 <script type="math/tex">t</script> 組。</p>
+
+<p>再從這些組中挑兩組合併起來，使其得出機率為最大值。合併完後，共有 <script type="math/tex">t-1</script> 組。</p>
+
+<p>再來，從這些 <script type="math/tex">t-1</script> 組中，再挑兩組合併，以此類推，直到剩下 <script type="math/tex">k</script> 組。</p>
+
+<p>由於此種演算法的時間複雜度相當高，為<script type="math/tex">O(t^{5})</script> ，<em>[Brown et al., 1992]</em> 提出的 <em>hierarchical clustering</em> 的概念，可有效降低時間複雜度，有興趣者請看延伸閱讀。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>首先，建立一個程式檔，命名為 <em>bcluster.py</em></p>
+
+<p>```python bcluster.py
+W_CORPUS = [
+  [‘the’,’dog’,’run’], [‘a’,’dog’,’jump’],
+  [‘the’,’dog’,’jump’], [‘a’,’cat’,’run’],
+  [‘the’,’cat’,’jump’], [‘the’,’cat’,’run’],
+]</p>
+
+<p>def word_count(c):
+  wcount = {} 
+  for s in c:
+    for w in s:
+      wcount.update({w:wcount.get(w,0) + 1.0})
+  return wcount</p>
+
+<p>def choose_merge(v, w_corpus, w_count):
+  max_p, max_v = 0.0, []
+  for i in range(len(v)):
+    for j in range(i+1,len(v)):
+      s1 = [x for x in v]
+      s2 = [ s1.pop(i)+s1.pop(j-1) ]+[x for x in s1]
+      p = calculate_prob(s2, w_corpus, w_count)
+      if p &gt; max_p:
+        max_p, max_v = p, s2 
+  return max_v           </p>
+
+<p>def calculate_prob(v, w_corpus, w_count):
+  w_class = { w:str(i) for i,s1 in enumerate([‘0’]+v) for w in s1}
+  c_corpus = [[w_class.get(w) for w in s] for s in w_corpus]<br />
+  c_count = word_count(c_corpus)
+  gran_count = word_count([[“_“.join(s[i:i+2]) for i in range(len(s))] for s in c_corpus])
+  p = 1.0;
+  for s in w_corpus:
+    for i in range(1,len(s)):
+      p = p<em>e(s[i], w_class, w_count, c_count)</em>q(s[i], s[i-1], w_class, c_count, gran_count)
+  return p </p>
+
+<p>def e(w, w_class, w_count, c_count):
+  return w_count[w] / c_count[w_class[w]] </p>
+
+<p>def q(w, wp, w_class, c_count, gran_count):
+  return gran_count[“%s_%s”%(w_class[wp],w_class[w])] / c_count[w_class[w]]</p>
+
+<p>def bcluster(k, corpus):
+  w_count = word_count(corpus)
+  w_corpus = [ [‘0’]+ s for s in corpus]
+  v = [[w] for w in w_count.keys()]
+  while len(v) &gt; k:
+  	print v
+    v = choose_merge(v, w_corpus, w_count)
+  return v</p>
+
+<p>```</p>
+
+<p>其中，<code>W_CORPUS</code> 為語料庫，<code>bcluster(k, corpus)</code> 為主要執行 <em>cluster</em> 的函數，參數 <code>k</code> 為總共要分成幾組。 </p>
+
+<p>到 python interactive mode 載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from bcluster import bcluster,W_CORPUS</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>根據語料庫中的文字，分成三組，程式印出逐漸將6個字分成3組的過程，最後一行為最終結果：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from bcluster import bcluster,W_CORPUS
+bcluster(3,W_CORPUS)
+[[‘a’], [‘jump’], [‘run’], [‘the’], [‘dog’], [‘cat’]]
+[[‘a’, ‘the’], [‘jump’], [‘run’], [‘dog’], [‘cat’]]
+[[‘dog’, ‘cat’], [‘a’, ‘the’], [‘jump’], [‘run’]]
+[[‘jump’, ‘run’], [‘dog’, ‘cat’], [‘a’, ‘the’]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlangp</p>
+
+<p>Brown Clustering 出處：</p>
+
+<h4 id="brown-et-al-class-based-n-gram-models-of-natural-language-1992">Brown et al. Class-Based n-gram Models of Natural Language, 1992</h4>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[R Data Splitting]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/08/23/r-createdatapartition/"/>
+    <updated>2014-08-23T06:46:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/08/23/r-createdatapartition</id>
+    <content type="html"><![CDATA[<p>在做機器學習演算法時，常常需要把資料分成 <em>training set</em> 和 <em>validation set</em> 這兩個資料組。</p>
+
+<p>但是，要如何切割，才可以讓具有不同 <em>label</em> 的資料，在這兩個資料組中，平均分佈？</p>
+
+<p>用統計語言 <em>R</em> 處理 <em>iris</em> 資料組為例。<em>iris</em> 的資料如下：</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>index</th>
+      <th>Sepal.Length</th>
+      <th>Sepal.Width</th>
+      <th>Petal.Length</th>
+      <th>Petal.Width</th>
+      <th>Species</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>5.1</td>
+      <td>3.5</td>
+      <td>1.4</td>
+      <td>0.2</td>
+      <td>setosa</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>4.9</td>
+      <td>3.0</td>
+      <td>1.4</td>
+      <td>0.2</td>
+      <td>setosa</td>
+    </tr>
+    <tr>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>……</td>
+    </tr>
+    <tr>
+      <td>51</td>
+      <td>7.0</td>
+      <td>3.2</td>
+      <td>4.7</td>
+      <td>1.4</td>
+      <td>versicolor</td>
+    </tr>
+    <tr>
+      <td>52</td>
+      <td>6.4</td>
+      <td>3.2</td>
+      <td>4.5</td>
+      <td>1.5</td>
+      <td>versicolor</td>
+    </tr>
+    <tr>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>……</td>
+    </tr>
+    <tr>
+      <td>101</td>
+      <td>6.3</td>
+      <td>3.3</td>
+      <td>6.0</td>
+      <td>2.5</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <td>102</td>
+      <td>5.8</td>
+      <td>2.7</td>
+      <td>5.1</td>
+      <td>1.9</td>
+      <td>virginica</td>
+    </tr>
+    <tr>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>…</td>
+      <td>……</td>
+    </tr>
+  </tbody>
+</table>
+
+<!--more-->
+
+<p><em>iris</em> 的中文意思是 <em>鳶尾花</em> 。這筆資料中，給出了 <em>Sepal</em> (萼片）和 <em>Petal</em> （花瓣）的長寬，以及 <em>Species</em> （物種）。有了這筆資料，就可以把花瓣和萼片的長度，當成是 <em>feature</em> ，而把物種當成 <em>label</em> ，就可以用機器學習的演算法，以花瓣和萼片的長度，來推測物種是什麼。</p>
+
+<p>首先，到 <em>R console</em> 中，直接輸入 <code>iris</code> ，就會顯示出以下資料，如下：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>iris
+    Sepal.Length Sepal.Width Petal.Length Petal.Width    Species
+1            5.1         3.5          1.4         0.2     setosa
+2            4.9         3.0          1.4         0.2     setosa
+3            4.7         3.2          1.3         0.2     setosa
+4            4.6         3.1          1.5         0.2     setosa
+5            5.0         3.6          1.4         0.2     setosa
+6            5.4         3.9          1.7         0.4     setosa
+7            4.6         3.4          1.4         0.3     setosa
+8            5.0         3.4          1.5         0.2     setosa</p>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <code>table</code> 指令，可以統計一下每個物種的個數，各有幾種。</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>table(iris$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+    50         50         50 
+</code></pre>
+
+<p>```</p>
+
+<p>在這資料組中，共有三個物種，每個物種都有50筆資料。由於每種物種的個數比為1:1:1，希望在切割完後的 <em>training set</em> 和 <em>validation set</em> 中，各物種的個數比也都為1:1:1。</p>
+
+<p>由於這個資料已經先根據 <em>species</em> 排序過了，不可以直接取一個 <em>index</em> 把資料切成兩半。</p>
+
+<p>如下，假設要取前120筆資料作為<em>training set</em> 而後30筆資料作為 <em>validation set</em> ，語法如下。</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>trainSet &lt;- iris[1:120,]
+valSet &lt;- iris[121:150,]</p>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <code>table</code> 來統計這兩組資料中 <em>species</em> 的分佈，會發現以下情形：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>table(trainSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+    50         50         20 
+</code></pre>
+
+<blockquote>
+  <p>table(valSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+     0          0         30 
+</code></pre>
+
+<p>```</p>
+
+<p>在 <code>trainSet</code> 中，大部分的 <em>species</em> 為 <em>setosa</em> 和 <em>versicolor</em> ，而在 <code>valSet</code> 中，只有 <em>virginica</em> ，各物種的分佈不平均。</p>
+
+<h2 id="split-by-sample">Split by sample</h2>
+
+<p><code>sample</code> 是隨機在一個數字範圍中，取出任意數字（不重複或可重複）。例如在 1~10 中隨機取五個不重複的數字，可用以下方法：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>sample(1:10, size=5)
+[1] 8 7 9 3 4</p>
+</blockquote>
+
+<p>```</p>
+
+<p>由於 <code>sample</code> 產生的結果是隨機的，所以要先設定一下 <em>seed</em> ，以便讓每次產生的結果都一樣。</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>set.seed(123456)</p>
+</blockquote>
+
+<p>```</p>
+
+<p>可以隨機在 <em>iris</em> 的 <em>index</em> 範圍中，隨機取出 120 個數字作為 <em>training set</em> 的 <em>index</em>，而剩下沒取到的 30 個數字的作為 <em>validation set</em> 的 <em>index</em> ，作法如下：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>trainIndex &lt;- sample(nrow(iris), size=120)
+trainSet &lt;- iris[trainIndex,]
+valSet &lt;- iris[-trainIndex,]</p>
+</blockquote>
+
+<p>```</p>
+
+<p>其中， <code>trainIndex</code> 是要取出來作為 <em>training set</em> 的 <em>index</em> 。用 <code>table</code> 後統計結果如下：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>table(trainSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+    41         35         44 
+</code></pre>
+
+<blockquote>
+  <p>table(valSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+     9         15          6 
+</code></pre>
+
+<p>```</p>
+
+<p>看起來分佈比較平均了，但是仍有點誤差，還不是1:1:1。</p>
+
+<h2 id="split-by-createdatapartition">Split by createDataPartition</h2>
+
+<p>如果要讓各個物種能夠在 <em>training set</em> 及 <em>validation set</em> 中，達到1:1:1的平均分佈，可以用 <code>createDataPartition</code>。</p>
+
+<p>首先，要載入模組 <code>caret</code>。</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>library(caret)</p>
+</blockquote>
+
+<p>```</p>
+
+<p>用 <code>createDataPartition</code> 根據 <em>iris</em> 的 <em>species</em> 種類，隨機取出120筆資料，作為 <em>training set</em> 的 <em>index</em> ，作法如下：</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>trainIndex &lt;- createDataPartition(iris$Species, p = .8, list=FALSE)
+trainSet &lt;- iris[trainIndex,]
+valSet &lt;- iris[-trainIndex,]</p>
+</blockquote>
+
+<p>```</p>
+
+<p>其中， <code>iris$Species</code> 表示要根據 <em>iris</em> 的 <em>species</em> 來取 <em>index</em>， 而 <code>p = .8</code> 表示要取出 0.8<em>150 筆資料，而 <code>list=FALSE</code> 表示產生出的結果不是 *list</em> ，而是 <em>vector</em> 。</p>
+
+<p>用 <code>table</code> 來統計一下分割的結果，物種以1:1:1的平均分佈在 <code>trainSet</code> 和 <code>valSet</code> 。</p>
+
+<p>```R</p>
+
+<blockquote>
+  <p>table(trainSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+    40         40         40 
+</code></pre>
+
+<blockquote>
+  <p>table(valSet$Species)</p>
+</blockquote>
+
+<pre><code>setosa versicolor  virginica 
+    10         10         10 
+</code></pre>
+
+<p>```</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>關於 createDataPartition 可參考以下網址：</p>
+
+<p>http://www.inside-r.org/packages/cran/caret/docs/createDataPartition</p>
+
+<p>關於 Data splitting 的其他方法，可參考以下網址：</p>
+
+<p>http://topepo.github.io/caret/splitting.html</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Log-Linear Model]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model/"/>
+    <updated>2014-04-28T11:00:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/28/natural-language-processing-log-linear-model</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1. Introduction</h2>
+
+<p>在機器學習中有一種用於分類的演算法, 叫作 <em>Logistic Regression</em> , 可以把東西分成兩類</p>
+
+<p>而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 <em>Part of speech Tagging</em> 就是把一個字詞分類到名詞, 動詞, 形容詞, 之類的問題</p>
+
+<p>如果二元分類的 <em>Logistic Regression</em> , 推廣到多種類別分類, 就可以處理這種分類問題</p>
+
+<p>首先, 把二元分類的 <em>Logistic Regression</em> 公式, 稍做調整, 如下  </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=true|X) = \frac{1}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\[12pt]
+
+&p(y=false|X) = \frac{e^{-W \cdot X }}{1+e^{-W \cdot X }} 
+
+= \frac{ e^{\frac{-W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>針對多類別的  <em>Logistic Regression</em> , 叫作 <em>Multinomial logistic regression</em> , 如果總共有 <script type="math/tex">k</script> 的類別, 每個類別的 <em>label</em> 為 <script type="math/tex">c_{i} , i \in k </script> , 則公式如下</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&p(y=c_{1}|X) = \frac{ e^{W_{c_{1}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&p(y=c_{2}|X) = \frac{ e^{W_{c_{2}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\[12pt]
+
+&...\\[12pt]
+
+&p(y=c_{k}|X) = \frac{ e^{W_{c_{k}} \cdot X} }{ \sum_{i=1}^{k} e^{W_{c_{i}} \cdot X} } \\
+
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>在自然語言處理中, 由於 <em>feature value</em> , 也就是 <script type="math/tex">X</script> , 通常不是數字, 例如 <em>前面幾個字的 Tag</em> 之類的, 這時就要用 <em>feature function</em> 把 <em>feature value</em> 轉成數字</p>
+
+<p>所謂的 <em>feature function</em> , 就像是一個檢查器, 去檢查 <em>input data</em> 是否滿足某個 <em>feature</em> , 滿足的話則輸出 <em>1</em> , 不滿足者輸出 <em>0</em> , 以下為一個<em>feature function</em> 的例子</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+f_{j}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = VB \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise}
+
+\end{cases}
+
+ %]]&gt;</script>
+
+<p>其中 , <script type="math/tex">tag_{i-1}</script> 是前一個字的 <em>Tag</em> , 而 <script type="math/tex">c</script> 為這個字的類別, 如果這個字的類別是 <script type="math/tex">NN</script> , 且前一個字的 <em>Tag</em> 為 <script type="math/tex">VB</script> , 則 <script type="math/tex">f_{j}=1</script> , 若不滿足這些條件, 則 <script type="math/tex">f_{j}=0</script></p>
+
+<p>加入 <em>feature function</em> 以後 , 原本的 <script type="math/tex">W_{c_{i}} \cdot X</script> 變為  <script type="math/tex">\sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x)</script> ,  <em>Multinomial logistic regression</em> 的公式變為這樣, 也就是所謂的 <em>Log-Linear Model</em></p>
+
+<script type="math/tex; mode=display">
+
+p(y=c_{i}|X) = \frac{ e^{ \sum_{i=0}^{N}w_{c_{i}}f_{i}(c,x) } }{ \sum_{j=1}^{k} e^{\sum_{j=0}^{N}w_{c_{j}}f_{j}(c,x)} } \\[12pt]
+
+</script>
+
+<p>再來, 要怎麼訓練這個 <em>Model</em> 呢？</p>
+
+<p><em>Training</em> 是一個求最佳解的過程, 要找到一組 <em>Weight</em> 可以使得 <script type="math/tex">\sum_{i}p(Y^{(i)} \mid X^{(i)})</script> 為最大值, 公式為</p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  
+
+
+</script>
+
+<p>由於有時 <em>feature function</em> 的數量會太多, 容易導致 <em>Overfitting</em> , 為了避免此現象, 所以會減掉 <script type="math/tex">\alpha R(w)</script> 以進行 <em>Regularization</em></p>
+
+<script type="math/tex; mode=display">
+
+\mathop{\arg\,\max}\limits_{w} \sum_{i} p(Y^{(i)} \mid X^{(i)})  -\alpha R(w)
+
+
+</script>
+
+<p>另外, 由於此最佳化後產生的結果, 會有最大的 <em>Entropy</em> , 故 <em>Log-Linear Model</em> 又稱為 <em>Maxmum Entropy Model</em> , 在此做不推導, 欲知詳情請看 <em>Berger et al. (1996). A maximum entropy approach to natural language processing.</em></p>
+
+<h2 id="example">2. Example</h2>
+
+<p>舉個例子, 如何用 <em>feature function</em> 算出 <em>Tagging</em> 的機率值</p>
+
+<p>假設現在要對以下句子進行 <em>Part of Speech Tagging</em> , 現在已經進行到了 <strong><em>race</em></strong> 這個字</p>
+
+<script type="math/tex; mode=display">
+
+\text{Secretariat/}NNP \text{ is/}BEZ \text{ expected/}VBN \text{ to/}TO \text{ race/}\textbf{??} \text{ tomorrow/} 
+
+</script>
+
+<p>總共用了以下六種 <em>feature function</em> </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&f_{1}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{2}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{3}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} suffix(word_{i}) = \text{'ing'} \mspace{15mu}\text{and} \mspace{15mu} c=VBG \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{4}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} isLowerCase(word_{i}) \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{5}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} word_{i} = \text{'race'} \mspace{15mu}\text{and} \mspace{15mu} c=VB \\
+
+0 & \text{otherwise} 
+
+\end{cases} \\[12pt]
+
+
+&f_{6}(c,x) =
+
+\begin{cases} 
+
+1 & \text{if}\mspace{15mu} tag_{i-1} = TO \mspace{15mu}\text{and} \mspace{15mu} c=NN \\
+
+0 & \text{otherwise} 
+
+\end{cases} 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>現在要求 <strong><em>race</em></strong> 這個字的 <em>Tag</em> 是 <em>NN</em> 還是 <em>VB</em> , 代入以上六個 <em>feature function</em> , 得出結</p>
+
+<p>果於下表</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+    \begin{array}{|c|c|} 
+
+    \hline
+
+		   &   & f1 & f2 & f3 & f4 & f5 & f6 \\ \hline
+
+    VB & f & 0  & 1  & 0  & 1  & 1  & 0  \\ \hline
+
+    VB & w & 0  & 0.8& 0  &0.01& 0.1& 0  \\ \hline
+
+    NN & f & 1  & 0  & 0  & 0  & 0  & 1  \\ \hline
+
+    NN & w &0.8 & 0  & 0  & 0  & 0  &-1.3  \\ \hline
+
+		\end{array}
+
+ %]]&gt;</script>
+
+<p>其中 <script type="math/tex">f</script> 是 <em>feature function</em> 算出來的值, <script type="math/tex">w</script> 是 <em>weight</em> , 這個值通常是針對 <em>Training Data</em> 做最佳化得出來的值, <em>weight</em> 越大則表示 <em>feature</em> 所占的比重越重</p>
+
+<p>接著把 <script type="math/tex">w_{i}f_{i}(c,x)</script> 的值帶入公式</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&P(NN \mid x) = \frac{e^{0.8+(-1.3)}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.2 \\[12pt]
+
+&P(VB \mid x) = \frac{e^{0.8+0.01+0.1}}{e^{0.8+(-1.3)}+e^{0.8+0.01+0.1}} = 0.8 \\
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>算出結果 <script type="math/tex">0.8>0.2</script> , 所以 <strong><em>race</em></strong> 的 <em>Tag</em> 為 <em>VB</em></p>
+
+<h2 id="implementation">3. Implementation</h2>
+
+<p>接著來實作用 <em>Log-Linear Mode</em> 進行 <em>Part of Speech Tagging</em></p>
+
+<p>這次要用 <em>python nltk</em>  的 <code>MaxentClassifier</code> 來實作</p>
+
+<p>首先, 開一個新的檔案 <em>loglinear.py</em> 貼上以下程式碼</p>
+
+<p>```python loglinear.py
+import nltk
+import operator</p>
+
+<p>class LogLinearTagger(nltk.TaggerI):</p>
+
+<pre><code>def __init__(self,training_corpus):
+    self.classifier = None
+    self.training_corpus = training_corpus
+
+def train(self):
+    self.classifier = nltk.MaxentClassifier.train(
+                reduce(operator.add, 
+                    map(lambda tagged_sent :
+                        self.sent_to_feature(tagged_sent)
+                        ,self.training_corpus)),algorithm='megam' )
+
+def sent_to_feature(self,tagged_sent):
+    return  map(lambda (i, elem) : 
+                    apply( lambda token , tag : 
+                         (self.extract_features(token, i, tag), elem[1])
+                        ,zip(*tagged_sent))
+                    ,enumerate(tagged_sent))
+
+def tag_sentence(self, sentence_tag):
+    if self.classifier == None:
+        self.train()
+    return apply (lambda sentence : 
+                zip(sentence,
+                reduce(lambda x,y:  
+                    apply(operator.add,
+                        [x,[self.classifier.classify(self.extract_features(sentence, y[0], x))]])
+                    , enumerate(sentence), []))
+                ,[map(operator.itemgetter(0),sentence_tag)])
+
+def evaluate(self,test_sents):
+    return apply(lambda result_list : 
+                sum(result_list)/float(len(result_list))
+                , [reduce(operator.add,
+                    map(lambda line:
+                        map(lambda tag : int(tag[0] == tag[1])
+                            , zip(map(operator.itemgetter(1),line),
+                                  map(operator.itemgetter(1),self.tag_sentence(line))))
+                       ,test_sents))])
+
+def extract_features(self, sentence, i, history):
+    features = {}
+    features["this-word"] =  sentence[i]
+    if i == 0:
+        features["prev-tag"] = "&lt;START&gt;"
+    else:
+        features["prev-tag"] = history[i-1]
+    return features     
+</code></pre>
+
+<p>```</p>
+
+<p>其中, <code>extract_features</code> 是用於把 <em>input sentence</em> 的 <em>feature</em> 取出來,  例如這次用到的 <em>feature</em> 有目前這個字是什麼 <code>"this-word"</code> ,和前一個字的 <em>Tag</em> 是什麼 <code>"prev-tag"</code> </p>
+
+<p>取出 <em>feature</em> 後 , <code>MaxentClassifier</code> 會自動根據這些 <em>feature</em> 產生 <em>feature function</em> </p>
+
+<p>接下來到 <em>python</em> 的 <em>interactive mode</em> 載入檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from loglinear import LogLinearTagger</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這次要用 <em>brown corpus</em> 的 <em>category</em> , <code>news</code> 的前 <em>100</em> 句來當作 <em>Tranining Data</em> ,第 <em>100~200</em> 句當作 <em>Test Data</em> , 先輸入以下程式碼</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk.corpus import brown
+brown_tagged_sents = brown.tagged_sents(categories=’news’)
+train_sents = brown_tagged_sents[:100]
+test_sents = brown_tagged_sents[100:200]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著用 <em>Training Data</em> 建立一個 <em>LogLinearTagger</em> 的 <em>class</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier = LogLinearTagger(train_sents)</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>在開始訓練之前, 我們先挑其中的一句, 看一下格式, 是已經 <em>Tag</em> 好的句子 , 我們以 <code>train_sents[31]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>train_sents[31]
+[(‘His’, ‘PP$’), (‘petition’, ‘NN’), (‘charged’, ‘VBD’), (‘mental’, ‘JJ’), \
+(‘cruelty’, ‘NN’), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>看一下這句可以產生出哪些 <em>Feature</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>for x in classifier.sent_to_feature(train_sents[31]):
+…     print x
+… 
+({‘prev-tag’: ‘<start>', 'this-word': 'His'}, 'PP$')
+({'prev-tag': 'PP$', 'this-word': 'petition'}, 'NN')
+({'prev-tag': 'NN', 'this-word': 'charged'}, 'VBD')
+({'prev-tag': 'VBD', 'this-word': 'mental'}, 'JJ')
+({'prev-tag': 'JJ', 'this-word': 'cruelty'}, 'NN')
+({'prev-tag': 'NN', 'this-word': '.'}, '.')</start></p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>例如第一個字, <code>'His'</code> , 它的 <em>feature</em> 有 <code>'prev-tag': '&lt;START&gt;'</code> 和 <code>'this-word': 'His'</code> , <em>Tag</em> 的結果為 </p>
+
+<p><code>'PP$'</code> , 由於第一個字前面已經沒有字了, 也沒有 <em>Tag</em> 了, 所以我們用 <code>&lt;START&gt;</code> 來表示</p>
+
+<p>再來就是要訓練 <em>classifier</em>, 執行 <code>classifier.train()</code> 就可以開始訓練, 但要花一點時間</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.train()
+Scanning file…2268 train, 0 dev, 0 test, reading…done
+optimizing with lambda = 0
+it 1   dw 5.348e-01 pp 4.19728e+00 er 0.79850
+it 2   dw 3.179e+00 pp 3.32097e+00 er 0.82760
+it 3   dw 1.037e+00 pp 2.92326e+00 er 0.67549
+it 4   dw 9.602e-01 pp 2.72106e+00 er 0.63933
+it 5   dw 1.345e+00 pp 2.41257e+00 er 0.54012
+it 6   dw 1.378e+00 pp 2.16177e+00 er 0.46429
+……</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>如果出現以下錯誤訊息, 表示你沒安裝 <em>megan</em></p>
+
+<p>```python
+    raise LookupError(‘\n\n%s\n%s\n%s’ % (div, msg, div))
+LookupError: </p>
+
+<p>===========================================================================
+NLTK was unable to find the megam file!
+Use software specific configuration paramaters or set the MEGAM environment variable.</p>
+
+<p>For more information, on megam, see:
+    <a href="http://www.cs.utah.edu/~hal/megam/">http://www.cs.utah.edu/~hal/megam/</a>
+===========================================================================</p>
+
+<p>```</p>
+
+<p>請到 http://www.umiacs.umd.edu/~hal/megam/version0_91/ 下載 <em>megan</em></p>
+
+<p>如果你是 <em>linux</em> 的使用者, 可直接下載執行檔, 放到 <code>/home/xxxxxx/bin/</code> 資料夾 ( 若你是使用 <em>Mac</em> 或 <em>Window$</em> , 則需要下載 <em>source code</em> 自行編譯</p>
+
+<p>或者你可以把 <em>loglinear.py</em> 中的 <code>MaxentClassifier</code> 的 ` algorithm=’megam’ ` 去掉 , 變成這樣</p>
+
+<p>```python loglinear.py
+        self.classifier = nltk.MaxentClassifier.train(
+                    reduce(operator.add, 
+                        map(lambda tagged_sent :
+                            self.sent_to_feature(tagged_sent)
+                            ,self.training_corpus)) )</p>
+
+<p>```</p>
+
+<p>但這會導致訓練速度變得很慢</p>
+
+<p>訓練好之後, 可以用 <em>Test Data</em> 看看結果如何 , 先挑一句, 以 <code>test_sents[10]</code> 為例</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>test_sents[10]
+[(‘<code>', '</code>’), (‘You’, ‘PPSS’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘NN’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘NNS’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>把這個句子放到訓練好的 <code>classifier</code> , 用它來 <em>Tag</em> , 比較一下跟原本的 <em>tag</em> 有何不同 </p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.tag_sentence(test_sents[10])
+[(‘<code>', '</code>’), (‘You’, ‘VB’), (‘take’, ‘VB’), (‘out’, ‘RP’), (‘of’, ‘IN’), \
+(‘circulation’, ‘JJ’), (‘many’, ‘AP’), (‘millions’, ‘NNS’), (‘of’, ‘IN’), \
+(‘dollars’, ‘JJ’), (“’’”, “’’”), (‘.’, ‘.’)]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>先用肉眼觀察, 我們發現 <code>classifier</code> 所得出的 <em>Tag</em> 有些和原本的一樣, 有些不一樣, 表示 <code>classifier</code> 有些字 <em>Tag</em> 錯了</p>
+
+<p>可以用程式來算準確率, 用 <code>classifier.evaluate</code> ,  但注意的是, <em>input argument</em> 不是 <em>sentence</em> , 而是 <em>list of sentence</em> , 所以 <em>input argument</em> 要用 <code>[test_sents[10]]</code> , 如下</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate([test_sents[10]])
+0.75</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>算出來後準確度是 <em>0.75</em> , 也就是說有 <em>75%</em> 的 <em>Tag</em> 是正確的</p>
+
+<p>再來把所有的 <em>Test Data</em> 都做 <em>Evaluation</em> 看看</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>classifier.evaluate(test_sents)
+0.6910327241818954</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>得的準確率約為 <em>69.1%</em></p>
+
+<p>這樣的準確率不是很理想, 原因是因為 <em>100</em> 句的 <em>Training Data</em> 實在是太少了</p>
+
+<p>有興趣者可以試試看, 取 <em>2000</em> 句的 <em>Training Data</em> , 準確度應該會大幅提昇, 但是要花很久的時間訓練</p>
+
+<h2 id="furtuer-reading">3. Furtuer Reading</h2>
+
+<p>本文參考至這本教科書</p>
+
+<p><a href="http://www.amazon.com/Speech-Language-Processing-2nd-Edition/dp/0131873210">Speech and Language Processing</a></p>
+
+<p>以及台大資工系 陳信希教授的 自然語言處理 課程講義</p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Model Selection]]></title>
     <link href="http://ckmarkoh.github.io/blog/2014/04/17/machine-learning-model-selection/"/>
     <updated>2014-04-17T07:15:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2014/04/17/machine-learning-model-selection</id>
@@ -600,1292 +2092,6 @@ Order:7, Ein:0.06660, Eval:0.12957, Eout:0.10250</p>
 <h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
 
 <p>https://www.coursera.org/course/ntumlone</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[機器學習 -- Overfitting and Regularization]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/04/13/machine-learning-overfitting-and-regularization/"/>
-    <updated>2014-04-13T06:46:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/04/13/machine-learning-overfitting-and-regularization</id>
-    <content type="html"><![CDATA[<h2 id="overfitting">1.Overfitting</h2>
-
-<p>所謂 <em>Overfitting</em> 指的就是過度訓練, 意思就是說機器學習所學到的 <em>Hypothesis</em> 過度貼近 <em>Training Data</em> , 而導致和 </p>
-
-<p><em>Testing Data</em> 的時候, <em>Error</em>  變得更大</p>
-
-<p>假設有一筆資料如下圖, 藍色的為 <em>Training Data</em> , 紅色的為 <em>Testing Data</em> ,</p>
-
-<p><img src="/images/pic/pic_00020.png" alt="input" /></p>
-
-<p>想要用高次多項式的 <em>Hypothesis</em> ,<script type="math/tex">h(w)</script>,  做 <em>Linear Regression</em> </p>
-
-<script type="math/tex; mode=display">
-
-	h(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n}
-
-</script>
-
-<p>其中, <script type="math/tex">w</script> 是 <em>weight</em>, <script type="math/tex">n</script> 表示這個多項式的次數 ( <em>Order</em> )</p>
-
-<!--more-->
-
-<p>如果多項式的 <em>Order</em> 不夠大, 則無法使 <em>Hypothesis</em> 貼近 <em>Training data</em>  , 如下圖</p>
-
-<p><img src="/images/pic/pic_00021.png" alt="osmall" /></p>
-
-<p>如果 <em>Order</em> 大小適中, 則可以使 <em>Hypothesis</em> 貼近 <em>Training data</em> 以及 <em>Testing Data</em>, 此時, <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> 都會降低, 如下圖</p>
-
-<p><img src="/images/pic/pic_00022.png" alt="omedium" /></p>
-
-<p>如果 <em>Order</em> 太大,  則會使 <em>Hypothesis</em> 過度貼近 <em>Training data</em>  , 因此遠離 <em>Testing Data</em>, 造成 <script type="math/tex">E_{out}</script> 變大, 如下圖</p>
-
-<p><img src="/images/pic/pic_00023.png" alt="olarge" /></p>
-
-<p>由此可知,  <em>Order</em> 並不是越大, 就可以讓 <em>Hypothesis</em> 越準確, 當 <em>Order</em> 太大的時候, 造成 <script type="math/tex">E_{out}</script> 變大, 這種情形稱作 <em>Overfitting</em></p>
-
-<p>接著來實際操作看看 <em>Overfitting</em> 這種情形</p>
-
-<h2 id="implementation-1">2.Implementation 1</h2>
-
-<p>首先, 開一個新的檔案, 命名為 <em>overfitting.py</em></p>
-
-<p>載入必要的模組, 並輸入data, 如下</p>
-
-<p>```python overfitting.py
-import numpy as np
-import matplotlib.pyplot as plt</p>
-
-<p>x=np.matrix([[-1.        , -0.93103448, -0.86206897, -0.79310345, -0.72413793, -0.65517241, 
-           -0.5862069 , -0.51724138, -0.44827586, -0.37931034, -0.31034483, -0.24137931,
-           -0.17241379, -0.10344828, -0.03448276,  0.03448276,  0.10344828,  0.17241379,
-           0.24137931,  0.31034483,  0.37931034,  0.44827586,  0.51724138,  0.5862069 ,
-           0.65517241,  0.72413793,  0.79310345,  0.86206897,  0.93103448,  1.        , ]])
-y_train=np.matrix([[ 0.72679128,  0.88352371,  0.55848839,  0.9960148 ,  0.27727561,  1.58193644,
-            0.35519674,  0.40919248, -0.66450448, -1.02347355, -0.71433077, -0.97857498,
-           -0.9542627 , -0.85186192, -0.00210849, -0.00559543,  0.6545823 ,  0.82926143,
-            0.3728542 ,  1.60336863,  1.20548029, -0.20721056,  0.44713523, -0.49832341,
-           -0.34765828, -1.51883285, -0.95758709, -0.83135465, -0.90942741, -0.10016318, ]])
-y_test=np.matrix([[ 0.79521635,  0.32523979,  0.63212171,  1.60522123,  0.72400525,  1.33408882,
-          -0.42555819, -0.19726661, -0.66041197, -0.65470685, -0.93661018, -0.87634342,
-          -0.84363868, -0.95689774, -0.1376653 ,  0.40842111, -0.20794503,  0.15057061,
-           0.50331016,  1.54413185,  0.01230807,  0.38623098,  0.32021572, -0.02133113,
-          -0.28643186, -0.91730531, -0.65369342, -0.68990553, -0.73800708, -0.56659495, ]])</p>
-
-<p>```</p>
-
-<p>再來, 新增兩個function如下</p>
-
-<p>```python overfitting.py</p>
-
-<p>def plot_data( y_model, title=’’):
-    plt.ion()
-    fig, ax = plt.subplots()
-    ax.plot(np.array([x[0,i]for i in range(x.shape[1])]) ,
-            np.array([y_model[0,i]for i in range(y_model.shape[1])]) ,
-            ‘k–’)
-    ax.plot(x, y_train, ‘bo’ )
-    ax.plot(x, y_test, ‘ro’ )
-    ax.set_xlim((-1, 1)) 
-    ax.set_ylim((-2, 2)) 
-    ax.set_title(title)
-    plt.show()</p>
-
-<p>def linear_regression(order):
-    X = np.matrix([[x[0,j]<em>*i for i in range(order) ] for j in range(x.shape[1])])
-    w =  np.linalg.pinv( X )</em>y_train.T 
-    y_model = (X*w).T
-    e_in = np.average(np.square(y_train - y_model))
-    e_out = np.average(np.square(y_test - y_model))
-    status_str = “Order=%s, Ein=%.6f, Eout=%.6f”%(order,e_in,e_out)
-    print status_str 
-    plot_data(y_model , status_str) </p>
-
-<p>```</p>
-
-<p>其中,  <code>plot_data( y_model, title='')</code> 是用來畫圖的 <em>function</em> ,而 <code>linear_regression(order)</code> 是用來做 <em>Linear Regression</em> 的 <em>function</em> , 參數 <code>order</code> 即為多項式的次數</p>
-
-<p>然後, 到 <em>interactive mode</em> 載入剛剛的檔案</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>import overfitting as ovf</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>試試看不同 <em>Order</em> 的多項式, 得出的 <em>Hypothesis</em> 有什麼不一樣</p>
-
-<p>例如, 輸入 <code>8</code> 和 <code>15</code> 這兩種 <em>Order</em> , 所得出的結果如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.linear_regression(8)
-Order=8, Ein=0.128044, Eout=0.175504</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.linear_regression(15)
-Order=15, Ein=0.111843, Eout=0.208729</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>所得出的圖形分別如下</p>
-
-<p><img src="/images/pic/pic_00024.png" alt="o8" /></p>
-
-<p><img src="/images/pic/pic_00025.png" alt="o15" /></p>
-
-<p>多嘗試幾種不同的 <em>Order</em> 看看</p>
-
-<p>然後將不同 <em>Order</em> 所得出的 <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> , 列成表格</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{array}{c|c}
-
-
-Order & 4 & 6 & 7 & 8 & 9 & 10 & 12 & 15 & 20 & 30 \\ \hline 
-
-E_{in} & 0.4845 & 0.1949 & 0.1835 & 0.1280 & 0.1276 & 0.1254 & 0.1164 & 0.1118 & 0.0824 & 0.0000 \\
-
-E_{out} & 0.3433 & 0.1815 & 0.1910 & 0.1755 & 0.1730 & 0.1847 & 0.2026 & 0.2087 & 0.1974 & 0.2103 
-
- 
-
-\end{array}
-
- %]]&gt;</script>
-
-<p>並根據這些資料來畫圖表</p>
-
-<p><img src="/images/pic/pic_00026.png" alt="plot1" /></p>
-
-<p>以上結果顯示, 當 <em>Order = 9</em> 時, 有最小的 <script type="math/tex">E_{out}</script> , 通常會選擇 <script type="math/tex">E_{out}</script> 最小的 <em>Hypothesis</em> , 為成最佳的 <em>Hypothesis</em> </p>
-
-<p>把 <em>Order</em> 由小逐漸增大的過程, 做成動畫, 如下：</p>
-
-<p><img src="/images/pic/pic_00027.gif" alt="oanim" /></p>
-
-<h2 id="regularization">3.Regularization</h2>
-
-<p>如果我們避免 <em>Overfitting</em> , 除了從 <em>Order</em> 較低的 <em>Hypothesis</em> 逐一嘗試之外, 還有一種方式叫做 <em>Regularization</em></p>
-
-<p><em>Regularization</em> 的概念就是, 限制 <em>weight</em> 的平方和, 為某一個常數</p>
-
-<script type="math/tex; mode=display">
-
-	h(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...w_{n}x^{n} \\ \text{subject to} \mspace{10mu} 
-
-  \sum_{i=0}^{n}w_{i}^{2} \leq C
-
-
-</script>
-
-<p>為什麼這樣就可以避免 <em>Over Fitting</em> ？</p>
-
-<p>例如,如果要用一個三次的多項式 <script type="math/tex">h_{3}</script> 做為 <em>Hypothesis</em> </p>
-
-<script type="math/tex; mode=display">
-
-	h_{3}(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+w_{3}x^{3}
-
-</script>
-
-<p>可以把 <script type="math/tex">h_{3}</script> 看成是一個 <script type="math/tex">n</script> 次的多項式, 但是次數大於 <em>3</em> 的 <em>weight</em> 都等於 <em>0</em> , 如下</p>
-
-<script type="math/tex; mode=display">
-
-	h_{3}(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n} \\ 
-
-  \text{subject to} \mspace{10mu} 
-
-  w_{4}=w_{5}=...=w_{n}=0
-
-</script>
-
-<p>可以把 <script type="math/tex">h_{3}</script> 推廣成這樣</p>
-
-<script type="math/tex; mode=display">
-
-	h_{3}'(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...+w_{n}x^{n} \\ 
-
-  \text{subject to} \mspace{10mu} 
-
-  \sum_{i=0}^{n} \left[  w_{i} \neq 0 \right]  \leq 3+1
-
-</script>
-
-<p>由以上式子可知, <script type="math/tex"> h_{3}(w) \subset h_{3}'(w)</script> </p>
-
-<p>但是對於 <script type="math/tex"> \left[  w_{i} \neq 0 \right] </script> 的最佳化問題, 是 <em>NP-Hard</em> , 所以就改成平方和</p>
-
-<script type="math/tex; mode=display">
-
-	h_{3}''(w)=w_{0}x^{0}+w_{1}x^{1}+w_{2}x^{2}+...w_{n}x^{n} \\ \text{subject to} \mspace{10mu} 
-
-  \sum_{i=0}^{n}w_{i}^{2} \leq C
-
-
-</script>
-
-<p>因此, 可以用 <em>Regularization</em> 來避免多項式的 <em>weight</em> 平方和過大, 間接降低多項式的次數</p>
-
-<p>此推導過程參考於 <em>Coursera</em> 線上課程 <a href="https://www.coursera.org/course/ntumlone">機器學習基石</a></p>
-
-<p>至於如何將 <em>Regularization</em> 用於 <em>Linear Regression</em> , 我們先來看看 <em>Linear Regression</em> 的 <em>Weight</em> 是如何計算的,</p>
-
-<script type="math/tex; mode=display">
-
-w=(X^{T}X)^{-1}X^{T}y
-
-</script>
-
-<p>加上 <em>Regularization</em> 以後會變成這樣, 其中 <script type="math/tex">\lambda=\frac{1}{C}</script></p>
-
-<script type="math/tex; mode=display">
-
-w=(X^{T}X+\lambda I)^{-1}X^{T}y
-
-</script>
-
-<p>在此不推導此公式, 請參考 <em>Coursera</em> 線上課程 <a href="!https://www.coursera.org/course/ml">Machine Learning</a></p>
-
-<h2 id="implementation-2">4.Implementation 2</h2>
-
-<p>來實作 <em>Regularization</em> , 看看它如何避免 <em>overfitting</em> 的發生</p>
-
-<p>新增一個 <em>function</em> 到 <em>overfitting.py</em> </p>
-
-<p>```python</p>
-
-<p>def regularization(C):
-    order=30
-    X = np.matrix([[x[0,j]<em>*i for i in range(order) ] for j in range(x.shape[1])])
-    w = ( np.linalg.pinv( X.T</em>X + (1./C)<em>np.identity(X.shape[1]) )</em>X.T )<em>y_train.T
-    y_model = (X</em>w).T
-    e_in = np.average(np.square(y_train - y_model))
-    e_out = np.average(np.square(y_test - y_model))
-    status_str = “C=%s, Ein=%.6f, Eout=%.6f”%(C,e_in,e_out)
-    print status_str
-    plot_data( y_model, status_str )</p>
-
-<p>```</p>
-
-<p><code>regularization(C)</code> 是用來做 <em>Regularized Linear Regression</em> 的 <em>function</em> , <em>C</em> 可以用來控制 <em>overfitting</em> 的程度, <em>C</em> 越小 , <em>overfitting</em> 的程度越低</p>
-
-<p>接著到 <em>interactive mode</em> 重新載入  <em>overfitting.py</em> </p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(ovf)
-&lt;module ‘overfitting’ from ‘overfitting.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>試試看不同 <em>C</em> , 得出的 <em>Hypothesis</em> 有什麼不一樣</p>
-
-<p>例如, 輸入 <code>10</code>,<code>50</code> , <code>1000</code> 和 <code>10000000</code>, 所得出的結果如下</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.regularization(10)
-C=10, Ein=0.325034, Eout=0.250901</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.regularization(50)
-C=50, Ein=0.228926, Eout=0.173973</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.regularization(200)
-C=200, Ein=0.167971, Eout=0.152158</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.regularization(1000)
-C=1000, Ein=0.126571, Eout=0.164675</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ovf.regularization(10000000)
-C=10000000, Ein=0.111289, Eout=0.203883</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>所得出的圖形分別如下</p>
-
-<p><img src="/images/pic/pic_00028.png" alt="c10" /></p>
-
-<p><img src="/images/pic/pic_00029.png" alt="c50" /></p>
-
-<p><img src="/images/pic/pic_00030.png" alt="c200" /></p>
-
-<p><img src="/images/pic/pic_00031.png" alt="c1000" /></p>
-
-<p><img src="/images/pic/pic_00032.png" alt="c10000000" /></p>
-
-<p>從以上結果顯示, <script type="math/tex">C</script> 如果太小, 和多項式的 <em>Order</em> 太小的結果一樣, 都無法貼近 <em>Training Data</em> , 而 <script type="math/tex">C</script> 過大的結果, 也會產生 <em>overfitting</em> , 過度貼近 <em>Training Data</em> 使得 <script type="math/tex">E_{in}</script> 變大</p>
-
-<p>多嘗試幾種不同的 <em>C</em> 看看</p>
-
-<p>然後將不同 <em>C</em> 所得出的 <script type="math/tex">E_{in}</script> 和 <script type="math/tex">E_{out}</script> , 列成表格</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{array}{c|c}
-
-
-C & 10 & 50 & 100 & 200 & 500 & 1000 & 3000 & 2\times 10^{4} & 5\times 10^{5} & 1\times 10^{7}  \\ \hline 
-
-E_{in} & 0.3250 & 0.2289 & 0.1973 & 0.1680 & 0.1384 & 0.1266 & 0.1196 & 0.1161 & 0.1142 & 0.1113 \\
-
-E_{out} & 0.2509 & 0.1740 & 0.1591 & 0.1522 & 0.1554 & 0.1647 & 0.1795 & 0.1933 & 0.2020 & 0.2039
-
-
-\end{array}
-
- %]]&gt;</script>
-
-<p>並根據這些資料來畫圖表</p>
-
-<p><img src="/images/pic/pic_00033.png" alt="plot1" /></p>
-
-<p>以上結果顯示, 當 <em>C = 200</em> 時, 有最小的 <script type="math/tex">E_{out}</script> , 通常會選擇 <script type="math/tex">E_{out}</script> 最小的 <em>Hypothesis</em> , 為成最佳的 <em>Hypothesis</em> </p>
-
-<p>把 <em>C</em> 由小逐漸增大的過程, 做成動畫, 如下：</p>
-
-<p><img src="/images/pic/pic_00034.gif" alt="canim" /></p>
-
-<p>註：</p>
-
-<ol>
-  <li>
-    <p>理論上, 當 <em>C</em> 趨近於無限大 <script type="math/tex">E_{in}</script> 應該要趨近於 <em>0</em> , 但根據以上結果 <script type="math/tex">E_{in}</script> 仍然無法趨近於 <em>0</em> , 這可能是由於 <code>numpy</code> 這個 <em>package</em> ,在計算 <em>pseudo inverse matrix</em> 的時候產生的, 使得 <script type="math/tex">E_{in}</script> 無法趨近於 <em>0</em></p>
-  </li>
-  <li>
-    <p>為了避免計算 <em>pseudo inverse matrix</em> 的誤差, 或許可以改用 <em>Gradient descent</em> 的方式做最佳化</p>
-  </li>
-</ol>
-
-<h2 id="reference">5.Reference</h2>
-
-<p>本文參考至以下兩門 <em>Coursera</em> 線上課程</p>
-
-<h4 id="andrew-ng-machine-learning">1.Andrew Ng. Machine Learning</h4>
-
-<p>https://www.coursera.org/course/ml</p>
-
-<h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
-
-<p>https://www.coursera.org/course/ntumlone</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[機器學習 -- Perceptron Algorithm]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/03/15/machine-learning-perceptron-algorithm/"/>
-    <updated>2014-03-15T11:28:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/03/15/machine-learning-perceptron-algorithm</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
-
-<p>這次來講一下機器學習(Machine Learning)</p>
-
-<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
-
-<p>現在,來看看一種簡單的Machine Learning演算法</p>
-
-<p>叫作Perceotron Algorithm</p>
-
-<p>Peceptron Algorithm要做的事</p>
-
-<p>就是要讓電腦學習,怎樣畫一條線,把兩群不同的資料分開</p>
-
-<!--more-->
-
-<h2 id="load-data">2.Load Data</h2>
-
-<p>接著來看看要怎麼實作Perceptron Algorithm</p>
-
-<p>首先,開啟新的檔案 <em>perceptron.py</em> 並載入模組</p>
-
-<p>```python perceptron.py
-import numpy as np
-import matplotlib.pyplot as plt </p>
-
-<p>```</p>
-
-<p>給定一筆資料</p>
-
-<p>```python perceptron.py</p>
-
-<p>X1 = np.array([-0.62231486, -0.96251306,  0.42269922, -1.452746  , -0.66915783,
-               -0.35716016,  0.49505163, -1.8117848 ,  0.53376487, -1.86923838,
-                0.71434306, -0.4055084 ,  0.82887254,  0.81221287,  1.44280951,
-               -0.45599278, -1.16715888,  1.08913131, -1.61470741,  1.61113001,
-               -1.4532688 ,  1.04872588, -1.52312195, -1.62831727, -0.25191539])</p>
-
-<p>X2 = np.array([-1.67427011, -1.81046748,  1.20384694, -0.41572751,  0.66851908,
-               -1.75435288, -1.57532207, -1.22329618, -0.84375819,  0.52873296,
-               -1.10837773,  0.04612922,  0.67696196,  0.84618152, -0.77362548,
-                0.99153072,  1.7896494 , -0.38343121, -0.21337742,  0.64754817,
-                0.36719101,  0.23132427,  1.07029963,  1.62919909, -1.53920827])</p>
-
-<p>Y = np.array([  1.,  -1.,  -1.,  -1.,  -1.,
-                1.,   1.,  -1.,   1.,  -1.,
-                1.,  -1.,   1.,   1.,   1., 
-               -1.,  -1.,   1.,  -1.,   1., 
-               -1.,   1.,  -1.,  -1.,   1.])</p>
-
-<p>```</p>
-
-<p>其中 <code>X1</code> 是資料的X座標, <code>X2</code> 是資料的Y座標, <code>Y</code>是資料的分類的結果, <strong>不是Y座標</strong></p>
-
-<p>然後寫個function 把data畫出來   </p>
-
-<p>```python perceptron.py<br />
-def plot_data(filename = ‘data0’):
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    plt.scatter(X1[Y &gt;= 0], X2[Y &gt;= 0], s = 80, c = ‘b’, marker = “o”)
-    plt.scatter(X1[Y &lt;  0], X2[Y  &lt; 0], s = 80, c = ‘r’, marker = “^”)
-    ax.set_xlim(xl1, xl2)
-    ax.set_ylim(yl1, yl2)
-    fig.set_size_inches(6, 6)
-    plt.show()   </p>
-
-<p>```</p>
-
-<p>到interactive mode執行</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>import perceptron as pct
-pct.plot_data()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="http://lh3.googleusercontent.com/-OOCOyCqpkZk/UyVNYCrnbXI/AAAAAAAAAk4/OUhvS3dnKjM/s480-no/data0.png" /></p>
-
-<p>這個圖把藍色( <script type="math/tex">y = 1</script> ),和紅色( <script type="math/tex">y = -1</script> )兩群資料呈現出來</p>
-
-<h2 id="draw-line">3.Draw Line</h2>
-
-<p>再來,看看怎麼畫一條線</p>
-
-<p>先在 <em>perceptron.py</em> 檔案新增一個畫線的function</p>
-
-<p>我們要畫的這條線有兩個參數,分別是 <script type="math/tex">w1,w2</script></p>
-
-<p>這條線的直線方程式是: </p>
-
-<script type="math/tex; mode=display">
-
-w_{1}x_{1}+w_{2}x_{2}=0
-
-</script>
-
-<p>藉由改變 <script type="math/tex">w1,w2</script> 的數值,我們可以控制這條線的斜率</p>
-
-<p>*註:</p>
-
-<p>事實上若只有<script type="math/tex">w1,w2</script>只可以改變線的斜率,必須再另外再加個常數相才可改變線的位置</p>
-
-<p>本文提到的是較簡化的模型,故省略常數項*</p>
-
-<p>```python perceptron.py
-def plot_data_and_line(w0,w1,w2):
-    w1,w2 = float(w1),float(w2)
-    if w2 != 0 :
-        y1,y2 = (-w1<em>(xl1))/w2, (-w1</em>(xl2))/w2
-        vx1,vy1 = [xl1,xl2,xl2,xl1,xl1], [y1,y2,yl2,yl2,y1]
-        vx2,vy2 = [xl1,xl2,xl2,xl1,xl1], [y1,y2,yl1,yl1,y1]
-    elif w1 != 0:
-        vx1,vy1 = [xl2,0,0,xl2,xl2], [yl1,yl1,yl2,yl2,yl1]
-        vx2,vy2 = [xl1,0,0,xl1,xl1], [yl1,yl1,yl2,yl2,yl1]
-    else:
-        print “ERROR, Invalid w1 and w2.”
-        return;
-    if  w2 &gt; 0 or ( w2 == 0 and w1 &gt; 0):
-        c1,c2 = ‘b’,’r’
-    else:
-        c1,c2 = ‘r’,’b’
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    plt.scatter(X1[Y &gt; 0], X2[Y &gt; 0], s = 80, c = ‘b’, marker = “o”)
-    plt.scatter(X1[Y&lt;= 0], X2[Y&lt;= 0], s = 80, c = ‘r’, marker = “^”)
-    plt.fill(vx1, vy1, c1, alpha = 0.25)
-    plt.fill(vx2, vy2, c2, alpha = 0.25)
-    ax.set_title((“w1 = %s, w2 = %s”)%( w1, w2))
-    ax.set_xlim(xl1, xl2)
-    ax.set_ylim(yl1, yl2)
-    fig.set_size_inches(6, 6)
-    plt.show()</p>
-
-<p>```</p>
-
-<p>程式碼有點多,但其實是為了處理某些special case,例如 ` w2 != 0 :` 是用來判斷斜率是否為無限大</p>
-
-<p>到interactive mode載入模組</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(pct)
-&lt;module ‘perceptron’ from ‘perceptron.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>接著你可以試著輸入不同的參數,讓電腦畫出不同的線,例如：</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pct.plot_data_and_line(1,1)
-pct.plot_data_and_line(1,2)
-pct.plot_data_and_line(1,0.5)
-pct.plot_data_and_line(-1,-1)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="https://lh5.googleusercontent.com/-BrKFzf5Qb3U/UyVN_fa8lxI/AAAAAAAAAlc/zZgKHlAfcqY/s480-no/line1.png" /></p>
-
-<p><img src="https://lh6.googleusercontent.com/-7EGWFYaEYHI/UyVN_YyzCVI/AAAAAAAAAlY/kb7lkv_7tTI/s480-no/line2.png" /></p>
-
-<p><img src="https://lh5.googleusercontent.com/-d3FrWKfweuU/UyVN_FAVP1I/AAAAAAAAAlQ/FLkYmbRlqo0/s480-no/line3.png" /></p>
-
-<p><img src="https://lh3.googleusercontent.com/-uAA0pRCn7A4/UyVN_vNFk6I/AAAAAAAAAlg/4VsP_MW_QVY/s480-no/line4.png" /></p>
-
-<p>這樣就可以畫出不一樣的線了</p>
-
-<p>改變數字大小,可控制斜率</p>
-
-<p>改變正負號,可以把紅色或藍色的區域反轉過來</p>
-
-<h2 id="perceptron-algorithm">4. Perceptron Algorithm</h2>
-
-<p>接下來,我們要讓電腦自己去學習,該怎麼樣畫一條線把資料分開</p>
-
-<p>Peceptron Algorithm 的概念是這樣</p>
-
-<p>先隨便給一條線,然後再根據這條線分類錯誤做修正</p>
-
-<p>我們先給定<script type="math/tex">w1=1,w2=1</script>畫出一條線,如下圖</p>
-
-<p><img src="https://lh5.googleusercontent.com/-BrKFzf5Qb3U/UyVN_fa8lxI/AAAAAAAAAlc/zZgKHlAfcqY/s480-no/line1.png" /></p>
-
-<p>從上圖中分類錯誤的點中,任意挑一個點 <script type="math/tex">x</script> , </p>
-
-<p>用<script type="math/tex">x</script> 到原點的向量 <script type="math/tex">X</script> ,來修正直線的法向量 <script type="math/tex">W</script></p>
-
-<p>要怎麼修正呢？要看 <script type="math/tex">x</script> 的類別 <script type="math/tex">y</script> 來決定, 調整 <script type="math/tex">W</script>的方向</p>
-
-<p>公式如下：</p>
-
-<script type="math/tex; mode=display">
-
-W\rightarrow W+y\cdot X
-
-</script>
-
-<p>用這個方法就可以改變直線的斜率,把分類錯誤的點 <script type="math/tex">x</script> ,歸到正確的一類,</p>
-
-<p>舉例：</p>
-
-<h4 id="y--1-">1.藍色( <script type="math/tex">y = 1</script> )分類錯誤</h4>
-
-<p><img src="https://lh5.googleusercontent.com/-Jd3-UGYnBb8/UyVggqQjbaI/AAAAAAAAAl8/2vVq2f86GmM/s480-no/pct1_blue_0.png" /></p>
-
-<p>修正後如下</p>
-
-<p><img src="https://lh4.googleusercontent.com/-at-hDPDZwcw/UyVgglyyCrI/AAAAAAAAAmI/x8LDeM-5YB8/s480-no/pct1_blue_1.png" /></p>
-
-<h4 id="y---1-">2.紅色( <script type="math/tex">y = -1</script> )分類錯誤</h4>
-
-<p><img src="https://lh4.googleusercontent.com/-xvvwhbXXjHQ/UyVgjop2GdI/AAAAAAAAAm8/2xH3SYZRlbU/s480-no/pct1_red_0.png" /></p>
-
-<p>修正後如下</p>
-
-<p><img src="https://lh4.googleusercontent.com/-zkoQhjr47aQ/UyVghZHlAgI/AAAAAAAAAmQ/pQSK0S388zk/s480-no/pct1_red_1.png" /></p>
-
-<p>以上結果顯示,<script type="math/tex">W</script> 修正過後, <em>有可能會把原本分類正確的點,分類到錯的一類</em> </p>
-
-<p>所以可能要重複修正好幾次,直到把所有的點都分類正確為止</p>
-
-<p>所以Perceptron的演算法如下：</p>
-
-<p><em>(1) 任選一條線</em> </p>
-
-<p><em>(2) 從這條線中選一個分類錯誤的點x</em></p>
-
-<p><em>(3) 由點x修正線的斜率</em></p>
-
-<p><em>(4) 重複(2)直到所有的點都分類正確</em></p>
-
-<p>我們把這個演算法寫到 <em>perceptron.py</em> 裡</p>
-
-<p>```python perceptron.py
-def learn_perceptron(times=1000):
-    w1,w2 = 1,1
-    for i in range(times):
-        ERR = (w1<em>X1+w2</em>X2) * Y &lt; 0
-        if len(filter(bool,ERR)) &gt; 0:
-           err_x1,err_x2,err_y = X1[ERR][0],X2[ERR][0],Y[ERR][0]
-           w1,w2 = (w1+err_y<em>err_x1),(w2+err_y</em>err_x2)
-        else: 
-           print “Complete!”
-           break;
-    plot_data_and_line(w1,w2)</p>
-
-<p>```</p>
-
-<p>寫好之後,到interactive mode載入模組後,</p>
-
-<p>其中times是迴圈的最大重複次數,</p>
-
-<p>如果超過這個次數後還沒有完全分類正確,則演算法停止</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(pct)
-&lt;module ‘perceptron’ from ‘perceptron.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pct.learn_perceptron()
-Iteration:1
-Iteration:2
-Iteration:3
-Iteration:4
-Iteration:5
-Complete!</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>總共執行了五次迴圈,所有的分類就都正確了</p>
-
-<p>執行結果如下：</p>
-
-<p><img src="http://lh4.googleusercontent.com/-LX6ouAzk-wE/UyVggokMcpI/AAAAAAAAAmA/4gNrnGYwlpM/s480-no/learn_1000.png" /></p>
-
-<p>如果想要看看每一次迴圈中修正 <script type="math/tex">W</script> 的情形</p>
-
-<p>以下提供更詳盡過程分解</p>
-
-<p>但程式碼有點長</p>
-
-<p>```python perceptron.py
-def learn_and_plot():
-    w1,w2 = 1.,1.
-    plt.ion()
-    fig = plt.figure()
-    plt.show()
-    complete=False
-    i=0
-    while True:
-        plt.clf()
-        ax = fig.add_subplot(111)
-        ERR = (w1<em>X1+w2</em>X2) * Y &lt; 0
-        if i &gt; 0 and (not complete):
-            pwa1,pwa2 = pw1+err_y<em>err_x1,pw2+err_y</em>err_x2
-            if err_y &gt;=0:
-                eva1,eva2=[err_x1,pwa1], [err_x2,pwa2]
-                ac=’b’
-            else: 
-                eva1,eva2=[err_x1,pw1], [err_x2,pw2]
-                ac=’r’
-            evb1,evb2=[pwa1,pw1], [pwa2,pw2]
-            ax.arrow(0, 0, err_x1, err_x2, head_width=0.05, alpha=0.5, fc=ac, ec=ac )
-            ax.arrow(0, 0, pw1, pw2, head_width=0.05, alpha=0.5, fc=’b’, ec=’b’)
-            ax.arrow(0, 0, pwa1, pwa2, head_width=0.05, alpha=0.5, fc=’b’, ec=’b’)
-            plt.text(err_x1/2., err_x2/2., ‘X’, color=’k’, size=20, fontweight=’bold’)
-            plt.text(pw1/2., pw2/2., ‘W’, color=’k’, size=20, fontweight=’bold’)
-            plt.text(pwa1/2., pwa2/2.,’W+yX’, color=’k’, size=20, fontweight=’bold’)
-            plt.plot(eva1, eva2, alpha=0.3, color=’k’)
-            plt.plot(evb1, evb2, alpha=0.3, color=’k’)
-            plt.plot([xl1,xl2],[y1,y2],alpha=0.2, color=’b’)
-            plt.fill(pvx1, pvy1, c1, alpha = 0.1)
-            plt.fill(pvx2, pvy2, c2, alpha = 0.1)
-        if w2 != 0 :
-            y1,y2 = (-w1<em>(xl1))/w2, (-w1</em>(xl2))/w2
-            vx1,vy1 = [xl1,xl2,xl2,xl1,xl1], [y1,y2,yl2,yl2,y1]
-            vx2,vy2 = [xl1,xl2,xl2,xl1,xl1], [y1,y2,yl1,yl1,y1]
-        elif w1 != 0:
-            vx1,vy1 = [xl2,0,0,xl2,xl2], [yl1,yl1,yl2,yl2,yl1]
-            vx2,vy2 = [xl1,0,0,xl1,xl1], [yl1,yl1,yl2,yl2,yl1]
-        else:
-            print “ERROR, Invalid w1 and w2.”
-            return;
-        if  w2 &gt; 0 or (w2 == 0 and w1 &gt; 0):
-            c1,c2 = ‘b’,’r’
-        else:      <br />
-            c1,c2 = ‘r’,’b’
-        plt.scatter(X1[Y &gt; 0], X2[Y &gt; 0], s = 80, c = ‘b’, marker = “o”)
-        plt.scatter(X1[Y&lt;= 0], X2[Y&lt;= 0], s = 80, c = ‘r’, marker = “^”)
-        ax.set_title( (“Iteration:%s, w1 = %.5f, w2 = %.5f”)%(i, w1, w2) )
-        ax.set_xlim(xl1, xl2)
-        ax.set_ylim(yl1, yl2)
-        if not complete:
-            plt.show()
-            fig.set_size_inches(6, 6)
-            raw_input(“Please press ENTER to update the result of iteration.”)
-        plt.fill(vx1, vy1, c1, alpha = 0.4)
-        plt.fill(vx2, vy2, c2, alpha = 0.4)
-        pw1,pw2,pvx1,pvy1,pvx2,pvy2 = w1,w2,vx1,vy1,vx2,vy2
-        #—-Perceptron Algorithm——-# 
-        ERR = (w1<em>X1+w2</em>X2) * Y &lt; 0
-        if len(filter(bool,ERR)) &gt; 0:
-           err_x1,err_x2,err_y = X1[ERR][0],X2[ERR][0],Y[ERR][0]
-           w1,w2 = (w1+err_y<em>err_x1),(w2+err_y</em>err_x2)
-        else:
-           if complete:
-               ax.set_title((“Complete! Iteration:%s, w1 = %.5f, w2 = %.5f”)%(i-1, w1, w2))
-               plt.show()
-               fig.set_size_inches(6, 6)
-               print “Complete!”
-               break 
-           else:
-              complete=True
-        #———————–#
-        plt.show()
-        fig.set_size_inches(6, 6)
-        i=i+1
-        raw_input(“Please press ENTER to start the next iteration.”)</p>
-
-<p>```</p>
-
-<p>然後,到interactive mode跑看看這個function</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(pct)
-&lt;module ‘perceptron’ from ‘perceptron.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pct.learn_and_plot()
-Please press ENTER to update the result of iteration.
-Please press ENTER to start the next iteration.
-….</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>進行完每次計算時,程式會把圖畫出來</p>
-
-<p>然後程式會暫停,要按下ENTER才能繼續進行下一步</p>
-
-<p>執行結果如下：</p>
-
-<p><img src="https://lh5.googleusercontent.com/-0pliSS4phQs/UyVmQGxv6DI/AAAAAAAAAp8/-OdPv9EsFAM/s480-no/pct_motion_1.gif" /></p>
-
-<h2 id="further-reading">5. Further Reading</h2>
-
-<p>以上是Perceptron Algorithm很簡單的介紹</p>
-
-<p>但其實Perceptron Algorithm有其他變化形式</p>
-
-<p>例如,如果有noise存在的時候,本篇介紹的演算法就無法求得最佳解</p>
-
-<p>就要用其他的變化形式來處理</p>
-
-<p>想要看更多相關介紹,請到coursera上線上課程</p>
-
-<h4 id="andrew-ng-machine-learning">1.Andrew Ng. Machine Learning</h4>
-
-<p>https://www.coursera.org/course/ml</p>
-
-<h4 id="machine-learning-foundations">2.林軒田 機器學習基石 (Machine Learning Foundations)</h4>
-
-<p>https://www.coursera.org/course/ntumlone</p>
-
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[機器學習 -- Logistic Regression Model (3D)]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model/"/>
-    <updated>2014-03-15T01:47:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model</id>
-    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
-
-<p>這次來講一下機器學習(Machine Learning)的Logistic Model</p>
-
-<p>搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何</p>
-
-<p>至於機器學習（Machine Learning）是什麼？</p>
-
-<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
-
-<p>Logistic Regression是一種機器學習的Model,可以用來處理分類問題</p>
-
-<p>從input data的feature,可以判斷出output data該歸到那一類</p>
-
-<p>Logistic Regression的model如下</p>
-
-<script type="math/tex; mode=display">
-
-h(x)=\frac{1}{1+e^{-W^{T} X }}
-
-</script>
-
-<p>其中 <script type="math/tex">h(x)</script> 是hypothesis,藉由hypothesis,可以用已知的data來預知未知的data</p>
-
-<p><script type="math/tex">X</script>是input data, <script type="math/tex">W</script> 是weight,這兩者皆是矩陣</p>
-
-<!--more-->
-
-<script type="math/tex; mode=display">
-
-X=
-
-\begin{bmatrix}
-
-	x_{0}\\
-
-  x_{1}\\
-
-  x_{2}\\
-
-\end{bmatrix},
-
-W=
-
-\begin{bmatrix}
-
-	w_{0}\\
-
-  w_{1}\\
-
-  w_{2}\\
-
-\end{bmatrix}, \mspace{20mu} W^{T} X =w_{0}x_{0}+w_{1}x_{1}+w_{2}x_{2} 
-
-</script>
-
-<p>用error function <script type="math/tex">E_{in}</script> 的gradient,調整 <script type="math/tex">W</script> ,可以讓h(x)根據data建立出一個的model,作出準確的預測</p>
-
-<script type="math/tex; mode=display">
-
-\bigtriangledown E_{in}(W)=\frac{1}{1+e^{-y W^{T} X }} \cdot (-yX) \\
-
-W\leftarrow  W-\eta \bigtriangledown E_{in}(W)
-
-</script>
-
-<p>其中,<script type="math/tex">y</script> 是實際的結果,藉此可比對 <script type="math/tex">h(x)</script> 預測出的結果,和實際結果是否相等</p>
-
-<p><script type="math/tex">\eta</script> 是學習速度,可以調整演算法收斂的速度</p>
-
-<p>在此不提詳細理論,</p>
-
-<p>若想更深入了解,請看coursea機器學習的線上課程 </p>
-
-<h2 id="draw-3d-logistic-model">2. Draw 3D Logistic Model</h2>
-
-<p>接著來畫畫看3D的Logistic Model是什麼樣子</p>
-
-<p>首先,開一個新的檔案 <em>plot_logistic.py</em> ,載入以下模組</p>
-
-<p>```python plot_logistic.py
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt
-import numpy as np</p>
-
-<p>```</p>
-
-<p>然後寫個function來畫圖</p>
-
-<p>```python plot_logistic.py
-def plot_logistic(w0,w1,w2):
-    fig = plt.figure()
-    ax = fig.gca(projection=’3d’)
-    X1, X2 = np.mgrid[-2:2:0.25, -2:2:0.25]
-    X0 = np.ones(X1.shape)
-    Z=np.divide(1,1+np.exp(-1*(np.multiply(w0,X0)+np.multiply(w1,X1)+np.multiply(w2,X2)) ))
-    surf = ax.plot_wireframe(X1, X2, Z, cstride=1, rstride=1)
-    ax.set_title((“w0=%s, w1=%s, w2=%s”)%(w0,w1,w2))
-    plt.show()</p>
-
-<p>```</p>
-
-<p>這個function可以讓我們輸入不同的weight,畫出不一樣的圖</p>
-
-<p>其中 <code>w0,w1,w2</code> 是weight,</p>
-
-<p><code>Z=np.divide(1,1+np.exp(np.multiply(w0,X0)+np.multiply(w1,X1)+np.multiply(w2,X2)))</code></p>
-
-<p>是logistic Model</p>
-
-<p>接著到interactive mode來跑剛剛寫的function</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>import plot_logistic as pl</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>首先,用不同的w0畫畫看</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pl.plot_logistic(0,1,1)
-pl.plot_logistic(2,1,1)
-pl.plot_logistic(-2,1,1)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="http://lh3.googleusercontent.com/-jCPyrHFtLTw/UyP_03T4BkI/AAAAAAAAAcc/cPuCsRbEs2I/w480-h320-no/logistic1.png" /></p>
-
-<p><img src="http://lh3.googleusercontent.com/-FihSXpokG6c/UyP_05hcLTI/AAAAAAAAAcY/iQ13UbUUFqA/w480-h320-no/logistic2.png" /></p>
-
-<p><img src="http://lh4.googleusercontent.com/-IxWybG4zcBE/UyP_140FJYI/AAAAAAAAAc8/TdMEnA7m81A/w480-h320-no/logistic3.png" /></p>
-
-<p>再改變不同的w1來畫</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>pl.plot_logistic(0,1,1)
-pl.plot_logistic(0,2,1)
-pl.plot_logistic(0,5,1)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="http://lh3.googleusercontent.com/-jCPyrHFtLTw/UyP_03T4BkI/AAAAAAAAAcc/cPuCsRbEs2I/w480-h320-no/logistic1.png" /></p>
-
-<p><img src="http://lh5.googleusercontent.com/-ElJA7s-qR5w/UyP_1oAHn3I/AAAAAAAAAdA/33SZMCbcrUY/w480-h320-no/logistic4.png" /></p>
-
-<p><img src="http://lh4.googleusercontent.com/-NGiKStaFfJE/UyP_1nbKXiI/AAAAAAAAAcs/oBSw0gc7djE/w480-h320-no/logistic5.png" /></p>
-
-<p>改變w2的結果和改變w1的結果呈對稱,在此省略</p>
-
-<h2 id="learning-by-logistic-model">3. Learning by Logistic Model</h2>
-
-<p>接著來看看如何用logistic model來進行機器學習</p>
-
-<p>開一個新的檔案 <em>logistic_model.py</em> ,並載入必要模組</p>
-
-<p>```python logistic_model.py
-from mpl_toolkits.mplot3d import Axes3D
-import matplotlib.pyplot as plt 
-import numpy as np</p>
-
-<p>```</p>
-
-<p>假設有這些data</p>
-
-<p>```python logistic_model.py
-X0=np.array([ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,
-              1.,  1.])
-X1=np.array([ 0.56084642,  1.3977301 ,  1.37559576,  1.25336531, -1.90734535,
-              1.41981271,  0.96873065, -1.95225824, -0.65156755,  0.84391794,
-              1.37463405, -1.90385285, -1.9961716 , -1.53774446,  0.62736126])</p>
-
-<p>X2=np.array([-0.54631195,  1.9883947 , -1.77695809,  1.74944549, -0.99031191,
-              1.6854447 , -1.78734606, -0.46925818, -1.72241882, -0.68654333,
-              1.70881411,  1.22240194, -1.87704629,  1.10556042, -1.892201  ])</p>
-
-<p>Y=np.array([-0.2041112 , -0.10358391, -2.69506218,  0.01788122,  4.42147236,
-            -0.35981413, -1.88860354,  4.87603575,  1.39744193, -0.86841621,
-            -0.25309822,  5.96338706,  3.9784108 ,  5.14938121, -1.27926322])</p>
-
-<p>```</p>
-
-<p>接著,寫出畫圖的function</p>
-
-<p>```python logistic_model.py
-def plot_data(filename=’data1’):
-    fig = plt.figure()
-    ax = fig.gca(projection=’3d’)
-    surf = ax.scatter(X1[Y&gt;=0], X2[Y&gt;=0], np.ones(X1[Y&gt;=0].shape) ,c=’b’,marker=’o’)
-    surf = ax.scatter(X1[Y&lt;0], X2[Y&lt;0], np.zeros(X1[Y&lt;0].shape) ,c=’r’,marker=’^’)
-    plt.show()</p>
-
-<p>```</p>
-
-<p>接著到interactive mode來跑剛剛寫的function</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>import logistic_model as lm
-lm.plot_data()</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="http://lh5.googleusercontent.com/-03OAk99aDVQ/UyQTVzt5JiI/AAAAAAAAAd8/uDW14eX_vi0/w480-h320-no/data1.png" /></p>
-
-<p>再來看看,把剛剛的model加進來看看會怎樣</p>
-
-<p>在 <em>logistic_model.py</em> 加入一個function</p>
-
-<p>和剛剛的類似,但這個function有加入logistic model</p>
-
-<p>```python logistic_model.py
-def plot_data_and_model(w0,w1,w2):
-    fig = plt.figure()
-    ax = fig.gca(projection=’3d’)
-    surf = ax.scatter(X1[Y&gt;=0], X2[Y&gt;=0], np.ones(X1[Y&gt;=0].shape) ,c=’b’,marker=’o’)
-    surf = ax.scatter(X1[Y&lt;0], X2[Y&lt;0], np.zeros(X1[Y&lt;0].shape) ,c=’r’,marker=’^’)
-    ##—Logistic Model—- 
-    GX1, GX2 = np.mgrid[-2:2:0.25, -2:2:0.25]
-    GX0 = np.ones(GX1.shape)
-    Z = np.divide(1,1+np.exp(-1*(np.multiply(w0,GX0)+np.multiply(w1,GX1)+np.multiply(w2,GX2))))
-    surf = ax.plot_wireframe(GX1, GX2, Z, cstride=1, rstride=1)
-    ##———————
-    plt.show()</p>
-
-<p>```</p>
-
-<p>到interactive mode重新載入 <em>logistic_model.py</em> ,再畫畫看</p>
-
-<p>```</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(lm)
-&lt;module ‘logistic_model’ from ‘logistic_model.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>lm.plot_data_and_model(1,1,1)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p><img src="" /></p>
-
-<p>看起來,這個model跟data好像差得很遠</p>
-
-<p>沒關係,我們用h(x)的gradient來調整w0,w1,w2</p>
-
-<script type="math/tex; mode=display">
-
-\bigtriangledown E_{in}(W)=\frac{1}{1+e^{-y W^{T} X }} \cdot (-y X) \\
-
-W\leftarrow  W-\eta \bigtriangledown E_{in}(W)
-
-</script>
-
-<p>接著我們要用以上公式來調整 <script type="math/tex">W</script> ,達到最佳化</p>
-
-<p>在 <em>logistic_model.py</em> 加入以下function</p>
-
-<p>```python logistic_model.py
-def learning_logistic(times):
-    w0,w1,w2=1,1,1
-    for i in range(times):
-        eta = 0.1
-        temp_err = np.divide(1,1+np.exp((Y)<em>(np.multiply(w0,X0)+np.multiply(w1,X1)+np.multiply(w2,X2))))
-        e0 = eta</em>np.average(temp_err<em>(-Y</em>X0))
-        e1 = eta<em>np.average(temp_err</em>(-Y<em>X1))
-        e2 = eta</em>np.average(temp_err<em>(-Y</em>X2))
-        w0 = w0-e0 
-        w1 = w1-e1 
-        w2 = w2-e2 
-    plot_data_and_model(w0,w1,w2)</p>
-
-<p>```</p>
-
-<p>簡而言之,這個function用一個迴圈,逐次來調整w0,w1,w2,把error降低</p>
-
-<p>times是這個迴圈要跑幾次,</p>
-
-<p>eta是學習速率,如果eta越小,就越慢收斂</p>
-
-<p>但eta太大,有可能會錯過最佳解</p>
-
-<p>接著,重新載入修改好的程式</p>
-
-<p>分別讓迴圈跑1次,10次到10000次來看看,結果如何</p>
-
-<p>```python</p>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>reload(ml)
-&lt;module ‘logistic_model’ from ‘logistic_model.py’&gt;</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<blockquote>
-  <blockquote>
-    <blockquote>
-      <p>ml.learning_logistic(1)
-ml.learning_logistic(10)
-ml.learning_logistic(100)
-ml.learning_logistic(1000)
-ml.learning_logistic(10000)</p>
-    </blockquote>
-  </blockquote>
-</blockquote>
-
-<p>```</p>
-
-<p>結果如下：</p>
-
-<p><img src="http://lh5.googleusercontent.com/-7zj7cOhJPEI/UyQUdiwAp9I/AAAAAAAAAf0/nwRWG2AQHi4/w480-h320-no/model_1.png" /></p>
-
-<p><img src="http://lh4.googleusercontent.com/-NAOxS1hvShE/UyQUdmlxMRI/AAAAAAAAAgI/461egO-xJWw/w480-h320-no/model_10.png" /></p>
-
-<p><img src="http://lh3.googleusercontent.com/-SdDWeaxWkwA/UyQUePGcZOI/AAAAAAAAAfw/Mmdzl_eWWlU/w480-h320-no/model_100.png" /></p>
-
-<p><img src="http://lh4.googleusercontent.com/-BDGOyehak7A/UyQUeoJNGoI/AAAAAAAAAgE/pcR_NCORpd4/w480-h320-no/model_1000.png" /></p>
-
-<p><img src="http://lh6.googleusercontent.com/-ZndSShsS7ZU/UyQUfHgvlpI/AAAAAAAAAgA/BEwdIT-QwVc/w480-h320-no/model_10000.png" /></p>
-
-<p>動畫版：</p>
-
-<p><img src="http://lh3.googleusercontent.com/-QBkEkySQAEI/UyVEwjNnd-I/AAAAAAAAAi8/kvoOH4-g514/w480-h320-no/model_motion.gif" /></p>
-
-<p>很明顯地,我們可以看到機器正在學習,依照data來把model做調整</p>
-
-<p>model可以符合大部分的data都可以達到準確預測</p>
-
-<p>但還是有些例外,例如,右上角的藍色的點,不符合model的預測</p>
-
-<p>這種data不符合大多數data的情形,就可能noice了</p>
-
-<h2 id="further-reading">4. Further Reading</h2>
-
-<p>以上是Logistic Model很簡單的實作</p>
-
-<p>想要學習Machine Learning的理論與應用</p>
-
-<p>請到coursera上線上課程</p>
-
-<p>主要有以下兩門課,雖然難易度不同,但都講得很好</p>
-
-<h4 id="andrew-ng-machine-learning">1.Andrew Ng. <em>Machine Learning</em></h4>
-
-<p>Andrew Y. Ng 是Stanford University的知名教授,也是Google Brain開發團隊的成員之一</p>
-
-<p>這門課基本概念講得很清楚,基本的概念以及應用都有提到,淺顯易懂,適合一般大眾</p>
-
-<p>https://www.coursera.org/course/ml</p>
-
-<h4 id="machine-learning-foundations">2.林軒田 <em>機器學習基石 (Machine Learning Foundations)</em></h4>
-
-<p>林軒田教授是台大資工系的教授,也曾經帶領學生參加資料探勘比賽KDDCUP獲得世界冠軍</p>
-
-<p>這門課有很多數學理論推導,作業多,難度頗高,適合想要成為機器學習的高手的人</p>
-
-<p>https://www.coursera.org/course/ntumlone</p>
-
 ]]></content>
   </entry>
   

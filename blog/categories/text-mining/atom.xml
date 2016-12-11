@@ -1,0 +1,996 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Text Mining | Mark Chang's Blog]]></title>
+  <link href="http://ckmarkoh.github.io/blog/categories/text-mining/atom.xml" rel="self"/>
+  <link href="http://ckmarkoh.github.io/"/>
+  <updated>2016-12-11T15:32:34+08:00</updated>
+  <id>http://ckmarkoh.github.io/</id>
+  <author>
+    <name><![CDATA[Mark Chang]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Brown Clustering]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/10/25/natural-language-processing-brown-clustering/"/>
+    <updated>2014-10-25T13:31:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/10/25/natural-language-processing-brown-clustering</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p><em>Clustering</em> 是一種非監督式的機器學習方法。所謂非監督式的學習方法，即是不需要事先提供人工標記好的語料庫給機器學習的演算法。可以直接從未標示的語料庫中，根據既有的特徵來做分類。</p>
+
+<p>例如，可以根據某字的前面或後面有哪些字，來決定哪些字屬於同一類。給一語料庫如下：</p>
+
+<blockquote>
+
+</blockquote>
+
+<p>The dog runs.</p>
+
+<p>A dog jumps.</p>
+
+<p>The dog jumps.</p>
+
+<p>A cat runs.</p>
+
+<p>The cat jumps.</p>
+
+<p>The cat runs.</p>
+
+<blockquote>
+
+</blockquote>
+
+<p>根據這些例句，可以把 <em>cat</em> 和 <em>dog</em> 歸在同一類，因為它們前面的字是 <em>the</em> 或 <em>a</em> ，同理，也可以把 <em>run</em> 和 <em>jump</em> 歸在同一類。</p>
+
+<h2 id="defining-the-formulation">Defining the Formulation</h2>
+
+<p>現在來定義一下，進行這種分類所需要的數學公式。</p>
+
+<!--more-->
+
+<p>假設總共有 <script type="math/tex">V</script> 個字彙， <script type="math/tex">V=\{w_{1},w_{2},...,w_{t}\}</script> ，和一個分類函數 <script type="math/tex">C:V \rightarrow \{1,2,...k\}</script> 。 <script type="math/tex">C</script> 把 <script type="math/tex">V</script> 中的單字分類成 <script type="math/tex">k</script> 類， <script type="math/tex">k \leq t</script> 。</p>
+
+<p>例如， <script type="math/tex">w_{1}</script> 被分類到類別 <script type="math/tex">3</script> ，則 <script type="math/tex">C(w_{1}) = 3</script> 。</p>
+
+<p>給定語料庫中的句子 <script type="math/tex">S = w_{1}, w_{2}, ... ,w_{n} </script> ，則可以計算這個句子出現的機率，為：</p>
+
+<script type="math/tex; mode=display">
+
+p(w_{1},w_{2},...,w_{n}) = \prod_{i=1}^{n}  e(w_{i}\mid C(w_{i})) \times q(C(w_{i}) \mid C(w_{i-1}))
+
+
+</script>
+
+<p>其中，<script type="math/tex">e(w_{i}\mid C(w_{i}))</script>  為，在類別 <script type="math/tex"> C(w_{i}) </script> 中，出現 <script type="math/tex">w_{i}</script> 的機率。 </p>
+
+<p>而 <script type="math/tex">q(C(w_{i}) \mid C(w_{i-1}))</script> 為，若此字的類別為 <script type="math/tex"> C(w_{i}) </script> ，則前一個字的類別為 <script type="math/tex">C(w_{i-1})</script> 的機率。</p>
+
+<p>根據先前例子中的語料庫，假設已經分類完成，分類 <script type="math/tex">(1)</script> 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&  C(\text{the})=C(\text{a})=1, \mspace{10mu}
+
+ C(\text{dog})=C(\text{cat})=2, \mspace{10mu}
+
+ C(\text{run})=C(\text{jump})=3 \mspace{10mu} & (1)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>並且，可計算出 <script type="math/tex">e(w_{i}\mid C(w_{i}))</script> 和 <script type="math/tex">q(C(w_{i}) \mid C(w_{i-1}))</script> 的機率。 例如， <script type="math/tex">e(\text{the}\mid C(\text{the}) )</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+e(\text{the}\mid C(\text{the}) )= 
+
+e(\text{the}\mid 1 )= 
+
+\frac{count(\text{the})}{count(\text{the})+count(\text{a})} = 
+
+\frac{4}{4+2} = \frac{2}{3}
+
+</script>
+
+<p>其中，<script type="math/tex">count(\text{the})</script> 為 <em>the</em> 在語料庫中出現的次數。 而 <script type="math/tex">q(C(\text{dog}) \mid C(\text{the}))</script> 的機率為：</p>
+
+<script type="math/tex; mode=display">
+
+
+q(C(\text{dog}) \mid C(\text{the})) = q(2 \mid 1) = \frac{count(1, 2 )}{count(1)} = \frac{6}{6} = 1
+
+
+</script>
+
+<p>其中，<script type="math/tex">count(1,2)</script> 為，類別為 <script type="math/tex">2</script> 的字，出現在類別為 <script type="math/tex">1</script> 的字後面的機會。</p>
+
+<p>給定語料庫中的句子 <em>The dog runs</em> ，那麼可以算出此句的機率為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& p(\text{the}, \text{dog}, \text{run}) \\
+
+& = e(the \mid C(\text{the})) \times e(dog \mid C(\text{dog})) \times e(run \mid C(\text{run})) \\ 
+
+& \times q(C(\text{the}) \mid 0 ) \times q(C(\text{dog}) \mid C(\text{the}) )  \times q(C(\text{run}) \mid C(\text{dog}) ) \\
+
+& = e(the \mid 1) \times e(dog \mid 2) \times e(run \mid 3)  \times q(1 \mid 0 ) \times q(2 \mid 1 )  \times q( 3 \mid 2 ) \\
+
+& = \frac{2}{3} \times \frac{1}{2} \times \frac{1}{2}  \times 1  \times 1  \times 1  \\
+
+& = \frac{1}{6}
+
+\end{align} 
+
+ %]]&gt;</script>
+
+<p>其中，把第一個字 <em>the</em> 的前一個字，歸類為第 <script type="math/tex">0</script> 類，即可求出 <script type="math/tex">q(C(\text{the}) \mid 0 ) = 1</script> 。</p>
+
+<p>再給一個分類，分類 <script type="math/tex">(2)</script>，這次隨便分，把 <em>the</em> 和 <em>dog</em> 分成一類，把 <em>a</em> 和 <em>cat</em> 分成一類，再把 <em>run</em> 和 <em>jump</em> 分成一類，分類如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& C(\text{the})=C(\text{dog})=1, \mspace{10mu}
+
+ C(\text{a})=C(\text{cat})=2, \mspace{10mu}
+
+ C(\text{run})=C(\text{jump})=3 \mspace{10mu} & (2)
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>給定語料庫中的句子 <em>The dog runs</em> ，那麼可以算出此句的機率為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& p(\text{the}, \text{dog}, \text{run}) \\
+
+& = e(the \mid C(\text{the})) \times e(dog \mid C(\text{dog})) \times e(run \mid C(\text{run})) \\ 
+
+& \times q(C(\text{the}) \mid 0 ) \times q(C(\text{dog}) \mid C(\text{the}) )  \times q(C(\text{run}) \mid C(\text{dog}) ) \\
+
+& = e(the \mid 1) \times e(dog \mid 1) \times e(run \mid 3)  \times q(1 \mid 0 ) \times q(1 \mid 1 )  \times q( 3 \mid 1 ) \\
+
+& = \frac{4}{7} \times \frac{3}{7} \times \frac{1}{2}  \times \frac{4}{6}  \times \frac{2}{7}  \times \frac{1}{2}  \\
+
+& = \frac{4}{343}
+
+\end{align} 
+
+ %]]&gt;</script>
+
+<p>從以上例子得知，用語料庫的句子  <em>The dog runs</em> 來算機率，分類 <script type="math/tex">(1)</script> 得出的機率比分類 <script type="math/tex">(2)</script> 高。若要得到較理想的分類，可以用語料庫的句子算出的機率，做最佳化，機率較高者，為較理想的分類。</p>
+
+<p>至於，把語料庫中 <script type="math/tex">t</script> 個單字 分組成 <script type="math/tex">k</script> 個類別的過程如何？</p>
+
+<p>首先，把 <script type="math/tex">t</script> 個單字個別分成 <script type="math/tex">t</script> 組。</p>
+
+<p>再從這些組中挑兩組合併起來，使其得出機率為最大值。合併完後，共有 <script type="math/tex">t-1</script> 組。</p>
+
+<p>再來，從這些 <script type="math/tex">t-1</script> 組中，再挑兩組合併，以此類推，直到剩下 <script type="math/tex">k</script> 組。</p>
+
+<p>由於此種演算法的時間複雜度相當高，為<script type="math/tex">O(t^{5})</script> ，<em>[Brown et al., 1992]</em> 提出的 <em>hierarchical clustering</em> 的概念，可有效降低時間複雜度，有興趣者請看延伸閱讀。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>首先，建立一個程式檔，命名為 <em>bcluster.py</em></p>
+
+<p>```python bcluster.py
+W_CORPUS = [
+  [‘the’,’dog’,’run’], [‘a’,’dog’,’jump’],
+  [‘the’,’dog’,’jump’], [‘a’,’cat’,’run’],
+  [‘the’,’cat’,’jump’], [‘the’,’cat’,’run’],
+]</p>
+
+<p>def word_count(c):
+  wcount = {} 
+  for s in c:
+    for w in s:
+      wcount.update({w:wcount.get(w,0) + 1.0})
+  return wcount</p>
+
+<p>def choose_merge(v, w_corpus, w_count):
+  max_p, max_v = 0.0, []
+  for i in range(len(v)):
+    for j in range(i+1,len(v)):
+      s1 = [x for x in v]
+      s2 = [ s1.pop(i)+s1.pop(j-1) ]+[x for x in s1]
+      p = calculate_prob(s2, w_corpus, w_count)
+      if p &gt; max_p:
+        max_p, max_v = p, s2 
+  return max_v           </p>
+
+<p>def calculate_prob(v, w_corpus, w_count):
+  w_class = { w:str(i) for i,s1 in enumerate([‘0’]+v) for w in s1}
+  c_corpus = [[w_class.get(w) for w in s] for s in w_corpus]<br />
+  c_count = word_count(c_corpus)
+  gran_count = word_count([[“_“.join(s[i:i+2]) for i in range(len(s))] for s in c_corpus])
+  p = 1.0;
+  for s in w_corpus:
+    for i in range(1,len(s)):
+      p = p<em>e(s[i], w_class, w_count, c_count)</em>q(s[i], s[i-1], w_class, c_count, gran_count)
+  return p </p>
+
+<p>def e(w, w_class, w_count, c_count):
+  return w_count[w] / c_count[w_class[w]] </p>
+
+<p>def q(w, wp, w_class, c_count, gran_count):
+  return gran_count[“%s_%s”%(w_class[wp],w_class[w])] / c_count[w_class[w]]</p>
+
+<p>def bcluster(k, corpus):
+  w_count = word_count(corpus)
+  w_corpus = [ [‘0’]+ s for s in corpus]
+  v = [[w] for w in w_count.keys()]
+  while len(v) &gt; k:
+  	print v
+    v = choose_merge(v, w_corpus, w_count)
+  return v</p>
+
+<p>```</p>
+
+<p>其中，<code>W_CORPUS</code> 為語料庫，<code>bcluster(k, corpus)</code> 為主要執行 <em>cluster</em> 的函數，參數 <code>k</code> 為總共要分成幾組。 </p>
+
+<p>到 python interactive mode 載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from bcluster import bcluster,W_CORPUS</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>根據語料庫中的文字，分成三組，程式印出逐漸將6個字分成3組的過程，最後一行為最終結果：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from bcluster import bcluster,W_CORPUS
+bcluster(3,W_CORPUS)
+[[‘a’], [‘jump’], [‘run’], [‘the’], [‘dog’], [‘cat’]]
+[[‘a’, ‘the’], [‘jump’], [‘run’], [‘dog’], [‘cat’]]
+[[‘dog’, ‘cat’], [‘a’, ‘the’], [‘jump’], [‘run’]]
+[[‘jump’, ‘run’], [‘dog’, ‘cat’], [‘a’, ‘the’]]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlangp</p>
+
+<p>Brown Clustering 出處：</p>
+
+<h4 id="brown-et-al-class-based-n-gram-models-of-natural-language-1992">Brown et al. Class-Based n-gram Models of Natural Language, 1992</h4>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Minimum Edit Distance]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/10/11/minimum-edit-distance/"/>
+    <updated>2014-10-11T14:28:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/10/11/minimum-edit-distance</id>
+    <content type="html"><![CDATA[<h2 id="minimum-edit-distance">Minimum Edit Distance</h2>
+
+<p><em>Minimum Edit Distance</em> （最小編輯距離），是用來計算兩個字串的相似程度。</p>
+
+<p>可應用於拼字校正、或是計算兩個DNA序列的相似程度。</p>
+
+<p>例如，假設有三個DNA序列：</p>
+
+<pre><code>1. AGCCT
+
+2. AACCT
+
+3. ATCT
+</code></pre>
+
+<p>直覺上，會認為，DNA序列 <em>2.</em> 和 <em>1.</em> 的相似程度比 <em>3.</em> 和 <em>1.</em> 的相似程度還要高。</p>
+
+<p>但為何是 <em>2.</em> 和 <em>1.</em> 較相似？相似程度又是多少？</p>
+
+<p>若要把兩序列的相似程度量化成數值，就要計算「最小編輯距離」，最小編輯距離越小，就表示兩序列越相似。</p>
+
+<h2 id="defining-of-minimum-edit-distance">Defining of Minimum Edit Distance</h2>
+
+<p>我們採用 <em>Levenshtein</em> 的最小編輯距離的定義，這是一種最簡單的定義方式。依此定義，若一個字串，編輯成另外一個字串，可以進行下面三種動作。</p>
+
+<!--more-->
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{c  c }
+
+		operation   &  cost \\ \hline
+
+	a.插入 (insertion) & 1 \\
+
+	b.刪除 (deletion)   & 1  \\
+
+	c.替換 (substitution) & 2  \\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>其中，定義 <em>a.</em> 和 <em>b.</em> 的 <em>cost</em> 為 <script type="math/tex">1</script> ， <em>c.</em> 的 <em>cost</em> 為 <script type="math/tex">2</script> （因為「替換」相當於「刪除」後再「插入」）。</p>
+
+<p>例如， <em>1.</em> 和 <em>2.</em> 的最小編輯距離，可以這樣計算，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{ c c c c c}
+
+    \ A & G & C & C & T \\
+
+    \ \mid & \mid & \mid & \mid & \mid \\
+
+    \ A & A & C & C & T \\
+
+		\   &  s &  &  &  &\\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>上圖中，將兩字串對齊，發現要把 <em>1.</em> 編輯成 <em>2.</em> ，需要對第二個字 <em>G</em> 進行替換（ <em>s</em> ），把 <em>G</em> 替換成 <em>A</em> ，而替換的 <em>cost</em> 為 <script type="math/tex">2</script>，故 <em>1.</em> 和 <em>2.</em> 的最小編輯距離為 <script type="math/tex">2</script>。</p>
+
+<p>再來，把 <em>1.</em> 編輯成 <em>3.</em> 的最小編輯距離，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{array}{ c c c c c}
+
+    \ A & G & C & C & T \\
+
+    \ \mid & \mid & \mid & \mid & \mid \\
+
+    \ A & \Box & T & C & T \\
+
+		\ &  d & s &  &  &\\
+
+\end{array}
+
+ %]]&gt;</script>
+
+<p>上圖中， <script type="math/tex">\Box</script> 表示該處沒字元， 而要把 <em>1.</em> 編輯成 <em>3.</em> ，需要把第二個字 <em>G</em> 刪除（ <em>d</em> ），並替換（ <em>s</em> ）第三個字 <em>C</em> ，這兩個動作的 <em>cost</em> 分別為 <script type="math/tex">1</script> 和 <script type="math/tex">2</script> ，故最小編輯距離為 <script type="math/tex">1+2 =3</script></p>
+
+<h2 id="computing-minimum-edit-distance">Computing Minimum Edit Distance</h2>
+
+<p>接著來看，要用什麼演算法，來計算最小編輯距離？可以用 <em>Dynamic Programming</em> 的方式來計算。</p>
+
+<p>所謂的 <em>Dynamic Programming</em> 簡而言之，就是把一個問題，一層一層分解下去，分成許多子問題，再算出這些子問題，用這些子問題的解答，求出原本問題的答案。</p>
+
+<p>首先，定義字串長度為 <script type="math/tex">m,n</script> 的兩字串，最小編輯距離為 <script type="math/tex">D(m,n)</script></p>
+
+<p>在分解過程中，需要計算長度為 <script type="math/tex">i,j</script>的兩個子字串，最小編輯距離為 <script type="math/tex">D(i,j)</script> ，其中 <script type="math/tex">% &lt;![CDATA[
+0<i<m, 0<j<n %]]&gt;</script> 。</p>
+
+<p>接著，定義起始狀態，就是把兩個給定的字串，各自編輯成空字串的距離，分別為 <script type="math/tex">D(i,0)</script> 和 <script type="math/tex">D(0,j)</script>。</p>
+
+<p>由於，把字串長度為 <script type="math/tex">i</script> 的字串，編輯成空字串長度為 <script type="math/tex">i</script> ，即 <script type="math/tex">D(i,0)=i</script> , 同理， <script type="math/tex">D(0,j)=j</script></p>
+
+<p>演算法如下：從起始狀態開始，由 <script type="math/tex">i=1\cdots m</script> 及 <script type="math/tex">j=1\cdots n</script> ，依序去計算長度為 <script type="math/tex">i,j</script> 字串的最小編輯距離。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+&\text{for each } i = 1\cdots m \\
+
+&\mspace{20mu}\text{for each } j = 1\cdots n \\
+
+&\mspace{40mu} D(i,j) = min 
+
+	\left\{
+
+	\begin{array}{l}
+
+	D(i-1,j) + 1 \\
+
+	D(i,j-1) + 1 \\
+
+  D(i-1,j-1) + 	\left\{\begin{array}{l}
+
+									 2 & \text{if} X(i) \neq Y(j) \\
+
+ 									 0 & \text{if} X(i) = Y(j) \\
+
+                	\end{array}\right.  
+
+	\end{array}
+
+\right.  
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex">X(i)</script> 為第一個字串中第 <script type="math/tex">i</script> 個字元，<script type="math/tex">Y(j)</script> 為第二個字串中第 <script type="math/tex">j</script> 個字元。</p>
+
+<p>用以上演算法，舉個例子來計算，若兩字串分別為：</p>
+
+<ol>
+  <li>
+    <p>AGCCT</p>
+  </li>
+  <li>
+    <p>ATCT</p>
+  </li>
+</ol>
+
+<p>輸入字串長度分別為 <script type="math/tex">5</script> 和 <script type="math/tex">4</script>，故 <script type="math/tex">m=5,n=4</script>。</p>
+
+<p>演算法開始的第一步，先建立以下表格，右下方空格部份即為 <script type="math/tex">D(i,j)</script> 的值。 </p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+	\begin{array}{|c|c|c|c|c|c|c|}
+
+  \hline
+
+	          \setminus & j  & 0    & 1 & 2 & 3 & 4  \\ \hline
+
+  					i	& \setminus  & \Box & A & T & C & T  \\ \hline 
+
+            0   & \Box     &      &   &   &   &    \\  \hline
+
+            1   & A        &      &   &   &   &    \\  \hline
+
+            2   & G        &      &   &   &   &    \\ \hline
+
+            3   & C        &      &   &   &   &    \\ \hline
+
+            4   & C        &      &   &   &   &    \\ \hline
+
+            5   & T        &      &   &   &   &    \\ \hline
+
+	\end{array}
+
+ %]]&gt;</script>
+
+<p>接著，填入初始狀態的值，即 <script type="math/tex">D(i,0)=i, D(0,j)=j</script></p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+	\begin{array}{|c|c|c|c|c|c|c|}
+
+  \hline
+
+              \setminus & j  & 0    & 1 & 2 & 3 & 4  \\ \hline
+
+            i   & \setminus  & \Box & A & T & C & T  \\ \hline
+
+            0   & \Box     & \color{blue}{0}   & \color{blue}{1} & \color{blue}{2} & \color{blue}{3} & \color{blue}{4}  \\ \hline
+
+            1   & A        & \color{blue}{1}   &   &   &   &    \\ \hline
+
+            2   & G        & \color{blue}{2}  &   &   &   &    \\ \hline
+
+            3   & C        & \color{blue}{3}  &   &   &   &    \\ \hline
+
+            4   & C        & \color{blue}{4}  &   &   &   &    \\ \hline
+
+            5   & T        & \color{blue}{5}  &   &   &   &    \\ \hline
+
+	\end{array}
+
+ %]]&gt;</script>
+
+<p>再來，計算 <script type="math/tex">D(1,1)</script> 的值，用演算法的公式，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+
+& D(1,1) \\
+
+&= min 
+
+	\left\{
+
+	\begin{array}{l}
+
+	D(0,1) + 1 \\
+
+	D(1,0) + 1 \\
+
+  D(0,0) + 	\left\{\begin{array}{l}
+
+									 2 & \text{if} X(1) \neq Y(1) \\
+
+ 									 0 & \text{if} X(1) = Y(1) \\
+
+                	\end{array}\right.  
+
+	\end{array}
+
+\right. \\
+
+&  = min 
+
+	\left\{
+
+	\begin{array}{l}
+
+	1 + 1 \\
+
+	1 + 1 \\
+
+  0 + 0  
+
+	\end{array}
+
+\right. \\
+
+& = 0 
+
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，可從表格中得知 <script type="math/tex"> D(0,1) = 1 , D(1,0) = 1 , D(0,0) = 0 </script>，又因為 <script type="math/tex">X(1) = Y(1) = \text{A}</script> ，故 <script type="math/tex"> D(1,1)</script> 的最小編輯距離為 <script type="math/tex"> 0+0=0 </script> 。將算出來的 <script type="math/tex">D(1,1)</script> 結果，填入表格，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+	\begin{array}{|c|c|c|c|c|c|c|}
+
+  \hline
+
+              \setminus & j  & 0    & 1 & 2 & 3 & 4  \\ \hline
+
+            i   & \setminus  & \Box & A & T & C & T  \\ \hline
+
+            0   & \Box     & \color{gray}{0}   & \color{gray}{1} & \color{gray}{2} & \color{gray}{3} & \color{gray}{4}  \\ \hline 
+
+            1   & A        & \color{gray}{1}  &  \color{blue}{0} &   &   &    \\ \hline
+
+            2   & G        & \color{gray}{2}  &   &   &   &    \\ \hline
+
+            3   & C        & \color{gray}{3}  &   &   &   &    \\ \hline
+
+            4   & C        & \color{gray}{4}  &   &   &   &    \\ \hline
+
+            5   & T        & \color{gray}{5}  &   &   &   &    \\ \hline
+
+	\end{array}
+
+ %]]&gt;</script>
+
+<p>用此公式，依序算出表格中其他空格的值。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+	\begin{array}{|c|c|c|c|c|c|c|}
+
+  \hline
+
+              \setminus & j  & 0    & 1 & 2 & 3 & 4  \\ \hline
+
+                    i   & \setminus  & \Box & A & T & C & T  \\ \hline
+
+            0   & \Box     & \color{gray}{0}  & \color{gray}{1} & \color{gray}{2} & \color{gray}{3} & \color{gray}{4} \\ \hline 
+
+            1   & A        & \color{gray}{1}  & \color{gray}{0} & \color{gray}{1} & \color{gray}{2} & \color{gray}{3}  \\ \hline 
+
+            2   & G        & \color{gray}{2}  & \color{gray}{1} & \color{gray}{2} & \color{gray}{3} & \color{gray}{4}  \\ \hline 
+
+            3   & C        & \color{gray}{3}  & \color{gray}{2} & \color{gray}{3} & \color{gray}{2} & \color{gray}{3}  \\ \hline 
+
+            4   & C        & \color{gray}{4}  & \color{gray}{3} & \color{gray}{4} & \color{gray}{3} & \color{gray}{4}  \\ \hline 
+
+            5   & T        & \color{gray}{5}  & \color{gray}{4} & \color{gray}{5} & \color{gray}{4} & \color{blue}{3}  \\ \hline
+
+	\end{array}
+
+ %]]&gt;</script>
+
+<p>全部算完以後，表格中最右下方的數字，即為 AGCCT 和 ATCT 兩序列的最小編輯距離，其值為3。</p>
+
+<h2 id="implementation">Implementation</h2>
+
+<p>再來是實作的部份，建立一個python程式檔 <em>minEditDist.py</em> ，並將以下程式複製貼上。</p>
+
+<p>```python minEditDist.py
+def minEditDist(sm,sn):
+  m,n = len(sm),len(sn)
+  D = map(lambda y: map(lambda x,y : y if x==0 else x if y==0 else 0,
+    range(n+1),[y]*(n+1)), range(m+1))
+  for i in range(1,m+1):
+    for j in range(1,n+1):
+      D[i][j] = min( D[i-1][j]+1, D[i][j-1]+1, 
+        D[i-1][j-1] + apply(lambda: 0 if sm[i-1] == sn[j-1] else 2)) 
+  for i in range(0,m+1):
+    print D[i] 
+  return D[m][n] </p>
+
+<p>```</p>
+
+<p>其中， <code>sm</code> 和 <code>sn</code> 分別為輸入的字串，而 <code>D[i][j]</code> 為  最小編輯距離 <script type="math/tex">D(i,j)</script>。</p>
+
+<p>到 <em>python interactive mode</em> 載入模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from minEditDist import minEditDist</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>接著，用此程式計算 <em>AGCCT</em> 和 <em>ATCT</em> 的最小編輯距離，方法如下：</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>minEditDist(“AGCCT”,”ATCT”)
+[0, 1, 2, 3, 4]
+[1, 0, 1, 2, 3]
+[2, 1, 2, 3, 4]
+[3, 2, 3, 2, 3]
+[4, 3, 4, 3, 4]
+[5, 4, 3, 4, 3]
+3</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>程式印出 <script type="math/tex">D(i,j)</script> 表格中的數值，並回傳最後結果，結果為 <script type="math/tex">3</script> 。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考至coursera線上課程</p>
+
+<h4 id="dan-jurafsky--christopher-manning-natural-language-processing">Dan Jurafsky &amp; Christopher Manning. Natural Language Processing</h4>
+
+<p>https://www.coursera.org/course/nlp</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[TF-IDF]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2014/04/14/natural-language-processing-tf-idf/"/>
+    <updated>2014-04-14T10:12:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2014/04/14/natural-language-processing-tf-idf</id>
+    <content type="html"><![CDATA[<h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的 <em>TF-IDF</em> , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法</p>
+
+<p>例如, 有一篇新聞, 是 <em>nltk</em> 的 <em>Reuters Corpus</em> 中的文章, 這篇文章被歸類在 <em>grain</em> , <em>ship</em> 這兩種類別下, 文章的內容如下：</p>
+
+<blockquote>
+  <p>GRAIN SHIPS LOADING AT PORTLAND 
+There were three grain ships loading and two ships were waiting to load at Portland , according to the Portland Merchants Exchange .</p>
+</blockquote>
+
+<p>假設不知道什麼是 <em>TF-IDF</em>, 先用人工判別法試看看, 這篇新聞的關鍵字, 應該是 <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的字, 而不會是 <em>to</em> , <em>at</em> 這種常常出現的字</p>
+
+<p>為什麼呢？因為 <em>to</em> 或 <em>at</em> 雖然在這篇文章中出現較多次, 但其他文章中也常有這些字, 所謂的關鍵的字, 應該是在這篇文章中出現較多次, 且在其他文章中比較少出現的字</p>
+
+<p>所以,如果要在一篇文章中, 尋找這樣的關鍵字, 要考慮以下兩個要素:</p>
+
+<!--more-->
+
+<h4 id="term-frequency-tf-">1.這個字在這篇文章中出現的頻率( <em>Term-Frequency TF</em> )</h4>
+
+<h4 id="inverse-document-frequency-idf-">2.在所有的文章中,有幾篇文章有這個字( <em>Inverse-Document-Frequency IDF</em> )</h4>
+
+<p>這就是所謂的 IF-IDF</p>
+
+<p>公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF
+
+\mspace{5mu}=\mspace{5mu} TF \times IDF
+
+\mspace{5mu}=\mspace{5mu} n_{w}^{d} \times log_{2} \frac{N}{N_{w}}
+
+</script>
+
+<p>其中, <script type="math/tex">n_{w}^{d}</script> 表示在文章 <script type="math/tex">d</script> 中, 文字 <script type="math/tex">w</script> 出現的次數, <script type="math/tex">N</script> 表示總共有幾篇文章, <script type="math/tex">N_{w}</script> 表示有文字 <script type="math/tex">w</script> 的文章有幾篇</p>
+
+<p>例如以上 <em>Reuters Corpus</em> 文章的例子, <em>Portland</em> 在這篇文章中出現了 <em>3</em> 次, 所以 <script type="math/tex">n_{w}^{d} =3 </script> , 而 <em>Reuters Corpus</em>  , 總共有 <em>10788</em> 篇文章, <script type="math/tex">N = 10788</script> , 在這些文章中, 有 <em>Portland</em> 這個字的文章, 有 <em>28</em> 篇, 所以 <script type="math/tex">N_{w} = 28.0</script> , 把這些數值帶入公式, 得出</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF_{Portland} \mspace{5mu}=\mspace{5mu}  3 \times log_{2} \frac{10788}{28} \mspace{5mu}  \approx \mspace{5mu} 25.769
+
+</script>
+
+<p>如果是 <em>to</em> 這個字, 在這篇文章出現 <em>2</em> 次, 但是總共有 <em>6944</em> 篇文章有這個字, 所以算出來的 <em>TF-IDF</em>  是</p>
+
+<script type="math/tex; mode=display">
+
+TF\text{-}IDF_{Portland} \mspace{5mu}=\mspace{5mu}  2 \times log_{2} \frac{10788}{6944} \mspace{5mu}  \approx \mspace{5mu} 1.271
+
+</script>
+
+<p>就這樣, 根據公式算出 <em>TF-IDF</em> 值的大小, 值越大的, 越可以作為代表這篇文章的關鍵字</p>
+
+<h2 id="implementation">2.Implementation</h2>
+
+<p>首先來瞭解一下 <em>nltk</em> 的 <em>Reuters Corpus</em>  和本文中的範例文章  </p>
+
+<p>先到 <em>python</em> 的 <em>Interactive Mode</em> 載入 <code>reuters</code> 模組</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>from nltk.corpus import reuters</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>本文中的範例文章, 在 <em>Reuters Corpus</em>  裡面的 <em>Id</em> 為 <code>training/3386</code></p>
+
+<p>可以把文章內容印出來看看</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>fileid = ‘training/3386’
+“ “.join(reuters.words(fileids=fileid))
+‘GRAIN SHIPS LOADING AT PORTLAND There were three grain ships loading and two ships were \
+waiting to load at Portland , according to the Portland Merchants Exchange .’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>也可以看一下這篇文章的分類, 是被分在 <em>grain</em> 和 <em>ship</em>  這兩個類別</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>reuters.categories(fileids=fileid)
+[‘grain’, ‘ship’]</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來是實作 <em>TF_IDF</em> 的公式, </p>
+
+<p>開一個新的檔案, 命名為 <em>tf_idf.py</em> , 並貼上以下程式碼</p>
+
+<p>```python tf_idf.py
+from nltk.corpus import reuters
+from math import log 
+from nltk import WordNetLemmatizer
+wnl=WordNetLemmatizer()</p>
+
+<p>_DN = float(len(reuters.fileids()))
+_RTS = {k:[wnl.lemmatize(w.lower()) for w in reuters.words(k)] for k in reuters.fileids()}</p>
+
+<p>def idf(w):
+    w = wnl.lemmatize(w.lower())
+    return log( _DN / sum([float(w in _RTS[k]) for k in _RTS.keys() ]) , 2)</p>
+
+<p>def tf(w,f):
+    w = wnl.lemmatize(w.lower())
+    return sum([float(w == x) for x in _RTS[f] ]) </p>
+
+<p>def tf_idf(w,f):
+    return tf(w,f)*idf(w)</p>
+
+<p>def run(f):
+    word_tfidf = [(w,tf_idf(w,f)) for w in set(_RTS[f])] 
+    for w,t in sorted(word_tfidf, key = lambda x : x[1], reverse=True):
+        print “%-15s %.10f”%(w,t)</p>
+
+<p>```</p>
+
+<p>其中, <code>_DN</code> 是 <em>Reuters Corpus</em>  中, 所有文章的數量, </p>
+
+<p>而 <code>_RTS = {k:[wnl.lemmatize(w.lower()) for w in reuters.words(k)] for k in reuters.fileids()}</code> </p>
+
+<p>是先把所有文章中的字都轉成小寫, 並轉換成單數, 例如把 <em>SHIPS</em>, <em>ships</em> , <em>ship</em> 這三種字, 都轉成同一種字 <em>ship</em></p>
+
+<p>剩下的 <em>function</em>  <code>idf(w)</code> , <code>tf(w,f)</code> , <code>tf_idf(w,f)</code> 就是 <em>TF-IDF</em> 公式, 而 <code>run(f)</code> 是把一篇文章每一個字都去跑 <em>TF-IDF</em> , 並印出結果</p>
+
+<p>再來到 <em>python</em> 的 <em>Interactive Mode</em> 載入 <em>tf_idf.py</em> 這個檔案</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>import tf_idf as ti</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>這可能需要花十幾秒甚至數分鐘的時間, 因為程式要把所有大小寫和單複數不同的字, 都轉成同樣的字, 要花一些時間</p>
+
+<p>再來, 別忘了先前看的那篇文章 <em>id</em> 是什麼, 因為等一下還會用到</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>fileid = ‘training/3386’</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>算一下 <em>Portland</em> 這個字在那篇文章中的 <em>TF</em> , <em>IDF</em> 以及 <em>TF-IDF</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.tf(‘Portland’,fileid)
+3.0</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.idf(‘Portland’)
+8.589784884178</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.tf_idf(‘Portland’,fileid)
+25.769354652534</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>還有, <em>to</em> 這個字在那篇文章中的 <em>TF</em> , <em>IDF</em> 以及 <em>TF-IDF</em></p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.tf(‘to’,fileid)
+2.0</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.idf(‘to’)
+0.6355885737911242</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.tf_idf(‘to’,fileid)
+1.2711771475822484</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>再來,把文章中每個字的 <em>TF-IDF</em> 都算出來, 並做排序</p>
+
+<p>```python</p>
+
+<blockquote>
+  <blockquote>
+    <blockquote>
+      <p>ti.run(fileid)
+portland        25.7693546525
+ship            17.9126251546
+loading         15.9417501031
+grain           10.3270402590
+load            8.7532836165
+waiting         7.6967000881
+merchant        7.4198598827
+according       5.0979317878
+were            4.9210037345
+there           3.5817565104
+exchange        3.4056179602
+at              3.3358878942
+three           3.0888007761
+two             2.4827546741
+to              1.2711771476
+and             0.6732655874
+the             0.6341349766
+,               0.2614305201
+.               0.1459533027</p>
+    </blockquote>
+  </blockquote>
+</blockquote>
+
+<p>```</p>
+
+<p>以上結果顯示, <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的關鍵字, 所算出來的 <em>TF-IDF</em> 值都比較高, 而 <em>to</em> , <em>at</em> , 或其他標點符號, 算出來的值就較低, 因此 <em>TF-IDF</em> 可以把文章中的關鍵字區分出來</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文使用 nltk 的 <em>Reuters Corpus</em> 做為範例, 若想知道 <em>Reuters Corpus</em> 要怎麼用, 請到以下網址</p>
+
+<p>http://nltk.googlecode.com/svn/trunk/doc/book/ch02.html</p>
+
+<p>另外, 本文的公式與觀念, 參考至以下這門 <em>coursera</em> 的線上課程 </p>
+
+<h4 id="dr-gautam-shroff--web-intelligence-and-big-data">Dr. Gautam Shroff.  Web Intelligence and Big Data</h4>
+
+<p>https://www.coursera.org/course/bigdata</p>
+
+]]></content>
+  </entry>
+  
+</feed>
