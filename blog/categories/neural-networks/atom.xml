@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:20:42+08:00</updated>
+  <updated>2016-12-23T02:38:23+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -124,7 +124,7 @@ print(l1.output)
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p><code>lua nn\Module.lua
+<p><code>lua nn/Module.lua
 function Module:__init()
    self.gradInput = torch.Tensor()
    self.output = torch.Tensor()
@@ -140,7 +140,7 @@ end
 
 <p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
 
-<p>```lua nn\Module.lua</p>
+<p>```lua nn/Module.lua</p>
 
 <p>function Module:updateOutput(input)
    return self.output
@@ -160,7 +160,7 @@ end</p>
 
 <p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
 
-<p>```lua nn\Linear.lua</p>
+<p>```lua nn/Linear.lua</p>
 
 <p>local Linear, parent = torch.class(‘nn.Linear’, ‘nn.Module’)</p>
 
@@ -220,7 +220,7 @@ print(l2.output)
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
-<p>```lua Linear.lua</p>
+<p>```lua nn/Linear.lua</p>
 
 <p>function Linear:updateOutput(input)
    if input:dim() == 1 then
@@ -416,7 +416,7 @@ print(l2.output)
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
 
-<p>
+<p>{% raw %}
 <code>lua
 input={
    {0,1},
@@ -424,7 +424,7 @@ input={
 }
 print(l2:forward(torch.Tensor(input)))
 </code>
-</p>
+{% endraw %}</p>
 
 <p>結果如下：</p>
 
