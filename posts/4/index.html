@@ -9,11 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1.Introduction 如果要把 string 的內容, 當成程式碼來執行, 可以用到 eval 或 exec 例如有個 string , 為 s1="3+5" 我們想要算它執行的結果, 可用 1
-2
-3
-&gt;&gt;&gt; s1=&quot;3+5&quot;
-&gt;&gt;&gt &hellip;">
+  <meta name="description" content="1.Introduction 在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息 例如, 在新聞報導中, 有 New , York , 這兩個字一起出現, 可以代表一個地名 New York , 所以當出現了 New &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -96,6 +92,54 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/">Pointwise Mutual Information</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-25T17:58:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:58 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息</p>
+
+<p>例如, 在新聞報導中, 有 <em>New</em> , <em>York</em>  , 這兩個字一起出現, 可以代表一個地名 <em>New York</em>  , 所以當出現了 <em>New</em> 這個字, 則有可能出現 <em>York</em> </p>
+
+<p>這可以用 <em>Pointwise Mutual Information(PMI)</em> 計算</p>
+
+<p><em>Pointwise Mutual Information</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
+
+</script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -587,82 +631,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/03/31/python-standard-library-argparse/">Python Argparse</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-03-31T05:31:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>31</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>5:31 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">0.Introduction</h2>
-
-<p>argparse是用來處理command line的argument所使用的</p>
-
-<p>例如執行一個程式, 比如說 <code>mv</code>  </p>
-
-<p>在Terminal輸入 <code>mv --help</code> 之後</p>
-
-<p>顯示如下：</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">$ </span>mv --help
-</span><span class="line">Usage: mv <span class="o">[</span>OPTION<span class="o">]</span>... <span class="o">[</span>-T<span class="o">]</span> SOURCE DEST
-</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... SOURCE... DIRECTORY
-</span><span class="line">  or:  mv <span class="o">[</span>OPTION<span class="o">]</span>... -t DIRECTORY SOURCE...
-</span><span class="line">Rename SOURCE to DEST, or move SOURCE<span class="o">(</span>s<span class="o">)</span> to DIRECTORY.
-</span><span class="line">
-</span><span class="line">Mandatory arguments to long options are mandatory <span class="k">for</span> short options too.
-</span><span class="line">      --backup<span class="o">[=</span>CONTROL<span class="o">]</span>       make a backup of each existing destination file
-</span><span class="line">  -b                           like --backup but does not accept an argument
-</span><span class="line">  -f, --force                  <span class="k">do</span> not prompt before overwriting
-</span><span class="line">  -i, --interactive            prompt before overwrite
-</span><span class="line">......
-</span></code></pre></td></tr></table></div></figure>
-
-<p>由此可知, <code>mv</code> 後面可以有很多種argument</p>
-
-<p>那要寫程式去parse這些command line的argument很麻煩</p>
-
-<p>如果用了 <code>argparse</code> 這個module</p>
-
-<p>就不用自己寫程式去parse這些argument了</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/03/31/python-standard-library-argparse/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -677,11 +645,15 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (8)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
@@ -697,10 +669,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
     
       <li class="post">
         <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">Gibbs Sampling</a>
       </li>
     
   </ul>

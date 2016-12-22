@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-11T15:32:34+08:00</updated>
+  <updated>2016-12-23T02:13:57+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,512 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 1 : NN.Module & NN.Linear]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module/"/>
+    <updated>2016-12-19T22:36:47+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>此系列講解如何用 torch 實作 neural network 。</p>
+
+<p>本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
+
+<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
+
+<p>舉個例子，如果要實作以下運算：</p>
+
+<script type="math/tex; mode=display">
+
+\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} 
+
+</script>
+
+<p>其中，假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
+
+<p>使用 torch 實作此運算的方法如下：</p>
+
+<p>首先，載入 nn 套件：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>建立一個 Linear Module：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中 <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
+
+<p>以上程式中，建立一個命名為 <code>l1</code> 的 module ，如果要取得它的 weight 和 bias ，可以用 <code>l1.weight</code> 和 <code>l1.bias</code> 取得，方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-0.0817 -0.0129
+</span><span class="line">-0.1369 -0.5361
+</span><span class="line"> 0.0573  0.1407
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">-0.6550
+</span><span class="line"> 0.2567
+</span><span class="line"> 0.2491
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， size 3x2 的 tensor 為 weight, size 3 的 tensor 為 bias。</p>
+
+<p>用此 module 可以執行運算，令 x 為一個二維向量 [0,1] ，輸入此 module ，進行 forward propagation ，也就是說，執行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的運算， 並輸出結果為 <script type="math/tex">\textbf{y}</script>  ，實作如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">}</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>輸出結果 <code>y</code> 為一個三維向量，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-0.6679
+</span><span class="line">-0.2794
+</span><span class="line"> 0.3899
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可以從 <code>l1.output</code> 來直接取得 <code>l1</code> 之前進行運算的結果。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-0.6679
+</span><span class="line">-0.2794
+</span><span class="line"> 0.3899
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="nnmodule--nnlinear">nn.Module &amp; nn.Linear</h2>
+
+<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的源碼相當簡潔易懂，可以直接看源碼來了解它的功能是什麼。</p>
+
+<p><code>nn.Module</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
+
+<p><code>nn.Linear</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
+
+<p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">__init</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">_type</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="nb">type</span><span class="p">()</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>Module</code> 中最基本的成員有 <code>output</code> 和 <code>gradInput</code> 。
+<code>output</code> 為此 <code>Module</code> 的 forward propagation 結果，而 <code>gradInput</code> 為 backward propagation 的運算結果。
+這些變量一開始都會被初始化為 空的 tensor 。</p>
+
+<p>註：本文先不講解 backward propagation 與 <code>gradInput</code> 的部分，交由之後的教學文章來解釋。</p>
+
+<p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span>
+</span><span class="line"><span class="k">end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>先看 forward 的部分， Module 沒有運算的實作，僅單純輸出 <code>output</code> 值。如果呼叫了 forward propagation ，則從 <code>Module:updateOutput</code> 就直接輸出了 <code>output</code> 。</p>
+
+<p>而 <code>nn.Linear</code> 則實作了 forward propagation。</p>
+
+<p>所謂的 Linear，即是指 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的線性運算。</p>
+
+<p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="kd">local</span> <span class="n">Linear</span><span class="p">,</span> <span class="n">parent</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">class</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">nn.Linear&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="s">nn.Module&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Linear</span><span class="p">:</span><span class="n">__init</span><span class="p">(</span><span class="n">inputSize</span><span class="p">,</span> <span class="n">outputSize</span><span class="p">,</span> <span class="n">bias</span><span class="p">)</span>
+</span><span class="line">   <span class="n">parent</span><span class="p">.</span><span class="n">__init</span><span class="p">(</span><span class="n">self</span><span class="p">)</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">bias</span> <span class="o">=</span> <span class="p">((</span><span class="n">bias</span> <span class="o">==</span> <span class="kc">nil</span><span class="p">)</span> <span class="ow">and</span> <span class="kc">true</span><span class="p">)</span> <span class="ow">or</span> <span class="n">bias</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">outputSize</span><span class="p">,</span> <span class="n">inputSize</span><span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">gradWeight</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">outputSize</span><span class="p">,</span> <span class="n">inputSize</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">bias</span> <span class="k">then</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">outputSize</span><span class="p">)</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradBias</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">outputSize</span><span class="p">)</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">   <span class="n">self</span><span class="p">:</span><span class="n">reset</span><span class="p">()</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在第1行， <code>nn.Linear</code> 繼承了 <code>nn.Module</code> 。</p>
+
+<p>在第3行開始可以看到，建構 Linear 所需的參數有 <code>inputSize</code> , <code>outputSize</code> 和 <code>bias</code> 。 <code>bias</code>  不一定要給，如果沒有給，則預設值會讓它是隨機的。除非 <code>bias=false</code> ，則此 Linear Module 就不會有 <code>bias</code> 。
+從6~10行中，它比 <code>nn.Module</code> 多了 <code>weigt</code> 和 <code>bias</code> 這兩個變量，而 <code>reset()</code> 則是將它們初始化。</p>
+
+<p>如果要建立一個 Linear Module，則要給定 <code>inputSize</code> 和 <code>outputSize</code> ，也就是 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。</p>
+
+<p>假設  <script type="math/tex">\textbf{x}</script> 是二維， <script type="math/tex">\textbf{y}</script> 是三維，建立一個命名為 <code>l2</code> 的 Linear 模組：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>用以下方法印出 l2 的 <code>weight</code> , <code>bias</code> 和 <code>output</code> ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>輸出結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.0690  0.1313
+</span><span class="line"> 0.3043  0.4869
+</span><span class="line"> 0.1453  0.5062
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.0635
+</span><span class="line"> 0.4911
+</span><span class="line">-0.1080
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor with no dimension<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中，<code>weight</code> 和 <code>bias</code> 會被初始化隨機成 size 3x2 和 size 3 的 double tensor ，而最後一行顯示出 <code>output</code> 還是空的（with no dimension）。</p>
+
+<p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Linear</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">then</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">resize</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">:</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">copy</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span> <span class="k">else</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">zero</span><span class="p">()</span> <span class="k">end</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">addmv</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">input</span><span class="p">)</span>
+</span><span class="line">   <span class="k">elseif</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">then</span>
+</span><span class="line">      <span class="kd">local</span> <span class="n">nframe</span> <span class="o">=</span> <span class="n">input</span><span class="p">:</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">      <span class="kd">local</span> <span class="n">nElement</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">nElement</span><span class="p">()</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">resize</span><span class="p">(</span><span class="n">nframe</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">:</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">nElement</span><span class="p">()</span> <span class="o">~=</span> <span class="n">nElement</span> <span class="k">then</span>
+</span><span class="line">         <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">zero</span><span class="p">()</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">      <span class="n">updateAddBuffer</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input</span><span class="p">)</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">addmm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">:</span><span class="n">t</span><span class="p">())</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span><span class="p">:</span><span class="n">addr</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">addBuffer</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span> <span class="k">end</span>
+</span><span class="line">   <span class="k">else</span>
+</span><span class="line">      <span class="nb">error</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">input must be vector or matrix&#39;</span><span class="p">)</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上可以分為兩部分來看，首先是當 <code>input:dim() ==1</code> 時，也就是 <code>input</code> 的維度為 1 ，也就是一次只輸入單筆資料的時候。第一步，會先調整 <code>output</code> 的 <code>size</code> 為適當的大小，再將 <code>bias</code> 複製到 <code>output</code> ，再讓 <code>input</code> 和 <code>weight</code> 進行矩陣相乘，並和 <code>output</code> 相加，再輸出結果。</p>
+
+<p>從數學公式上來看，輸入值 <script type="math/tex">\textbf{x}</script> 是一維的向量，進行的運算如下：</p>
+
+<script type="math/tex; mode=display">
+\textbf{W}\textbf{x} + \textbf{b}
+</script>
+
+<p>此時， <script type="math/tex">\textbf{W}</script> 放前面，而 <script type="math/tex">\textbf{x}</script> 放後面。</p>
+
+<p>例如當輸入值向量 <script type="math/tex">[0,1]</script> 時，則矩陣運算的結果為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\begin{bmatrix}
+
+ 0.0690 & 0.1313 \\
+ 0.3043 & 0.4869 \\
+ 0.1453 & 0.5062 \\
+
+\end{bmatrix}
+\begin{bmatrix}
+0 \\
+1
+\end{bmatrix}
++ 
+\begin{bmatrix}
+0.0635 \\
+0.4911 \\
+-0.1080 \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+0.0690 \times 0 + 0.1313 \times 1 + 0.0635 \\
+0.3043 \times 0 + 0.4869 \times 1 + 0.4911\\
+0.1453 \times 0 + 0.5062 \times 1  -0.1080\\
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+0.1313 + 0.0635 \\
+0.4869 + 0.4911\\
+0.5062  -0.1080\\
+\end{bmatrix}
+=
+\begin{bmatrix}
+ 0.1948 \\
+ 0.9780  \\
+ 0.3982\\
+\end{bmatrix}
+\end{align}
+
+ %]]&gt;</script>
+
+<p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入 <code>torch.Tensor{0,1}</code> 並印出結果：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">}))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948
+</span><span class="line"> 0.9780
+</span><span class="line"> 0.3982
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>這時已經進行過了 forward 運算，而 <code>output</code> 有值了，所以可以印出它的值，方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>output</code> 的值也是如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948
+</span><span class="line"> 0.9780
+</span><span class="line"> 0.3982
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>而當 <code>input:dim() ==2</code> 時，也就是 <code>input</code> 的維度為 2 ，也就是一次輸入多筆資料。這時需要先把 <code>weight</code> 進行轉置，再和 <code>input</code> ，並和 <code>bias</code> 相加，並將結果加到 <code>output</code> 並輸出。</p>
+
+<p>一次輸入多筆資料的目的是為了加速運算，因為用矩陣對矩陣的相乘的方式就可以來加速。這樣同時輸入的一批資料，就稱為 batch 。</p>
+
+<p>從公式上來看，輸入值 <script type="math/tex">\textbf{X}</script> 是二維的矩陣，則進行以下矩陣運算：</p>
+
+<script type="math/tex; mode=display">
+\textbf{X}\textbf{W}^{T} + \textbf{b}
+</script>
+
+<p>此時， <script type="math/tex">\textbf{X}</script> 放前面，而 <script type="math/tex">\textbf{W}</script> 進行轉置後放後面。</p>
+
+<p>例如當輸入資料有兩筆向量 <script type="math/tex">[0, 1]</script> 和 <script type="math/tex">[2, 1]</script> 時，則可以組成以下矩陣 (2x2) ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{bmatrix}
+0 &1 \\
+2 &1 \\
+\end{bmatrix}
+
+
+ %]]&gt;</script>
+
+<p>則矩陣運算的過程如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&
+\begin{bmatrix}
+0 &1 \\
+2 &1 \\
+\end{bmatrix}
+\begin{bmatrix}
+0.0690 & 0.3043 & 0.1453 \\
+0.1313 & 0.4869 & 0.5062 \\
+\end{bmatrix}
++ 
+\begin{bmatrix}
+0.0635 &0.4911 &-0.1080 
+\end{bmatrix}\\
+&
+=
+\begin{bmatrix}
+0 \times 0.0690 + 1 \times 0.1313 
+& 0 \times 0.3043 + 1 \times 0.4869
+& 0 \times 0.1453 + 1 \times 0.5062 \\
+
+ 2 \times 0.0690 + 1 \times 0.1313 
+& 2 \times 0.3043 + 1 \times 0.4869
+& 2 \times 0.1453 + 1 \times 0.5062 \\
+\end{bmatrix}\\
+&
++ 
+\begin{bmatrix}
+0.0635 &0.4911 &-0.1080 \\
+0.0635 &0.4911 &-0.1080
+\end{bmatrix}\\
+&
+=
+\begin{bmatrix}
+0.1313 +0.0635
+& 0.4869 +0.4911
+& 0.5062 -0.1080 \\
+0.2694 + 0.0635
+& 1.0955 +0.4911
+& 0.7969 -0.1080 \\
+\end{bmatrix}\\
+&
+=
+\begin{bmatrix}
+ 0.1948 & 0.9780 & 0.3982 \\
+ 0.3328 & 1.5866 & 0.6889 \\
+\end{bmatrix}
+\end{align}\\
+
+ %]]&gt;</script>
+
+<p>輸出結果為一個 2x3 的矩陣，每一個橫排為一個三維向量，代表著每一筆資料經過線性運算的結果。</p>
+
+<p>以上要注意的就是， <script type="math/tex">\textbf{b}</script> 的橫排會被複製，以便和前面的矩陣相乘結果來相加。</p>
+
+<p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">input</span><span class="o">=</span><span class="p">{</span>
+</span><span class="line">   <span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">},</span>
+</span><span class="line">   <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">(</span><span class="n">input</span><span class="p">)))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948  0.9780  0.3982
+</span><span class="line"> 0.3328  1.5866  0.6889
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 2x3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>也可印出 <code>output</code> 的值：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948  0.9780  0.3982
+</span><span class="line"> 0.3328  1.5866  0.6889
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 2x3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Word2vec (Part 3 : Implementation)]]></title>
@@ -7355,130 +7861,6 @@ avoid \vee view  = [1,0,0] \vee [0,1,0] = [1 ,1, 0]
 <p>本文參考教科書 <em>Introduction to Information Retrieval</em></p>
 
 <p>http://nlp.stanford.edu/IR-book/</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Machine Translation : Statistical Machine Translation]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation/"/>
-    <updated>2014-10-27T16:49:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2014/10/27/machine-translation-statistical-machine-translation</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p><em>Statistical Machine Translation</em> （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 <em>parallel corpus</em>（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。</p>
-
-<p>平行語料庫中包含大量句子，這些句子意思一樣，但分別用兩種語言寫成，例如：</p>
-
-<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class=""><span class="line">這是一個蘋果。
-</span><span class="line">This is an apple.
-</span><span class="line">
-</span><span class="line">桌上有一本書。
-</span><span class="line">There is a book on the table．
-</span><span class="line">
-</span><span class="line">...... 
-</span></code></pre></td></tr></table></div></figure>
-
-<p>藉由這種平行語料庫，就可以用統計的方式，讓機器學會如何將一種語言，翻譯成另一種語言。</p>
-
-<h2 id="noisy-channel-model">Noisy Channel Model</h2>
-
-<p><em>Noicy Channel Model</em> 是一種常用的統計機器翻譯的模型。</p>
-
-<!--more-->
-
-<p>如果，要把中文翻譯成英文，則可用計算某個中文句子翻譯成英文句子的機率，來找出哪個翻譯結果，是比較好的翻譯。給定中文句子 <em>c</em> ，它翻譯成某個英文句子 <em>e</em> 的機率，為 <script type="math/tex">p(e \mid c)</script> ，即為，在中文句子為 <em>c</em> 的條件下，出現英文句子 <em>e</em> 的條件機率。</p>
-
-<p>在 <em>Noicy Channel Model</em> 中，有兩個成分：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& p(e)  & \text{The Language Model}   \\
-
-& p(c \mid e)  & \text{The Translation Model}  
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>其中， <em>Language Model</em> 表示英文句子 <em>e</em> 在語料庫中的機率。要建立此模型，用單一一種語言的語料庫做訓練即可。</p>
-
-<p>而 <em>Translation Model</em> 表示給定英文句子 <em>e</em> ，在此條件下，翻譯成中文句子 <em>c</em> 的機率。要建立此模型，需要用平行語料庫做訓練。</p>
-
-<p>用貝氏定理，得出某個中文句子 <em>c</em> 翻譯成某個英文句子 <em>e</em> 的機率，為：</p>
-
-<script type="math/tex; mode=display">
-
-p(e \mid c) = \frac{p(e,c)}{p(c)} = \frac{p(e)\times p(c \mid e)}{\sum_{e} p(e)\times p(c \mid e)}
-
-</script>
-
-<p>若要得出翻譯最佳的英文句子，則可以求機率最大者，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\mathop{\arg\,\max}\limits_{e}  p(e \mid c) = \mathop{\arg\,\max}\limits_{e} p(e)\times p(c \mid e)
-
-</script>
-
-<h2 id="example">Example</h2>
-
-<p>舉個例子，若要將中文句 <em>「我肚子餓了」</em> 翻譯成英文。假設已經先從從語料庫中，計算出可能翻譯出的英文句子，如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{array}{c | c c}
-
-English & p(c \mid e) & p (e) \\ \hline
-
-\text{I am hungry} & 0.00019 & 0.0084\\
-
-\text{My belly hungry} & 0.00031 & 0.0000031\\
-
-\text{I starve} &  0.00045 & 0.0000012\\
-
-\end{array}
-
- %]]&gt;</script>
-
-<p>則這句中文最有可能的翻譯為 <em>“I am hungry”</em> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \mathop{\arg\,\max}\limits_{e}  p(e \mid c) \\
-
-& = \mathop{\arg\,\max}\limits_{e} p(e)\times p(c \mid e) \\
-
-& = p(e = \text{"I am hungry"} )\times p(c \mid e = \text{"I am hungry"} ) \\
-
-& =  0.00019 \times 0.0084 = 0.000001596 
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>註：本例子已先假設 <em>Language Model</em> <script type="math/tex">p(e)</script> 和 <em>Translation Model</em> <script type="math/tex">p(c \mid e)</script> 都已經先計算好。若要從頭計算 <em>Language Model</em> 可以用 <em>n-gram</em> ，但計算 <em>Translation Model</em> 則需要更複雜的模型，例如 <em>IBM Model</em> 或 <em>Phrase-based Model</em> 。</p>
-
-<h2 id="reference">Reference</h2>
-
-<p>本文參考至coursera線上課程</p>
-
-<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
-
-<p>https://www.coursera.org/course/nlangp</p>
 ]]></content>
   </entry>
   

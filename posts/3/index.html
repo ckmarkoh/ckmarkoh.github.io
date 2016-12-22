@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction Clustering 是一種非監督式的機器學習方法。所謂非監督式的學習方法，即是不需要事先提供人工標記好的語料庫給機器學習的演算法。可以直接從未標示的語料庫中，根據既有的特徵來做分類。 例如，可以根據某字的前面或後面有哪些字，來決定哪些字屬於同一類。給一語料庫如下： &hellip;">
+  <meta name="description" content="Introduction Statistical Machine Translation （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 parallel corpus（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。 平行語料庫中包含大量句子， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,66 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/10/27/machine-translation-statistical-machine-translation/">Machine Translation : Statistical Machine Translation</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-10-27T16:49:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>27</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:49 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Statistical Machine Translation</em> （統計機器翻譯）是一種機器翻譯的演算法，這種方法藉由從 <em>parallel corpus</em>（平行語料庫）語料庫，當成訓練資料，訓練出機器學習的模型，以此將句子翻譯成另一個句子。</p>
+
+<p>平行語料庫中包含大量句子，這些句子意思一樣，但分別用兩種語言寫成，例如：</p>
+
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class=""><span class="line">這是一個蘋果。
+</span><span class="line">This is an apple.
+</span><span class="line">
+</span><span class="line">桌上有一本書。
+</span><span class="line">There is a book on the table．
+</span><span class="line">
+</span><span class="line">...... 
+</span></code></pre></td></tr></table></div></figure>
+
+<p>藉由這種平行語料庫，就可以用統計的方式，讓機器學會如何將一種語言，翻譯成另一種語言。</p>
+
+<h2 id="noisy-channel-model">Noisy Channel Model</h2>
+
+<p><em>Noicy Channel Model</em> 是一種常用的統計機器翻譯的模型。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/10/27/machine-translation-statistical-machine-translation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -708,54 +768,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/">Pointwise Mutual Information</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-25T17:58:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:58 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>在自然語言處理中, 想要探討兩個字之間, 是否存在某種關係, 例如某些字比較容易一起出現, 這些字一起出現時, 可能帶有某種訊息</p>
-
-<p>例如, 在新聞報導中, 有 <em>New</em> , <em>York</em>  , 這兩個字一起出現, 可以代表一個地名 <em>New York</em>  , 所以當出現了 <em>New</em> 這個字, 則有可能出現 <em>York</em> </p>
-
-<p>這可以用 <em>Pointwise Mutual Information(PMI)</em> 計算</p>
-
-<p><em>Pointwise Mutual Information</em> 的公式如下：</p>
-
-<script type="math/tex; mode=display">
-
-pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
-
-</script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/25/natural-language-processing-pointwise-mutual-information/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -770,11 +782,15 @@ pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (8)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
@@ -790,10 +806,6 @@ pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
     
       <li class="post">
         <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">Gibbs Sampling</a>
       </li>
     
   </ul>

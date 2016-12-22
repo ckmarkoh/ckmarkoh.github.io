@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="本篇是我在使用xpath中遇到的一些案例,做些筆記 xpath是什麼,簡而言之,就是可以把網頁的html碼當成Tree 並且用xpath去取得Tree中的某些nodes或leaves 若想了解更多關於xpath是什麼,可以考以下網站 http://www.w3schools.com/XPath/ &hellip;">
+  <meta name="description" content="本篇介紹如何用python nltk 的應用,邏輯語意與推理 1. Introduction 邏輯語意學(logic semantics/formal semantics) 是早期的自然語言處理方法之一 因為自然語言中存在著某種邏輯成份 故可以用數理邏輯的公式來描述自然語言 進行各種邏輯推理 例如 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,68 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/13/python-nltk-logic-1/">NLTK Logic 1 : First Order Logic and Semantics</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-13T13:53:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:53 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>本篇介紹如何用python nltk 的應用,邏輯語意與推理</p>
+
+<h2 id="introduction">1. Introduction</h2>
+
+<p>邏輯語意學(logic semantics/formal semantics)</p>
+
+<p>是早期的自然語言處理方法之一</p>
+
+<p>因為自然語言中存在著某種邏輯成份</p>
+
+<p>故可以用數理邏輯的公式來描述自然語言</p>
+
+<p>進行各種邏輯推理</p>
+
+<p>例如 <em>Socrates is a man.</em> 這句話,用一階邏輯式表示:</p>
+
+<script type="math/tex; mode=display">
+
+man(Socrates)
+
+</script>
+
+<p>如果 <em>Socrates is a man.</em> 這句話為真,則:</p>
+
+<script type="math/tex; mode=display">
+
+man(Socrates)= true 
+
+</script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/13/python-nltk-logic-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -465,11 +527,15 @@ MathJax.Hub.Config({
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (8)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
@@ -485,10 +551,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/09/pgm-gibbs-sampling/">Gibbs Sampling</a>
       </li>
     
   </ul>
