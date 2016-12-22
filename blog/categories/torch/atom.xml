@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Torch | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/torch/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:18:24+08:00</updated>
+  <updated>2016-12-23T02:20:42+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -22,7 +22,7 @@
 
 <p>此系列講解如何用 torch 實作 neural network 。</p>
 
-<p>本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
+<p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
 
 <p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
 
@@ -124,7 +124,7 @@ print(l1.output)
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p><code>lua
+<p><code>lua nn\Module.lua
 function Module:__init()
    self.gradInput = torch.Tensor()
    self.output = torch.Tensor()
@@ -140,7 +140,7 @@ end
 
 <p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
 
-<p>```lua</p>
+<p>```lua nn\Module.lua</p>
 
 <p>function Module:updateOutput(input)
    return self.output
@@ -160,7 +160,7 @@ end</p>
 
 <p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
 
-<p>```lua</p>
+<p>```lua nn\Linear.lua</p>
 
 <p>local Linear, parent = torch.class(‘nn.Linear’, ‘nn.Module’)</p>
 
@@ -220,7 +220,7 @@ print(l2.output)
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
-<p>```lua</p>
+<p>```lua Linear.lua</p>
 
 <p>function Linear:updateOutput(input)
    if input:dim() == 1 then

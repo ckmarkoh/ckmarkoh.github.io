@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:14:40+08:00</updated>
+  <updated>2016-12-23T02:20:42+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -22,7 +22,7 @@
 
 <p>此系列講解如何用 torch 實作 neural network 。</p>
 
-<p>本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
+<p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
 
 <p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
 
@@ -34,9 +34,7 @@
 
 </script>
 
-<p>其中，假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
-
-<!--more-->
+<p>假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
 
 <p>使用 torch 實作此運算的方法如下：</p>
 
@@ -52,7 +50,9 @@
 </pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
 </span></code></pre></td></tr></table></div></figure>
 
-<p>其中 <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
+<!--more-->
+
+<p>其中， <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
 
 <p>以上程式中，建立一個命名為 <code>l1</code> 的 module ，如果要取得它的 weight 和 bias ，可以用 <code>l1.weight</code> 和 <code>l1.bias</code> 取得，方法如下：</p>
 
@@ -136,7 +136,7 @@
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -156,7 +156,7 @@
 
 <p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -180,7 +180,7 @@
 
 <p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -261,7 +261,7 @@
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>

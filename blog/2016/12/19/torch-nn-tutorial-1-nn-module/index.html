@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 此系列講解如何用 torch 實作 neural network 。 本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。 以 torch 實作 neural network 時，最常用的套件為 nn，而在 nn 中，建構 neural &hellip;">
+  <meta name="description" content="Introduction 此系列講解如何用 torch 實作 neural network 。 本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。 以 torch 實作 neural network 時，最常用的套件為 nn，而在 nn 中，建構 neural &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -115,7 +115,7 @@ MathJax.Hub.Config({
 
 <p>此系列講解如何用 torch 實作 neural network 。</p>
 
-<p>本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
+<p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
 
 <p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
 
@@ -229,7 +229,7 @@ MathJax.Hub.Config({
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -249,7 +249,7 @@ MathJax.Hub.Config({
 
 <p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -273,7 +273,7 @@ MathJax.Hub.Config({
 
 <p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn\Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -354,7 +354,7 @@ MathJax.Hub.Config({
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
