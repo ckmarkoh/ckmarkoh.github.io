@@ -229,7 +229,7 @@ MathJax.Hub.Config({
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -249,7 +249,7 @@ MathJax.Hub.Config({
 
 <p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
 
-<figure class="code"><figcaption><span>nn\Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -273,7 +273,7 @@ MathJax.Hub.Config({
 
 <p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
 
-<figure class="code"><figcaption><span>nn\Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn/Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -354,7 +354,7 @@ MathJax.Hub.Config({
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
-<figure class="code"><figcaption><span>Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><figcaption><span>nn/Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
