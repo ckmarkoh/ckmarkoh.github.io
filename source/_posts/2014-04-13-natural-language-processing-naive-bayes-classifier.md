@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Naive Bayes Classifier'
+title: 'Naive Bayes Classifier'
 date: 2014-04-13 07:04
 comments: true
-categories: [natural_language_processing, Naive_Bayes, classifier, sentiment_analysis]
+categories: ['Machine Learning', 'Natural Language Processing']
 ---
 
 ## 1.Introduction

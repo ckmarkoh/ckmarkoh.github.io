@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Dependency Grammar'
+title: 'NLTK Dependency Grammar'
 date: 2014-05-03 15:00
 comments: true
-categories: [natural_language_processing, grammar, parsing, dependency_grammar, nltk]
+categories: ['Natural Language Processing','NLTK']
 ---
 
 ## 1. Introduction

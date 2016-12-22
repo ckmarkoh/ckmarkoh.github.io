@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器學習 -- Overfitting and Regularization'
+title: 'Overfitting and Regularization'
 date: 2014-04-13 06:46
 comments: true
-categories: [machine_learning]
+categories: ['Machine Learning']
 ---
 
 ## 1.Overfitting

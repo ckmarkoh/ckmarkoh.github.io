@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Optimization Method -- Gradient Descent & AdaGrad'
+title: 'Gradient Descent & AdaGrad'
 date: 2015-12-23 17:14
 comments: true
-categories: [adagrad, optimization]
+categories: ['Optimization Methods','Machine Learning']
 ---
 
 ## Introduction

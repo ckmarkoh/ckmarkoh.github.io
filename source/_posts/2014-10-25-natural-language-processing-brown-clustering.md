@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Brown Clustering'
+title: 'Brown Clustering'
 date: 2014-10-25 13:31
 comments: true
-categories: 
+categories: ['Natural Language Processing','Text Mining','Machine Learning']
 ---
 
 ##Introduction

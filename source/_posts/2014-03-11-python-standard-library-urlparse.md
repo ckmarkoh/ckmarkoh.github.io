@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Standard Library -- urlparse'
+title: 'Python urlparse'
 date: 2014-03-11 02:56
 comments: true
-categories: [Python, web_crawler, python_standard_library]
+categories: ['Python Programming']
 ---
 
 今天來談到URL parse(URL剖析)

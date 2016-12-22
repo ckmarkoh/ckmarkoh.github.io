@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器翻譯 -- Statistical Machine Translation'
+title: 'Machine Translation : Statistical Machine Translation'
 date: 2014-10-27 16:49
 comments: true
-categories: 
+categories: ['Natural Language Processing']
 ---
 
 ## Introduction

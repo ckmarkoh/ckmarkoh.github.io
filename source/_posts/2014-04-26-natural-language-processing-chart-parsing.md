@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Chart Parsing'
+title: 'Chart Parsing'
 date: 2014-04-26 03:41
 comments: true
-categories: [natural_language_processing, parsing, Chart]
+categories: ['Natural Language Processing']
 ---
 
 ## 1.Introduction

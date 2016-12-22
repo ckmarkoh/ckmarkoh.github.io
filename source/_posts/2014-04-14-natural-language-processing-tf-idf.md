@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- TF-IDF'
+title: 'TF-IDF'
 date: 2014-04-14 10:12
 comments: true
-categories: [natural_language_processing, TF-IDF]
+categories: ['Natural Language Processing','Text Mining', 'Information Retrieval']
 ---
 
 ## 1.Introduction

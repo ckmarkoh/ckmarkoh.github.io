@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Hidden Markov Model'
+title: 'Hidden Markov Model'
 date: 2014-04-03 03:38
 comments: true
-categories: [natural_language_processing, hmm, tagging]
+categories: ['Natural Language Processing']
 ---
 
 ## 1.Markov Model

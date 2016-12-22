@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Ngram Smoothing / Interpolation'
+title: 'Ngram Smoothing / Interpolation'
 date: 2014-03-28 11:57
 comments: true
-categories: [natural_language_processing]
+categories: ['Natural Language Processing']
 ---
 
 以下為我對於 *Ngram Smoothing* 這個章節的公式所做的筆記

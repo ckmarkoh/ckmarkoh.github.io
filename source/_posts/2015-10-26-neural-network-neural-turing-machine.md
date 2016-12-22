@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- Neural Turing Machine'
+title: 'Neural Turing Machine'
 date: 2015-10-26 16:25
 comments: true
-categories: [neural_turing_machine, neural_networks]
+categories: ['Neural Networks']
 ---
 
 ## Introduction

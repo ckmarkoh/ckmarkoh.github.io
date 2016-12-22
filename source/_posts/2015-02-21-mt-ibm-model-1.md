@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器翻譯 -- IBM Model 1'
+title: 'Machine Translation : IBM Model 1'
 date: 2015-02-21 09:31
 comments: true
-categories: 
+categories: ['Natural Language Processing']
 ---
 
 ## Introduction

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Ruby -- Enumerable 1 : Collect , Inject '
+title: 'Ruby Enumerable 1 : Collect , Inject '
 date: 2014-04-30 15:06
 comments: true
-categories: [ruby, enumerable, map, reduce, functional_programming]
+categories: ['Ruby Programming','Functional Programming']
 ---
 
 ## Introduction

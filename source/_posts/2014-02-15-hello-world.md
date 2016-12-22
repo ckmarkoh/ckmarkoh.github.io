@@ -3,7 +3,7 @@ layout: post
 title: 'Hello World'
 date: 2014-02-15 18:04
 comments: true
-categories: 
+published: false 
 ---
 
 Hi, This a demo post of [Logdown](http://logdown.com). 
@@ -28,7 +28,7 @@ Logdown also support drag & drop image uploading. The picture syntax is like thi
 
 
 
-```
+```linenos:false 
 puts "Hello World!"
 
 ```

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)'
+title: 'Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)'
 date: 2015-05-23 15:33
 comments: true
-categories: [neural_network, hierarchical_softmax]
+categories: ['Natural Language Processing','Neural Networks']
 ---
 
 ## Introduction

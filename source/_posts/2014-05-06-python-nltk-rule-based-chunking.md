@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Rule-Based Chunking'
+title: 'NLTK Rule-Based Chunking'
 date: 2014-05-06 14:46
 comments: true
-categories: [nltk, natural_language_processing, chunking, information_extraction]
+categories: ['NLTK', 'Natural Language Processing']
 ---
 
 ## Chunking

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Convex Optimization -- Duality & KKT Conditions'
+title: 'Duality & KKT Conditions in Convex Optimization'
 date: 2015-11-05 13:18
 comments: true
-categories: [duality, kkt_conditions, optimization]
+categories: ['Optimization Methods']
 ---
 
 ## Introduction

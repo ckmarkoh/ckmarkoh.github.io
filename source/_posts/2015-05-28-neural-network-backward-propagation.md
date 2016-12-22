@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- Backward Propagation 詳細推導過程'
+title: 'Neural Networks Backward Propagation'
 date: 2015-05-28 07:47
 comments: true
-categories: [neural_network, back_propagation]
+categories: ['Neural Networks']
 ---
 
 ## Introduction 

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python -- Functional Programming Style 1'
+title: 'Python Functional Programming Style 1'
 date: 2014-03-18 07:04
 comments: true
-categories: [functional_programming, map, reduce, filter]
+categories: ['Python Programming','Functional Programming']
 ---
 
 今天來看看如何用python的Functional Programming tool來簡化程式碼

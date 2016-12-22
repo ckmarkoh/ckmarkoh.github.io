@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Standard Library -- copy'
+title: 'Python copy'
 date: 2014-04-01 16:23
 comments: true
-categories: [python_standard_library]
+categories: ['Python Programming']
 ---
 
 

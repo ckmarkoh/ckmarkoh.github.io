@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Logic 1 : First Order Logic and Semantics'
+title: 'NLTK Logic 1 : First Order Logic and Semantics'
 date: 2014-03-13 13:53
 comments: true
-categories: 
+categories: ['Natural Language Processing', 'Semantics','NLTK']
 ---
 
 本篇介紹如何用python nltk 的應用,邏輯語意與推理

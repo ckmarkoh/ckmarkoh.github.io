@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器學習 -- Logistic Regression Model (3D)'
+title: 'Logistic Regression Model (3D)'
 date: 2014-03-15 01:47
 comments: true
-categories: [machine_learning]
+categories: ['Machine Learning']
 ---
 
 ## 1.Introduction

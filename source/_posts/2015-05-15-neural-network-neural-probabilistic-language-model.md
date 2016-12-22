@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- Neural Probabilistic Language Model '
+title: 'Neural Probabilistic Language Model '
 date: 2015-05-15 02:38
 comments: true
-categories: [neural_network, back_propagation]
+categories: ['Natural Language Processing','Neural Networks']
 ---
 
 ## Introduction

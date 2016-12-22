@@ -3,7 +3,7 @@ layout: post
 title: 'Note on Xpath Parsing'
 date: 2014-03-13 06:45
 comments: true
-categories: [web_crawler, xPath]
+categories: ['XPath']
 ---
 
 本篇是我在使用xpath中遇到的一些案例,做些筆記

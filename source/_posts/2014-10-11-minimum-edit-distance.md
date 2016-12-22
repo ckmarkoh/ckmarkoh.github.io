@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Minimum Edit Distance'
+title: 'Minimum Edit Distance'
 date: 2014-10-11 14:28
 comments: true
-categories: 
+categories: ['Natural Language Processing','Text Mining']
 ---
 
 ## Minimum Edit Distance

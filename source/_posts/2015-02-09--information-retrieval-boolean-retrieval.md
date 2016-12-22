@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '資訊檢索 -- Boolean Retrieval'
+title: 'Boolean Retrieval'
 date: 2015-02-09 00:27
 comments: true
-categories: 
+categories: ['Information Retrieval']
 ---
 
 ## Information Retrieval

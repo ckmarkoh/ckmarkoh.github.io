@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機率圖模型 -- Metropolis Hasting'
+title: 'Metropolis Hasting'
 date: 2016-07-07 17:21
 comments: true
-categories: 
+categories: ['Probabilistic Graphical Models']
 ---
 
 ## Introduction

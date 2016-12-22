@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Logic 4 : Model and Satisfiability'
+title: 'NLTK Logic 4 : Model and Satisfiability'
 date: 2014-03-29 15:39
 comments: true
-categories: [Python, nltk, semantics, logic]
+categories: ['Natural Language Processing', 'Semantics','NLTK']
 ---
 
 ## 1.Model and Satisfiability

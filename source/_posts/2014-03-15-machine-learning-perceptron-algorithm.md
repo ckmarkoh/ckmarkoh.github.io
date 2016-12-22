@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器學習 -- Perceptron Algorithm'
+title: 'Perceptron Algorithm'
 date: 2014-03-15 11:28
 comments: true
-categories: [machine_learning]
+categories: ['Machine Learning']
 ---
 
 ## 1.Introduction

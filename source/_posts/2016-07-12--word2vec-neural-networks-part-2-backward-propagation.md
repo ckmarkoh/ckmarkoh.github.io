@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- word2vec (part 2 : Backward Propagation)'
+title: 'word2vec (part 2 : Backward Propagation)'
 date: 2016-07-12 09:21
 comments: true
-categories: 
+categories: ['Natural Language Processing','Neural Networks']
 ---
 
 ## Introduction

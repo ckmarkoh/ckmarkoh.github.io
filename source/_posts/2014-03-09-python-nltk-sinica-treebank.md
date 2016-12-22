@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Sinica Treebank '
+title: 'NLTK Sinica Treebank '
 date: 2014-03-09 07:41
 comments: true
-categories: [Python, natural_language_processing, nltk]
+categories: ['Natural Language Processing']
 ---
 
 今天我們來談談如何用python nltk做中文的的自然語言處理

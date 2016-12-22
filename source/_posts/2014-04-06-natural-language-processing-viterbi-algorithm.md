@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Viterbi Algorithm'
+title: 'Viterbi Algorithm'
 date: 2014-04-06 18:21
 comments: true
-categories: [natural_language_processing viterbi tagging]
+categories: ['Natural Language Processing', 'Semantics']
 ---
 
 ## 1.Introduction

@@ -3,7 +3,7 @@ layout: post
 title: 'Ruby -- struct v.s openStruct'
 date: 2014-03-12 15:26
 comments: true
-categories: [ruby]
+categories: ['Ruby Programming']
 ---
 
 

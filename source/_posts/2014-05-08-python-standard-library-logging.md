@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Standard Library -- logging'
+title: 'Python logging'
 date: 2014-05-08 07:44
 comments: true
-categories: 
+categories: ['Python Programming']
 ---
 
 ## 1. Introduction

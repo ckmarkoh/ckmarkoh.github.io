@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- Recurrent Neural Network'
+title: 'Recurrent Neural Network'
 date: 2015-06-06 09:32
 comments: true
-categories: [neural_network, back_propagation]
+categories: ['Neural Networks']
 ---
 
 ## Introduction

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Log-Linear Model'
+title: 'Log-Linear Model'
 date: 2014-04-28 11:00
 comments: true
-categories: [natural_language_processing, log_linear, entropy, tagging, classifier, maximum_entropy]
+categories: ['Natural Language Processing','Machine Learning']
 ---
 
 ## 1. Introduction

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Logic 3 : Discourse Representation Theory'
+title: 'NLTK Logic 3 : Discourse Representation Theory'
 date: 2014-03-21 03:58
 comments: true
-categories: [Python, nltk, semantics, logic]
+categories: ['Natural Language Processing', 'Semantics','NLTK']
 ---
 
 ## 1. Introduction

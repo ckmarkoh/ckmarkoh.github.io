@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Optimization Method -- Gradient Descent with Momentum'
+title: 'Gradient Descent with Momentum'
 date: 2016-01-16 08:01
 comments: true
-categories: [optimization]
+categories: ['Optimization Methods']
 ---
 
 ## Gradient Descent

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "Optimization Method -- Newton's Method for Optimization"
+title: "Newton's Method for Optimization"
 date: 2016-01-25 16:56
 comments: true
-categories: [optimization]
+categories: ['Optimization Methods']
 ---
 
 ## Gradient Descent

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Pointwise Mutual Information'
+title: 'Pointwise Mutual Information'
 date: 2014-04-25 17:58
 comments: true
-categories: [natural_language_processing, mutual_information]
+categories: ['Natural Language Processing','Information Theory']
 ---
 
 ## 1.Introduction

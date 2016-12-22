@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python nltk -- Tree'
+title: 'NLTK Tree'
 date: 2014-02-28 16:36
 comments: true
-categories: [Python, nltk, natural_language_processing, grammar]
+categories: ['Natural Language Processing']
 ---
 
 

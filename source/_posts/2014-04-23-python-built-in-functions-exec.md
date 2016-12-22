@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Built-in Functions -- eval and execute'
+title: 'Python eval and execute'
 date: 2014-04-23 01:59
 comments: true
-categories: [Python, eval, exec]
+categories: ['Python Programming']
 ---
 
 ## 1.Introduction

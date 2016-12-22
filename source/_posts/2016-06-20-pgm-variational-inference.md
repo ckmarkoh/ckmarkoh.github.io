@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機率圖模型 -- Variational Inference'
+title: 'Variational Inference'
 date: 2016-06-20 02:42
 comments: true
-categories: 
+categories: ['Probabilistic Graphical Models']
 ---
 
 ## Introduction

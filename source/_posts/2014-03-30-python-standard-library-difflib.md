@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Standard Library -- difflib'
+title: 'Python difflib'
 date: 2014-03-30 04:24
 comments: true
-categories: [python_standard_library]
+categories: ['Python Programming']
 ---
 
 

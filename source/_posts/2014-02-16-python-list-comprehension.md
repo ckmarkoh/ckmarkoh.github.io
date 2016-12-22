@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python -- List Comprehension'
+title: 'Python List Comprehension'
 date: 2014-02-16 04:13
 comments: true
-categories: [Python, list_comprehension]
+categories: ['Python Programming']
 ---
 
 List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。

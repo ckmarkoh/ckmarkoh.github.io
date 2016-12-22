@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機率圖模型 -- Gibbs Sampling'
+title: 'Gibbs Sampling'
 date: 2016-07-09 08:36
 comments: true
-categories: 
+categories: ['Probabilistic Graphical Models']
 ---
 
 ## Introduction

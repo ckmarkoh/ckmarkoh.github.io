@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '機器學習 -- Model Selection'
+title: 'Model Selection'
 date: 2014-04-17 07:15
 comments: true
-categories: [machine_learning]
+categories: ['Machine Learning']
 ---
 
 ## 1.Motivation

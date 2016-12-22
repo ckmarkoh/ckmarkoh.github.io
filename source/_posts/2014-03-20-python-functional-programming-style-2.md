@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python -- Functional Programming Style 2  '
+title: 'Python Functional Programming Style 2  '
 date: 2014-03-20 13:35
 comments: true
-categories: [functional_programming, Python, operator, functools]
+categories: ['Python Programming','Functional Programming']
 ---
 
 用Functional Programming style來寫程式的時候

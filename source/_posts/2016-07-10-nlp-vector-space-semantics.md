@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '自然語言處理 -- Vector Space of Semantics'
+title: 'Vector Space of Semantics'
 date: 2016-07-10 14:06
 comments: true
-categories: 
+categories: ['Natural Language Processing','Semantics']
 ---
 
 ## Introduction 

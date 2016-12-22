@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'R -- Data Splitting'
+title: 'R Data Splitting'
 date: 2014-08-23 06:46
 comments: true
-categories: [data_splitting, Sample, createDataPartition, r]
+categories: ['Machine Learning', 'R Programming']
 ---
 
 在做機器學習演算法時，常常需要把資料分成 *training set* 和 *validation set* 這兩個資料組。

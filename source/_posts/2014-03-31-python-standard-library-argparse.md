@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Python Standard Library -- argparse'
+title: 'Python argparse'
 date: 2014-03-31 05:31
 comments: true
-categories: [python_standard_library, parser]
+categories: ['Python Programming']
 ---
 
 

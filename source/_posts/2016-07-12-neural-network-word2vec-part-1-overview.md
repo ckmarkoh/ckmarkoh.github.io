@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- word2vec (part 1 : Overview)'
+title: 'word2vec (part 1 : Overview)'
 date: 2016-07-12 09:19
 comments: true
-categories: 
+categories: ['Natural Language Processing','Neural Networks']
 ---
 
 ## Introduction

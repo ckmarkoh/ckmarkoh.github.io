@@ -1,9 +1,9 @@
 ---
 layout: post
-title: 'Optimization Method -- AdaDelta'
+title: 'AdaDelta'
 date: 2016-02-08 16:13
 comments: true
-categories: [adagrad, adadelta, optimization]
+categories: ['Optimization Methods']
 ---
 
 ## AdaGrad

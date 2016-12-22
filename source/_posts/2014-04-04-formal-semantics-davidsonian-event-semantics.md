@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '形式語意學 -- Davidsonian Event Semantics'
+title: 'Davidsonian Event Semantics'
 date: 2014-04-04 17:13
 comments: true
-categories: [semantics, logic]
+categories: ['Natural Language Processing', 'Semantics']
 ---
 
 ## 1.Introduction

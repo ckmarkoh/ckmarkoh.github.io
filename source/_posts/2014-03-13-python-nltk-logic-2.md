@@ -3,7 +3,7 @@ layout: post
 title: 'Python nltk -- Logic 2 : Lambda Calculus'
 date: 2014-03-13 14:09
 comments: true
-categories: [Python, nltk, semantics, logic]
+categories: ['Natural Language Processing', 'Semantics','NLTK']
 ---
 
 本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus

@@ -1,9 +1,9 @@
 ---
 layout: post
-title: '類神經網路 -- word2vec (part 3 : Implementation)'
+title: 'word2vec (part 3 : Implementation)'
 date: 2016-08-29 11:17
 comments: true
-categories: 
+categories: ['Natural Language Processing','Neural Networks']
 ---
 
 ## Introduction
