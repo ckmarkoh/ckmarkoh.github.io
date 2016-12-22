@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:13:57+08:00</updated>
+  <updated>2016-12-23T02:18:24+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -34,7 +34,7 @@
 
 </script>
 
-<p>其中，假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
+<p>假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
 
 <p>使用 torch 實作此運算的方法如下：</p>
 
@@ -50,7 +50,9 @@ require 'nn'
 l1 = nn.Linear(2,3)
 </code></p>
 
-<p>其中 <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
+<!--more-->
+
+<p>其中， <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
 
 <p>以上程式中，建立一個命名為 <code>l1</code> 的 module ，如果要取得它的 weight 和 bias ，可以用 <code>l1.weight</code> 和 <code>l1.bias</code> 取得，方法如下：</p>
 

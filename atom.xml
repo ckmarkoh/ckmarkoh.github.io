@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:13:57+08:00</updated>
+  <updated>2016-12-23T02:14:40+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -35,6 +35,8 @@
 </script>
 
 <p>其中，假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
+
+<!--more-->
 
 <p>使用 torch 實作此運算的方法如下：</p>
 
