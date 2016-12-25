@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-23T02:40:33+08:00</updated>
+  <updated>2016-12-25T13:22:22+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -24,7 +24,7 @@
 
 <p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
 
-<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
+<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。 <code>nn.Module</code> 是一個抽象類別，所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
 
 <p>舉個例子，如果要實作以下運算：</p>
 
@@ -65,21 +65,21 @@ print(l1.bias)
 
 <p>```sh</p>
 
-<p>-0.0817 -0.0129
--0.1369 -0.5361
- 0.0573  0.1407
+<p>0.1453  0.5062
+ 0.0635  0.4911
+-0.1080  0.1747
 [torch.DoubleTensor of size 3x2]</p>
 
-<p>-0.6550
- 0.2567
- 0.2491
+<p>0.2063
+-0.1635
+-0.0883
 [torch.DoubleTensor of size 3]</p>
 
 <p>```</p>
 
 <p>其中， size 3x2 的 tensor 為 weight, size 3 的 tensor 為 bias。</p>
 
-<p>用此 module 可以執行運算，令 x 為一個二維向量 [0,1] ，輸入此 module ，進行 forward propagation ，也就是說，執行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的運算， 並輸出結果為 <script type="math/tex">\textbf{y}</script>  ，實作如下：</p>
+<p>用此 module 可以執行運算，令 x 為一個二維向量 <script type="math/tex">[0,1]</script> ，輸入此 module ，進行 forward propagation ，也就是說，執行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的運算， 並輸出結果為 <script type="math/tex">\textbf{y}</script>  ，實作如下：</p>
 
 <p>```lua</p>
 
@@ -92,9 +92,9 @@ print(y)</p>
 <p>輸出結果 <code>y</code> 為一個三維向量，如下：</p>
 
 <p>```sh
--0.6679
--0.2794
- 0.3899
+ 0.7125
+ 0.3276
+ 0.0865
 [torch.DoubleTensor of size 3]</p>
 
 <p>```</p>
@@ -108,9 +108,9 @@ print(l1.output)
 <p>結果如下：</p>
 
 <p><code>sh
--0.6679
--0.2794
- 0.3899
+ 0.7125
+ 0.3276
+ 0.0865
 [torch.DoubleTensor of size 3]
 </code></p>
 
@@ -202,14 +202,14 @@ print(l2.output)
 <p>輸出結果如下：</p>
 
 <p>```sh
- 0.0690  0.1313
- 0.3043  0.4869
- 0.1453  0.5062
+-0.2863  0.5541
+-0.6269  0.6557
+-0.3215 -0.1648
 [torch.DoubleTensor of size 3x2]</p>
 
-<p>0.0635
- 0.4911
--0.1080
+<p>-0.0316
+ 0.4126
+ 0.4415
 [torch.DoubleTensor of size 3]</p>
 
 <p>[torch.DoubleTensor with no dimension]</p>
@@ -261,11 +261,9 @@ end
 
 \begin{align}
 &\begin{bmatrix}
-
- 0.0690 & 0.1313 \\
- 0.3043 & 0.4869 \\
- 0.1453 & 0.5062 \\
-
+-0.2863 & 0.5541 \\
+-0.6269 & 0.6557 \\
+-0.3215 & -0.1648 \\
 \end{bmatrix}
 \begin{bmatrix}
 0 \\
@@ -273,27 +271,27 @@ end
 \end{bmatrix}
 + 
 \begin{bmatrix}
-0.0635 \\
-0.4911 \\
--0.1080 \\
+-0.0316 \\
+ 0.4126 \\
+ 0.4415 \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.0690 \times 0 + 0.1313 \times 1 + 0.0635 \\
-0.3043 \times 0 + 0.4869 \times 1 + 0.4911\\
-0.1453 \times 0 + 0.5062 \times 1  -0.1080\\
+-0.2863 \times 0 + 0.5541 \times 1  -0.0316 \\
+-0.6269 \times 0 + 0.6557 \times 1 + 0.4126\\
+-0.3215 \times 0  -0.1648 \times 1 + 0.4415\\
 \end{bmatrix}\\
 &=
 \begin{bmatrix}
-0.1313 + 0.0635 \\
-0.4869 + 0.4911\\
-0.5062  -0.1080\\
+0.5541 -0.0316 \\
+0.6557 + 0.4126\\
+-0.1648 + 0.4415\\
 \end{bmatrix}
 =
 \begin{bmatrix}
- 0.1948 \\
- 0.9780  \\
- 0.3982\\
+  0.5225 \\
+  1.0683  \\
+  0.2766 \\
 \end{bmatrix}
 \end{align}
 
@@ -307,13 +305,12 @@ print(l2:forward(torch.Tensor{0,1}))
 
 <p>結果如下：</p>
 
-<p>```sh
- 0.1948
- 0.9780
- 0.3982
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
+<p><code>sh
+ 0.5225
+ 1.0683
+ 0.2766
+[torch.DoubleTensor of size 3]
+</code></p>
 
 <p>這時已經進行過了 forward 運算，而 <code>output</code> 有值了，所以可以印出它的值，方法如下：</p>
 
@@ -323,13 +320,12 @@ print(l2.output)
 
 <p><code>output</code> 的值也是如下：</p>
 
-<p>```sh
- 0.1948
- 0.9780
- 0.3982
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
+<p><code>sh
+ 0.5225
+ 1.0683
+ 0.2766
+[torch.DoubleTensor of size 3]
+</code></p>
 
 <p>而當 <code>input:dim() ==2</code> 時，也就是 <code>input</code> 的維度為 2 ，也就是一次輸入多筆資料。這時需要先把 <code>weight</code> 進行轉置，再和 <code>input</code> ，並和 <code>bias</code> 相加，並將結果加到 <code>output</code> 並輸出。</p>
 
@@ -338,10 +334,12 @@ print(l2.output)
 <p>從公式上來看，輸入值 <script type="math/tex">\textbf{X}</script> 是二維的矩陣，則進行以下矩陣運算：</p>
 
 <script type="math/tex; mode=display">
-\textbf{X}\textbf{W}^{T} + \textbf{b}
+\textbf{X}\textbf{W}^{T} + \textbf{B}
 </script>
 
 <p>此時， <script type="math/tex">\textbf{X}</script> 放前面，而 <script type="math/tex">\textbf{W}</script> 進行轉置後放後面。</p>
+
+<p>而 <script type="math/tex">\textbf{B}</script> 是將 <script type="math/tex">\textbf{b}</script> 轉置以後，再複製其橫排所形成的矩陣，以便和前面的矩陣相乘結果來相加。</p>
 
 <p>例如當輸入資料有兩筆向量 <script type="math/tex">[0, 1]</script> 和 <script type="math/tex">[2, 1]</script> 時，則可以組成以下矩陣 (2x2) ：</p>
 
@@ -366,53 +364,52 @@ print(l2.output)
 2 &1 \\
 \end{bmatrix}
 \begin{bmatrix}
-0.0690 & 0.3043 & 0.1453 \\
-0.1313 & 0.4869 & 0.5062 \\
-\end{bmatrix}
+-0.2863 & -0.6269 & -0.3215 \\
+ 0.5541 & 0.6557 & -0.1648 \\
+ \end{bmatrix}
 + 
 \begin{bmatrix}
-0.0635 &0.4911 &-0.1080 
+-0.0316 & 0.4126 & 0.4415 \\
+-0.0316 & 0.4126 & 0.4415 
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
-0 \times 0.0690 + 1 \times 0.1313 
-& 0 \times 0.3043 + 1 \times 0.4869
-& 0 \times 0.1453 + 1 \times 0.5062 \\
+   -0.2863 \times 0 +  0.5541 \times 1
+&  -0.6269 \times 0 +  0.6557 \times 1
+&  -0.3215 \times 0   -0.1648 \times 1\\
 
- 2 \times 0.0690 + 1 \times 0.1313 
-& 2 \times 0.3043 + 1 \times 0.4869
-& 2 \times 0.1453 + 1 \times 0.5062 \\
+   -0.2863 \times 2 +  0.5541 \times 1
+&  -0.6269 \times 2 +  0.6557 \times 1
+&  -0.3215 \times 2   -0.1648 \times 1\\
 \end{bmatrix}\\
 &
 + 
 \begin{bmatrix}
-0.0635 &0.4911 &-0.1080 \\
-0.0635 &0.4911 &-0.1080
+-0.0316 & 0.4126 & 0.4415 \\
+-0.0316 & 0.4126 & 0.4415 
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
-0.1313 +0.0635
-& 0.4869 +0.4911
-& 0.5062 -0.1080 \\
-0.2694 + 0.0635
-& 1.0955 +0.4911
-& 0.7969 -0.1080 \\
+0.5541 -0.0316
+& 0.6557 +0.4126
+& -0.1648 +0.4415 \\
+-0.0186  -0.0316
+& -0.5981 +0.4126
+& -0.8079 +0.4415 \\
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
- 0.1948 & 0.9780 & 0.3982 \\
- 0.3328 & 1.5866 & 0.6889 \\
+ 0.5225 & 1.0683  & 0.2766 \\
+-0.0502 & -0.1855 & -0.3664 \\
 \end{bmatrix}
 \end{align}\\
 
  %]]&gt;</script>
 
 <p>輸出結果為一個 2x3 的矩陣，每一個橫排為一個三維向量，代表著每一筆資料經過線性運算的結果。</p>
-
-<p>以上要注意的就是， <script type="math/tex">\textbf{b}</script> 的橫排會被複製，以便和前面的矩陣相乘結果來相加。</p>
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
 
@@ -429,8 +426,8 @@ print(l2:forward(torch.Tensor(input)))
 <p>結果如下：</p>
 
 <p><code>sh
- 0.1948  0.9780  0.3982
- 0.3328  1.5866  0.6889
+ 0.5225  1.0683  0.2766
+-0.0502 -0.1855 -0.3664
 [torch.DoubleTensor of size 2x3]
 </code></p>
 
@@ -443,10 +440,16 @@ print(l2.output)
 <p>結果如下：</p>
 
 <p><code>sh
- 0.1948  0.9780  0.3982
- 0.3328  1.5866  0.6889
+ 0.5225  1.0683  0.2766
+-0.0502 -0.1855 -0.3664
 [torch.DoubleTensor of size 2x3]
 </code></p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb</a></p>
 
 ]]></content>
   </entry>

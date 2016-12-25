@@ -120,7 +120,7 @@ MathJax.Hub.Config({
 
 <p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
 
-<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。而所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
+<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。 <code>nn.Module</code> 是一個抽象類別，所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
 
 <p>舉個例子，如果要實作以下運算：</p>
 
