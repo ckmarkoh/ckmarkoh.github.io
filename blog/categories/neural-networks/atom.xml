@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:26:39+08:00</updated>
+  <updated>2016-12-25T17:31:03+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -138,15 +138,253 @@ print(z)
 
 <p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p>```lua nn/Container.lua</p>
-
-<p>local Container, parent = torch.class(‘nn.Container’, ‘nn.Module’)</p>
+<p>```lua nn/Container.lua
+local Container, parent = torch.class(‘nn.Container’, ‘nn.Module’)</p>
 
 <p>function Container:__init(…)
     parent.__init(self, …)
     self.modules = {}
 end
 ```</p>
+
+<p>第1行處，看到 <code>nn.Container</code> 是從 <code>nn.Module</code> 繼承而來的，因此它具有 <code>nn.Module</code> 的 variable 及 function 。</p>
+
+<p>第5行中，container 的變量 <code>modules</code> ，它是一個 lua table ，是用來存放加到 container 中的  module 。</p>
+
+<p>至於，要如何將 module 加到 container 中？可以用 <code>add</code> 加入。 <code>add</code> 的程式碼如下： </p>
+
+<p><code>lua nn/Container.lua
+function Container:add(module)
+    table.insert(self.modules, module)
+    return self
+end
+</code></p>
+
+<p>在第2行可看到， <code>add</code> 可以把新的 module 加到 <code>modules</code> 中。</p>
+
+<p>```lua nn/Container.lua</p>
+
+<p>function Container:get(index)
+    return self.modules[index]
+end</p>
+
+<p>```</p>
+
+<p>除了加進去之外，也可以用 <code>get</code> 取得 <code>modules</code> 中的某個元素，或是用 <code>size</code> 取得 <code>modules</code> 的大小，程式碼如下：</p>
+
+<p>```lua nn/Container.lua</p>
+
+<p>function Container:get(index)
+    return self.modules[index]
+end</p>
+
+<p>function Container:size()
+    return #self.modules
+end
+```</p>
+
+<p>再來是實作的部分，首先我們建立一個 sequential 的 container ，命名為 <code>n2</code> ，並以 <code>size</code> 取得它所含的 module 個數，如下：</p>
+
+<p><code>lua
+n2 = nn.Sequential()
+print(n2:size())
+</code></p>
+
+<p>剛建立時， 由於 <code>n2</code> 的 <code>modules</code> 是空的，所以 <code>size</code> 是 0。執行結果如下：</p>
+
+<p><code>sh
+0	
+</code></p>
+
+<p>再來將 <code>l1</code> 和 <code>s1</code> 依序加入，再看看 <code>size</code> 的變化：</p>
+
+<p><code>lua
+n2:add(l1)
+n2:add(s1)
+print(n2:size())
+</code></p>
+
+<p>此時已經加入了兩個 module 進去了，所以 <code>size</code> 會是 2 ，執行結果如下：</p>
+
+<p><code>sh
+2	
+</code></p>
+
+<p>可以用 <code>get</code> 取得加進去的 module ，例如，想取得第一個加進去的，作法如下：</p>
+
+<p><code>lua
+print(n2:get(1))
+</code></p>
+
+<p>第一個加進去的為 <code>nn.Linear</code> ，執行結果如下：</p>
+
+<p><code>sh
+nn.Linear(2 -&gt; 3)
+{
+  gradBias : DoubleTensor - size: 3
+  weight : DoubleTensor - size: 3x2
+  _type : torch.DoubleTensor
+  output : DoubleTensor - size: 3
+  gradInput : DoubleTensor - empty
+  bias : DoubleTensor - size: 3
+  gradWeight : DoubleTensor - size: 3x2
+}
+</code></p>
+
+<p>再來看到 <code>nn.Sequential()</code> 的程式碼。</p>
+
+<p><code>lua nn/Sequential.lua
+local Sequential, _ = torch.class('nn.Sequential', 'nn.Container')
+</code></p>
+
+<p>第一行顯示 <code>nn.Sequential</code> 繼承了 <code>nn.Container</code> 。它的 <code>init</code> 也與 <code>nn.Container</code> 共用，沒有再另外實作。</p>
+
+<p>再來看 <code>add</code> 的程式碼。</p>
+
+<p><code>lua nn/Sequential.lua
+function Sequential:add(module)
+   if #self.modules == 0 then
+      self.gradInput = module.gradInput
+   end
+   table.insert(self.modules, module)
+   self.output = module.output
+   return self
+end
+</code></p>
+
+<p>在 <code>nn.Sequential</code> 中， <code>add</code> 除了會將 module 加到 <code>modules</code> 之外，它的 <code>output</code> 會是最後一個加進去的 module 的 <code>output</code> 。</p>
+
+<p>以下實作，將 <code>n2</code> 的 <code>output</code> 和它裡面的兩個 module 的 <code>output</code> 都印出來看看：</p>
+
+<p><code>lua
+print(n2:get(1).output)
+print(n2:get(2).output)
+print(n2.output)
+</code></p>
+
+<p>結果如下， <code>n2</code> 的 output 是第二個 module 的 output ：</p>
+
+<p>```sh
+ 0.1948
+ 0.9780
+ 0.3982
+[torch.DoubleTensor of size 3]</p>
+
+<p>0.5485
+ 0.7267
+ 0.5983
+[torch.DoubleTensor of size 3]</p>
+
+<p>0.5485
+ 0.7267
+ 0.5983
+[torch.DoubleTensor of size 3]
+```</p>
+
+<p>再來看到 <code>updateOutput</code> 的部分：</p>
+
+<p><code>lua nn/Sequential.lua
+function Sequential:updateOutput(input)
+   local currentOutput = input
+   for i=1,#self.modules do
+      currentOutput = self:rethrowErrors(self.modules[i], i, 'updateOutput', currentOutput)
+   end
+   self.output = currentOutput
+   return currentOutput
+end
+</code></p>
+
+<p>以上可知，在第3行的 for 迴圈中， <code>modules</code> 中的 <code>module</code> 會依序進行  <code>updateOutput</code> ，並將其 <code>output</code> 傳遞到下個 <code>module</code> 的 <code>input</code> ，而 <code>nn.Sequential</code> 的 <code>output</code> 會是最後一個 <code>module</code> 的 <code>output</code></p>
+
+<p>假設輸入 <code>n2</code> 的 <code>x</code> 為 <script type="math/tex">[1,0]</script> ，則進行 forward propagation ，將輸出結果存到 <code>z</code> ，實作如下 ：</p>
+
+<p><code>lua
+x = torch.Tensor{1,0}
+z = n2:forward(x)
+print(z)
+</code></p>
+
+<p>透過 updateOutput 中的 for 迴圈，它會依序跑完內部所有的 module，並得出最後結果，結果如下：</p>
+
+<p><code>sh
+ 0.5331
+ 0.6890
+ 0.5093
+[torch.DoubleTensor of size 3]
+</code></p>
+
+<p>如果想看 <code>n2</code> 中有哪些 module ，以及它們的順序，也可以直接用 <code>print</code> 的方式，作法如下：</p>
+
+<p><code>lua 
+print(n2)
+</code></p>
+
+<p>結果如下：</p>
+
+<p><code>sh
+nn.Sequential {
+  [input -&gt; (1) -&gt; (2) -&gt; output]
+  (1): nn.Linear(2 -&gt; 3)
+  (2): nn.Sigmoid
+}
+{
+  gradInput : DoubleTensor - empty
+  modules : 
+    {
+      1 : 
+        nn.Linear(2 -&gt; 3)
+        {
+          gradBias : DoubleTensor - size: 3
+          weight : DoubleTensor - size: 3x2
+          _type : torch.DoubleTensor
+          output : DoubleTensor - size: 3
+          gradInput : DoubleTensor - empty
+          bias : DoubleTensor - size: 3
+          gradWeight : DoubleTensor - size: 3x2
+        }
+      2 : 
+        nn.Sigmoid
+        {
+          gradInput : DoubleTensor - empty
+          _type : torch.DoubleTensor
+          output : DoubleTensor - size: 3
+        }
+    }
+  _type : torch.DoubleTensor
+  output : DoubleTensor - size: 3
+}
+​</code></p>
+
+<p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
+
+<p>第二部份是詳細印出 <code>nn.Sequential</code> 中，有哪些成員 ，它有從 <code>nn.Module</code> 繼承而來的 <code>gradInput</code> 即 <code>output</code> ，也有從 <code>nn.Container</code> 繼承而來的 <code>modules</code> 。而 <code>modules</code> 的部分會詳細列出裡面每個 module 有哪些成員。</p>
+
+<p>這部分的程式碼於 <code>__tostring__</code> 這個函式中，程式碼如下：</p>
+
+<p><code>lua nn/Sequential.lua
+function Sequential:__tostring__()
+   local tab = '  '
+   local line = '\n'
+   local next = ' -&gt; '
+   local str = 'nn.Sequential'
+   str = str .. ' {' .. line .. tab .. '[input'
+   for i=1,#self.modules do
+      str = str .. next .. '(' .. i .. ')'
+   end
+   str = str .. next .. 'output]'
+   for i=1,#self.modules do
+      str = str .. line .. tab .. '(' .. i .. '): ' .. tostring(self.modules[i]):gsub(line, line .. tab)
+   end
+   str = str .. line .. '}'
+   return str
+end
+</code></p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb</a></p>
 ]]></content>
   </entry>
   
