@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:48:00+08:00</updated>
+  <updated>2016-12-25T17:56:38+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -396,7 +396,7 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 
 <p>結果如下：</p>
 
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
 <span class="line-number">3</span>
 <span class="line-number">4</span>
@@ -427,15 +427,6 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 <span class="line-number">29</span>
 <span class="line-number">30</span>
 <span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-<span class="line-number">36</span>
-<span class="line-number">37</span>
-<span class="line-number">38</span>
-<span class="line-number">39</span>
-<span class="line-number">40</span>
 </pre></td><td class="code"><pre><code class="sh"><span class="line">nn.Sequential <span class="o">{</span>
 </span><span class="line">  <span class="o">[</span>input -&gt; <span class="o">(</span>1<span class="o">)</span> -&gt; <span class="o">(</span>2<span class="o">)</span> -&gt; output<span class="o">]</span>
 </span><span class="line">  <span class="o">(</span>1<span class="o">)</span>: nn.Linear<span class="o">(</span><span class="m">2</span> -&gt; 3<span class="o">)</span>
@@ -467,36 +458,47 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 </span><span class="line">  _type : torch.DoubleTensor
 </span><span class="line">  output : DoubleTensor - size: 3
 </span><span class="line"><span class="o">}</span>
-</span><span class="line">
-</span><span class="line">​<span class="sb">```</span>
-</span><span class="line">
-</span><span class="line">
-</span><span class="line">以上結果可分成兩部分來看，第一部分是 <span class="sb">`</span>nn.Sequential<span class="sb">`</span> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。
-</span><span class="line">
-</span><span class="line">第二部份是詳細印出 <span class="sb">`</span>nn.Sequential<span class="sb">`</span> 中，有哪些成員 ，它有從 <span class="sb">`</span>nn.Module<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>gradInput<span class="sb">`</span> 即 <span class="sb">`</span>output<span class="sb">`</span> ，也有從 <span class="sb">`</span>nn.Container<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>modules<span class="sb">`</span> 。而 <span class="sb">`</span>modules<span class="sb">`</span> 的部分會詳細列出裡面每個 module 有哪些成員。
-</span><span class="line">
-</span><span class="line">這部分的程式碼於 <span class="sb">`</span>tostring<span class="sb">`</span> 函式中，程式碼如下：
 </span></code></pre></td></tr></table></div></figure>
-<p>lua nn/Sequential.lua</p>
 
-<p>function Sequential:<strong>tostring</strong>()
-   local tab = ‘  ‘
-   local line = ‘\n’
-   local next = ‘ -&gt; ‘
-   local str = ‘nn.Sequential’
-   str = str .. ‘ {‘ .. line .. tab .. ‘[input’
-   for i=1,#self.modules do
-      str = str .. next .. ‘(‘ .. i .. ‘)’
-   end
-   str = str .. next .. ‘output]’
-   for i=1,#self.modules do
-      str = str .. line .. tab .. ‘(‘ .. i .. ‘): ‘ .. tostring(self.modules[i]):gsub(line, line .. tab)
-   end
-   str = str .. line .. ‘}’
-   return str
-end</p>
+<p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
 
-<p>```</p>
+<p>第二部份是詳細印出 <code>nn.Sequential</code> 中，有哪些成員 ，它有從 <code>nn.Module</code> 繼承而來的 <code>gradInput</code> 即 <code>output</code> ，也有從 <code>nn.Container</code> 繼承而來的 <code>modules</code> 。而 <code>modules</code> 的部分會詳細列出裡面每個 module 中有哪些 variable。</p>
+
+<p>這部分的程式碼於 <code>tostring</code> 函式中，程式碼如下：</p>
+
+<figure class="code"><figcaption><span>nn/Sequential.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Sequential</span><span class="p">:</span><span class="n">__tostring__</span><span class="p">()</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">tab</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s">  &#39;</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+</span><span class="line">   <span class="kd">local</span> <span class="nb">next</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s"> -&gt; &#39;</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">str</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="s">nn.Sequential&#39;</span>
+</span><span class="line">   <span class="n">str</span> <span class="o">=</span> <span class="n">str</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s"> {&#39;</span> <span class="o">..</span> <span class="n">line</span> <span class="o">..</span> <span class="n">tab</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">[input&#39;</span>
+</span><span class="line">   <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="k">do</span>
+</span><span class="line">      <span class="n">str</span> <span class="o">=</span> <span class="n">str</span> <span class="o">..</span> <span class="nb">next</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">(&#39;</span> <span class="o">..</span> <span class="n">i</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">)&#39;</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">   <span class="n">str</span> <span class="o">=</span> <span class="n">str</span> <span class="o">..</span> <span class="nb">next</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">output]&#39;</span>
+</span><span class="line">   <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="k">do</span>
+</span><span class="line">      <span class="n">str</span> <span class="o">=</span> <span class="n">str</span> <span class="o">..</span> <span class="n">line</span> <span class="o">..</span> <span class="n">tab</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">(&#39;</span> <span class="o">..</span> <span class="n">i</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">): &#39;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span><span class="n">gsub</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">line</span> <span class="o">..</span> <span class="n">tab</span><span class="p">)</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">   <span class="n">str</span> <span class="o">=</span> <span class="n">str</span> <span class="o">..</span> <span class="n">line</span> <span class="o">..</span> <span class="s1">&#39;</span><span class="s">}&#39;</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">str</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
 
 <h2 id="materials">Materials</h2>
 

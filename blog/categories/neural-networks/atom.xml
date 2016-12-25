@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:48:00+08:00</updated>
+  <updated>2016-12-25T17:56:38+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -42,7 +42,7 @@
 
 <p>首先，載入 <code>nn</code> 套件：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>require ‘nn’</p>
 
@@ -50,7 +50,7 @@
 
 <p>建立以上兩個運算所需的Module，分別為 <code>nn.Linear</code> 和 <code>nn.Sigmoid</code> ，並將它們分別命名為 <code>l1</code> 和 <code>s1</code> ，如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>l1 = nn.Linear(2,3)
 s1 = nn.Sigmoid()</p>
@@ -63,7 +63,7 @@ s1 = nn.Sigmoid()</p>
 
 <p>假設 x 為一個二維向量 <script type="math/tex">[0,1]</script> ，先輸入 <code>l1</code> ，進行 forward propagation ，將運算結果傳給 <code>y</code> ，如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>x = torch.Tensor{0,1}
 y = l1:forward(x)
@@ -74,7 +74,7 @@ print(y)</p>
 <p>執行完後會印出 <code>l1</code> 的輸出值，也就是 <code>y</code> 的值，是個三維的向量，
 y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值關， <code>y</code> 值如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>0.1948
  0.9780
@@ -85,7 +85,7 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 
 <p>再來將 <code>y</code> 輸入到 <code>s1</code> 中， 進行 forward propagation，將運算結果傳給 <code>z</code> ，如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>z = s1:forward(y)
 print(z)</p>
@@ -94,7 +94,7 @@ print(z)</p>
 
 <p>執行完後會印出 <code>z</code> 值，此值是由 <code>y</code> 的值經過 sigmoid function 的運算所得出來的， <code>z</code> 值如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>0.5485
  0.7267
@@ -112,7 +112,7 @@ print(z)</p>
 
 <p>例如，如果要將 <code>l1</code> 的輸出，傳入 <code>s1</code> ，則可以用 <code>nn.Sequential</code> 來達成。建立一個命名為 <code>n1</code> 的 sequential container ，將 <code>l1</code> 和 <code>s1</code> 串起來，方法如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>n1 = nn.Sequential()
 n1:add(l1)
@@ -126,7 +126,7 @@ n1:add(s1)</p>
 
 <p>如此給定 <code>x</code> 之後，只要進行一次 forward 即可取得 <code>z</code> 的結果，如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>x = torch.Tensor{0,1}
 z = n1:forward(x)
@@ -136,7 +136,7 @@ print(z)</p>
 
 <p>執行完後，會印出 <code>z</code> 的結果，如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>0.5485
  0.7267
@@ -155,7 +155,7 @@ print(z)</p>
 
 <p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p>```lua nn/Container.lua</p>
+<p>``` lua nn/Container.lua</p>
 
 <p>local Container, parent = torch.class(‘nn.Container’, ‘nn.Module’)</p>
 
@@ -172,7 +172,7 @@ end</p>
 
 <p>至於，要如何將 module 加到 container 中？可以用 <code>add</code> 加入。 <code>add</code> 的程式碼如下： </p>
 
-<p>```lua nn/Container.lua</p>
+<p>``` lua nn/Container.lua</p>
 
 <p>function Container:add(module)
     table.insert(self.modules, module)
@@ -183,7 +183,7 @@ end</p>
 
 <p>在第2行可看到， <code>add</code> 可以把新的 module 加到 <code>modules</code> 中。</p>
 
-<p>```lua nn/Container.lua</p>
+<p>``` lua nn/Container.lua</p>
 
 <p>function Container:get(index)
     return self.modules[index]
@@ -193,7 +193,7 @@ end</p>
 
 <p>除了加進去之外，也可以用 <code>get</code> 取得 <code>modules</code> 中的某個元素，或是用 <code>size</code> 取得 <code>modules</code> 的大小，程式碼如下：</p>
 
-<p>```lua nn/Container.lua</p>
+<p>``` lua nn/Container.lua</p>
 
 <p>function Container:get(index)
     return self.modules[index]
@@ -207,7 +207,7 @@ end</p>
 
 <p>再來是實作的部分，首先我們建立一個 sequential 的 container ，命名為 <code>n2</code> ，並以 <code>size</code> 取得它所含的 module 個數，如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>n2 = nn.Sequential()
 print(n2:size())</p>
@@ -216,7 +216,7 @@ print(n2:size())</p>
 
 <p>剛建立時， 由於 <code>n2</code> 的 <code>modules</code> 是空的，所以 <code>size</code> 是 0。執行結果如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>0	</p>
 
@@ -224,7 +224,7 @@ print(n2:size())</p>
 
 <p>再來將 <code>l1</code> 和 <code>s1</code> 依序加入，再看看 <code>size</code> 的變化：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>n2:add(l1)
 n2:add(s1)
@@ -234,7 +234,7 @@ print(n2:size())</p>
 
 <p>此時已經加入了兩個 module 進去了，所以 <code>size</code> 會是 2 ，執行結果如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>2	</p>
 
@@ -242,7 +242,7 @@ print(n2:size())</p>
 
 <p>可以用 <code>get</code> 取得加進去的 module ，例如，想取得第一個加進去的，作法如下：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>print(n2:get(1))</p>
 
@@ -250,7 +250,7 @@ print(n2:size())</p>
 
 <p>第一個加進去的為 <code>nn.Linear</code> ，執行結果如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>nn.Linear(2 -&gt; 3)
 {
@@ -267,7 +267,7 @@ print(n2:size())</p>
 
 <p>再來看到 <code>nn.Sequential()</code> 的程式碼。</p>
 
-<p>```lua nn/Sequential.lua</p>
+<p>``` lua nn/Sequential.lua</p>
 
 <p>local Sequential, _ = torch.class(‘nn.Sequential’, ‘nn.Container’)</p>
 
@@ -277,7 +277,7 @@ print(n2:size())</p>
 
 <p>再來看 <code>add</code> 的程式碼。</p>
 
-<p>```lua nn/Sequential.lua</p>
+<p>``` lua nn/Sequential.lua</p>
 
 <p>function Sequential:add(module)
    if #self.modules == 0 then
@@ -294,7 +294,7 @@ end</p>
 
 <p>以下實作，將 <code>n2</code> 的 <code>output</code> 和它裡面的兩個 module 的 <code>output</code> 都印出來看看：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>print(n2:get(1).output)
 print(n2:get(2).output)
@@ -325,7 +325,7 @@ print(n2.output)</p>
 
 <p>再來看到 <code>updateOutput</code> 的部分：</p>
 
-<p>```lua nn/Sequential.lua</p>
+<p>``` lua nn/Sequential.lua</p>
 
 <p>function Sequential:updateOutput(input)
    local currentOutput = input
@@ -342,7 +342,7 @@ end</p>
 
 <p>假設輸入 <code>n2</code> 的 <code>x</code> 為 <script type="math/tex">[1,0]</script> ，則進行 forward propagation ，將輸出結果存到 <code>z</code> ，實作如下 ：</p>
 
-<p>```lua</p>
+<p>``` lua</p>
 
 <p>x = torch.Tensor{1,0}
 z = n2:forward(x)
@@ -352,7 +352,7 @@ print(z)</p>
 
 <p>透過 updateOutput 中的 for 迴圈，它會依序跑完內部所有的 module，並得出最後結果，結果如下：</p>
 
-<p>```sh</p>
+<p>``` sh</p>
 
 <p>0.5331
  0.6890
@@ -363,7 +363,7 @@ print(z)</p>
 
 <p>如果想看 <code>n2</code> 中有哪些 module ，以及它們的順序，也可以直接用 <code>print</code> 的方式，作法如下：</p>
 
-<p>```lua </p>
+<p>``` lua </p>
 
 <p>print(n2)</p>
 
@@ -371,49 +371,85 @@ print(z)</p>
 
 <p>結果如下：</p>
 
-<p>```sh</p>
-
-<p>nn.Sequential {
-  [input -&gt; (1) -&gt; (2) -&gt; output]
-  (1): nn.Linear(2 -&gt; 3)
-  (2): nn.Sigmoid
-}
-{
-  gradInput : DoubleTensor - empty
-  modules : 
-    {
-      1 : 
-        nn.Linear(2 -&gt; 3)
-        {
-          gradBias : DoubleTensor - size: 3
-          weight : DoubleTensor - size: 3x2
-          _type : torch.DoubleTensor
-          output : DoubleTensor - size: 3
-          gradInput : DoubleTensor - empty
-          bias : DoubleTensor - size: 3
-          gradWeight : DoubleTensor - size: 3x2
-        }
-      2 : 
-        nn.Sigmoid
-        {
-          gradInput : DoubleTensor - empty
-          _type : torch.DoubleTensor
-          output : DoubleTensor - size: 3
-        }
-    }
-  _type : torch.DoubleTensor
-  output : DoubleTensor - size: 3
-}</p>
-
-<p>​```</p>
+<p><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;nn.Sequential <span class="o">{</span>
+</span><span class='line'>  <span class="o">[</span>input -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>1<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>2<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> output<span class="o">]</span>
+</span><span class='line'>  <span class="o">(</span>1<span class="o">)</span>: nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
+</span><span class='line'>  <span class="o">(</span>2<span class="o">)</span>: nn.Sigmoid
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>  gradInput : DoubleTensor - empty
+</span><span class='line'>  modules :
+</span><span class='line'>    <span class="o">{</span>
+</span><span class='line'>      <span class="m">1</span> :
+</span><span class='line'>        nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
+</span><span class='line'>        <span class="o">{</span>
+</span><span class='line'>          gradBias : DoubleTensor - size: 3
+</span><span class='line'>          weight : DoubleTensor - size: 3x2
+</span><span class='line'>          _type : torch.DoubleTensor
+</span><span class='line'>          output : DoubleTensor - size: 3
+</span><span class='line'>          gradInput : DoubleTensor - empty
+</span><span class='line'>          bias : DoubleTensor - size: 3
+</span><span class='line'>          gradWeight : DoubleTensor - size: 3x2
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>      <span class="m">2</span> :
+</span><span class='line'>        nn.Sigmoid
+</span><span class='line'>        <span class="o">{</span>
+</span><span class='line'>          gradInput : DoubleTensor - empty
+</span><span class='line'>          _type : torch.DoubleTensor
+</span><span class='line'>          output : DoubleTensor - size: 3
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  _type : torch.DoubleTensor
+</span><span class='line'>  output : DoubleTensor - size: 3
+</span><span class='line'><span class="o">}</span>&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
 
-<p>第二部份是詳細印出 <code>nn.Sequential</code> 中，有哪些成員 ，它有從 <code>nn.Module</code> 繼承而來的 <code>gradInput</code> 即 <code>output</code> ，也有從 <code>nn.Container</code> 繼承而來的 <code>modules</code> 。而 <code>modules</code> 的部分會詳細列出裡面每個 module 有哪些成員。</p>
+<p>第二部份是詳細印出 <code>nn.Sequential</code> 中，有哪些成員 ，它有從 <code>nn.Module</code> 繼承而來的 <code>gradInput</code> 即 <code>output</code> ，也有從 <code>nn.Container</code> 繼承而來的 <code>modules</code> 。而 <code>modules</code> 的部分會詳細列出裡面每個 module 中有哪些 variable。</p>
 
 <p>這部分的程式碼於 <code>tostring</code> 函式中，程式碼如下：</p>
 
-<p>```lua nn/Sequential.lua</p>
+<p>``` lua nn/Sequential.lua</p>
 
 <p>function Sequential:<strong>tostring</strong>()
    local tab = ‘  ‘
