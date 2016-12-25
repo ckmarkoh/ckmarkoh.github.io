@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:44:37+08:00</updated>
+  <updated>2016-12-25T17:48:00+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -475,7 +475,7 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 </span><span class="line">
 </span><span class="line">第二部份是詳細印出 <span class="sb">`</span>nn.Sequential<span class="sb">`</span> 中，有哪些成員 ，它有從 <span class="sb">`</span>nn.Module<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>gradInput<span class="sb">`</span> 即 <span class="sb">`</span>output<span class="sb">`</span> ，也有從 <span class="sb">`</span>nn.Container<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>modules<span class="sb">`</span> 。而 <span class="sb">`</span>modules<span class="sb">`</span> 的部分會詳細列出裡面每個 module 有哪些成員。
 </span><span class="line">
-</span><span class="line">這部分的程式碼於 <span class="sb">`</span>__tostring__<span class="sb">`</span> 這個函式中，程式碼如下：
+</span><span class="line">這部分的程式碼於 <span class="sb">`</span>tostring<span class="sb">`</span> 函式中，程式碼如下：
 </span></code></pre></td></tr></table></div></figure>
 <p>lua nn/Sequential.lua</p>
 

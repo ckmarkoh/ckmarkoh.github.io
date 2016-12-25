@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Torch | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/torch/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:44:37+08:00</updated>
+  <updated>2016-12-25T17:48:00+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -411,7 +411,7 @@ print(z)</p>
 
 <p>第二部份是詳細印出 <code>nn.Sequential</code> 中，有哪些成員 ，它有從 <code>nn.Module</code> 繼承而來的 <code>gradInput</code> 即 <code>output</code> ，也有從 <code>nn.Container</code> 繼承而來的 <code>modules</code> 。而 <code>modules</code> 的部分會詳細列出裡面每個 module 有哪些成員。</p>
 
-<p>這部分的程式碼於 <code>__tostring__</code> 這個函式中，程式碼如下：</p>
+<p>這部分的程式碼於 <code>tostring</code> 函式中，程式碼如下：</p>
 
 <p>```lua nn/Sequential.lua</p>
 
