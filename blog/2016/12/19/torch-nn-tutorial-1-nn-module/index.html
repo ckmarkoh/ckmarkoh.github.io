@@ -201,24 +201,6 @@ MathJax.Hub.Config({
 </span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
 </span></code></pre></td></tr></table></div></figure>
 
-<p>也可以從 <code>l1.output</code> 來直接取得 <code>l1</code> 之前進行運算的結果。</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>結果如下：</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.7125
-</span><span class="line"> 0.3276
-</span><span class="line"> 0.0865
-</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
 <h2 id="nnmodule--nnlinear">nn.Module &amp; nn.Linear</h2>
 
 <p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的源碼相當簡潔易懂，可以直接看源碼來了解它的功能是什麼。</p>
@@ -351,6 +333,36 @@ MathJax.Hub.Config({
 </span></code></pre></td></tr></table></div></figure>
 
 <p>其中，<code>weight</code> 和 <code>bias</code> 會被初始化隨機成 size 3x2 和 size 3 的 double tensor ，而最後一行顯示出 <code>output</code> 還是空的（with no dimension）。</p>
+
+<p>如果想知道各個 variable 的 size ，還有個方式，就是直接用 print 的方式把它印出來，作法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">nn.Linear<span class="o">(</span><span class="m">2</span> -&gt; 3<span class="o">)</span>
+</span><span class="line"><span class="o">{</span>
+</span><span class="line">  gradBias : DoubleTensor - size: 3
+</span><span class="line">  weight : DoubleTensor - size: 3x2
+</span><span class="line">  _type : torch.DoubleTensor
+</span><span class="line">  output : DoubleTensor - empty
+</span><span class="line">  gradInput : DoubleTensor - empty
+</span><span class="line">  bias : DoubleTensor - size: 3
+</span><span class="line">  gradWeight : DoubleTensor - size: 3x2
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
@@ -657,6 +669,8 @@ MathJax.Hub.Config({
         <a class="basic-alignment left" href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/" title="Previous Post: word2vec (part 3 : Implementation)">&laquo; word2vec (part 3 : Implementation)</a>
       
       
+        <a class="basic-alignment right" href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/" title="Next Post: Torch NN Tutorial 2 : NN.Container & NN.Sequential">Torch NN Tutorial 2 : NN.Container & NN.Sequential &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -673,11 +687,15 @@ MathJax.Hub.Config({
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (10)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (2)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
@@ -693,10 +711,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
       </li>
     
   </ul>

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd" xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url>
+<loc>http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/</loc>
+<lastmod>2016-12-24T00:24:25+08:00</lastmod>
+</url>
+<url>
 <loc>http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module/</loc>
 <lastmod>2016-12-19T22:36:47+08:00</lastmod>
 </url>
@@ -284,20 +288,5 @@
 </url>
 <url>
 <loc>http://ckmarkoh.github.io/blog/categories/torch/</loc>
-</url>
-<url>
-<loc>http://ckmarkoh.github.io/posts/2/</loc>
-</url>
-<url>
-<loc>http://ckmarkoh.github.io/posts/3/</loc>
-</url>
-<url>
-<loc>http://ckmarkoh.github.io/posts/4/</loc>
-</url>
-<url>
-<loc>http://ckmarkoh.github.io/posts/5/</loc>
-</url>
-<url>
-<loc>http://ckmarkoh.github.io/posts/6/</loc>
 </url>
 </urlset>

@@ -1,0 +1,381 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Torch NN Tutorial 2 : NN.Container & NN.Sequential - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 在Torch NN tutorial 1 : NN.Module &amp; NN.Linear中，介紹了構成 neural network 的最基本的單位，也就是 nn.Module ，並介紹了 nn.Linear 可以進行一次線性運算，但通常一個 neural &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50146000-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Torch NN Tutorial 2 : NN.Container & NN.Sequential</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-12-24T00:24:25+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>24</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>12:24 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在<a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN tutorial 1 : NN.Module &amp; NN.Linear</a>中，介紹了構成 neural network 的最基本的單位，也就是 <code>nn.Module</code> ，並介紹了 <code>nn.Linear</code> 可以進行一次線性運算，但通常一個 neural network 是經由多個線性和非線性的運算構成的。要把多個 Module 串接起來，就需要用到 <code>nn.Contaner</code> 。</p>
+
+<p>例如，有個 neural network 的輸入為 x ，輸出為 z ，中間經過了一次線性運算與一個sigmoid function ，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+&\textbf{y} = \textbf{W}\textbf{x} + \textbf{b}  \\
+&\textbf{z} = \frac{1}{1+e^{-\textbf{y}}}
+\end{align}
+ %]]></script>
+
+<p>假設 <script type="math/tex">\textbf{x}</script> 為 2 維的向量，而 <script type="math/tex">\textbf{y}</script> 為 3 維向量， 
+<script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化，
+<script type="math/tex">\textbf{z}</script>  是 <script type="math/tex">\textbf{y}</script> 經過 sigmoid 非線性運算的輸出結果。</p>
+
+<!--more-->
+
+<p>使用 torch 實作此運算：</p>
+
+<p>首先，載入 <code>nn</code> 套件：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>建立以上兩個運算所需的Module，分別為 <code>nn.Linear</code> 和 <code>nn.Sigmoid</code> ，並將它們分別命名為 <code>l1</code> 和 <code>s1</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+</span><span class="line"><span class="n">s1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>nn.Sigmoid</code> 為進行 sigmoid 運算所需的 module 。</p>
+
+<p>如果要進行運算，方法如下：</p>
+
+<p>假設 x 為一個二維向量 <script type="math/tex">[0,1]</script> ，先輸入 <code>l1</code> ，進行 forward propagation ，將運算結果傳給 <code>y</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">}</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行完後會印出 <code>l1</code> 的輸出值，也就是 <code>y</code> 的值，是個三維的向量，
+y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值關， <code>y</code> 值如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948
+</span><span class="line"> 0.9780
+</span><span class="line"> 0.3982
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來將 <code>y</code> 輸入到 <code>s1</code> 中， 進行 forward propagation，將運算結果傳給 <code>z</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">z</span> <span class="o">=</span> <span class="n">s1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行完後會印出 <code>z</code> 值，此值是由 <code>y</code> 的值經過 sigmoid function 的運算所得出來的， <code>z</code> 值如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.5485
+</span><span class="line"> 0.7267
+</span><span class="line"> 0.5983
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上過程中，給定了 <code>x</code> 值，經過每一個 module 都要呼叫一次 <code>forward</code> ，最後才能取得 <code>z</code> 的值，
+如果一個 network 是由很多個 module 所組成的，這樣要呼叫很多次 <code>forward</code> ，會很麻煩。</p>
+
+<p>而 <code>nn.Container</code> 則是一個容器，它可以把多個 module 放進去，並自動處理這些 module 輸入與輸出值的傳遞。 <code>nn.Container</code> 也是個抽象個類別，泛指能夠把 module 放進去的容器。</p>
+
+<p>其中一種 container 可將前一個 module 的輸出，傳給下一個 module 的輸入，這種 contanier 為 <code>nn.Sequential()</code> 。</p>
+
+<p>例如，如果要將 <code>l1</code> 的輸出，傳入 <code>s1</code> ，則可以用 <code>nn.Sequential</code> 來達成。建立一個命名為 <code>n1</code> 的 sequential container ，將 <code>l1</code> 和 <code>s1</code> 串起來，方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">n1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">()</span>
+</span><span class="line"><span class="n">n1</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
+</span><span class="line"><span class="n">n1</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中，<code>add</code> 是將 module 加入 container 的 function。</p>
+
+<p>其實， <code>nn.Container</code> 也是從 <code>nn.Module</code> 繼承而來的，所以它也有 <code>forward</code> ，可以進行 forward propagation ，只要呼叫了 <code>nn.Container</code> 的 <code>forward</code> ，它就會自動將裡面的 module 進行 forward ，病輸出結果。</p>
+
+<p>如此給定 <code>x</code> 之後，只要進行一次 forward 即可取得 <code>z</code> 的結果，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">}</span>
+</span><span class="line"><span class="n">z</span> <span class="o">=</span> <span class="n">n1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行完後，會印出 <code>z</code> 的結果，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.5485
+</span><span class="line"> 0.7267
+</span><span class="line"> 0.5983
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-12-24T00:24:25+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>24</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>12:24 am</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/neural-networks/'>neural networks</a>, <a class='category' href='/blog/categories/torch/'>torch</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/" title="Previous Post: Torch NN tutorial 1 : NN.Module & NN.Linear">&laquo; Torch NN tutorial 1 : NN.Module & NN.Linear</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (10)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (2)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'ckmarkoh-pages';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/';
+        var disqus_url = 'http://ckmarkoh.github.io/blog/2016/12/24/torch-nn-tutorial-2-nn-container/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

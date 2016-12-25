@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Gradient Descent 在機器學習的過程中，常需要將 Cost Function 的值減小，通常用 Gradient Descent 來做最佳化的方法來達成。但是用 Gradient Descent 有其缺點，例如，很容易卡在 Local Minimum。 Gradient &hellip;">
+  <meta name="description" content="Gradient Descent 機器學習中，用 Gradient Descent 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：Optimization Method – Gradient Descent &amp; AdaGrad 對於 Cost &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,50 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/01/25/optimization-method-newton/">Newton's Method for Optimization</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-01-25T16:56:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:56 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="gradient-descent">Gradient Descent</h2>
+
+<p>機器學習中，用 <em>Gradient Descent</em> 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：<a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad</a></p>
+
+<p>對於 <em>Cost function</em> <script type="math/tex">f(\textbf{x})</script> ，在 <script type="math/tex">\textbf{x} = \textbf{x}_{t}</script> 時， <em>Gradient Descent</em>  走的方向為  <script type="math/tex">  -\nabla f(\textbf{x})</script> 。也就是，用泰勒展開式展開後，用一次微分 <script type="math/tex">f(\textbf{x})</script> 來趨近的方向，如下圖：</p>
+
+<p><img src="/images/pic/pic_00144.png" alt="" /></p>
+
+<p>註：考慮到 <script type="math/tex">\textbf{x}</script> 為向量的情形，故一次微分寫成  <script type="math/tex">\nabla f(\textbf{x})</script> 。 </p>
+
+<p>其中， <script type="math/tex">f(\textbf{x})</script> 為原本的 <em>Cost function</em> ，而 <script type="math/tex">\tilde{f}(\textbf{x})</script> 為泰勒展開式取一次微分逼近的。 而 <em>Gradient Descent</em> 走的方向為 <script type="math/tex"> - \nabla f(\textbf{x}) </script> ，為沿著 <script type="math/tex">\tilde{f}(\textbf{x})</script> 的方向。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/01/25/optimization-method-newton/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -589,66 +633,6 @@ This is not an apple </p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/">Boolean Retrieval</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-09T00:27:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>9</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>12:27 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="information-retrieval">Information Retrieval</h2>
-
-<p>所謂的資訊檢索（ <em>Information Retrieval</em> )，就是從大量非結構的資料，例如網頁，根據某些關鍵字，找出具有此關鍵字的文件。例如，搜尋引擎，即是一種資訊檢索的應用。</p>
-
-<p>資訊檢索的演算法，其實跟我們要在某本書中，找尋某個字的方法差不多。</p>
-
-<p>例如我們想在 <em>Introduction to Information Retrieval</em> 這本教科書中，找到 <em>informational queries</em> 這個詞在哪一頁，如果從第一頁開始，一個字一個字慢慢找，要比對成千上萬個字才能找到。</p>
-
-<p>但如果我們翻到書本後面的 <em>Index</em> （如下） ，即可很快找到 <em>informational queries</em> 這個字是在第 <em>432</em> 頁。</p>
-
-<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-</pre></td><td class="code"><pre><code class=""><span class="line">...
-</span><span class="line">information gain, 285 
-</span><span class="line">information need, 5, 152 
-</span><span class="line">information retrieval, 1 
-</span><span class="line">informational queries, 432 
-</span><span class="line">inner product, 121 
-</span><span class="line">...
-</span></code></pre></td></tr></table></div></figure>
-
-<p>所以，資訊檢索，最核心的概念就是建立 <em>Index</em> ，這樣就可以快速找到哪些文件中具有某個關鍵字。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/09/-information-retrieval-boolean-retrieval/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -663,11 +647,15 @@ This is not an apple </p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (10)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (2)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
@@ -683,10 +671,6 @@ This is not an apple </p>
     
       <li class="post">
         <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
       </li>
     
   </ul>

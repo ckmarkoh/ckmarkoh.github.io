@@ -9,20 +9,14 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="0.Introduction argparse是用來處理command line的argument所使用的 例如執行一個程式, 比如說 mv 在Terminal輸入 mv --help 之後 顯示如下： 1
+  <meta name="description" content="1.Introduction 在python裡面, = 這個符號, 有可能是 pass by value 或是 pass by reference 如果 = 右方的 variable 是 value , 例如 int 則 = 是 pass by value ,如下 1
 2
 3
 4
 5
 6
 7
-8
-9
-10
-11
-12
-$ mv --help
-Usage: &hellip;">
+8 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -105,6 +99,68 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/01/python-standard-library-copy/">Python Copy</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-01T16:23:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>4:23 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>在python裡面, <code>=</code> 這個符號,</p>
+
+<p>有可能是 <em>pass by value</em> 或是 <em>pass by reference</em></p>
+
+<p>如果 <code>=</code> 右方的 <em>variable</em> 是 <em>value</em> , 例如 <em>int</em></p>
+
+<p>則 <code>=</code> 是 <em>pass by value</em> ,如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x2</span><span class="o">=</span><span class="n">x1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">x1</span><span class="o">+=</span><span class="mi">1</span>
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x1</span>
+</span><span class="line"><span class="mi">2</span>
+</span><span class="line">
+</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="k">print</span> <span class="n">x2</span>
+</span><span class="line"><span class="mi">1</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><img src="/images/pic/pic_00001.tiff" alt="p1" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/01/python-standard-library-copy/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -612,93 +668,6 @@ h(x)=\frac{1}{1+e^{-W^{T} X }}
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/03/13/python-nltk-logic-2/">Python Nltk -- Logic 2 : Lambda Calculus</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-03-13T14:09:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:09 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus</p>
-
-<h2 id="introduction">1.introduction</h2>
-
-<p>邏輯語意學在語意推導方面,通常會用到 <script type="math/tex">\lambda -calculus</script></p>
-
-<p>使用<script type="math/tex">\lambda -calculus</script>就可以把一個句子的語意,從個別單字中推導出來</p>
-
-<p>至於<script type="math/tex">\lambda -calculus</script> 是什麼呢？</p>
-
-<p>簡而言之,lambda calculus是一種數學運算,由以下三種元素組成</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-
-
-& v  & (a)\\
-
-& \lambda x.f(x)  & (b)\\
-
-& \lambda x.f(x)(v) & (c)\\
-
-
-\end{align}
-
- %]]></script>
-
-<p><script type="math/tex">(a)</script> 是 <script type="math/tex">variable</script></p>
-
-<p><script type="math/tex">(b)</script> 是 <script type="math/tex">astraction</script> ,就是把function中的variable拿到前面,加個 <script type="math/tex">\lambda</script></p>
-
-<p><script type="math/tex">(c)</script> 是將另一個 <script type="math/tex">variable</script> 放到 <script type="math/tex">astraction</script> 後面</p>
-
-<p>然後可以進行一種運算,叫做 <script type="math/tex">\beta-reduction</script> ,如下</p>
-
-<script type="math/tex; mode=display">
-
-\lambda x.f(x)(v)
-
-\Rightarrow f(v)
-
-</script>
-
-<p>還有另一種運算叫做 <script type="math/tex">\alpha-conversion</script> ,其實就是更改變數名稱而已</p>
-
-<script type="math/tex; mode=display">
-
-\lambda x.f(x)
-
-\Rightarrow \lambda y.f(y)
-
-</script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/03/13/python-nltk-logic-2/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/6">&larr; Older</a>
@@ -713,11 +682,15 @@ h(x)=\frac{1}{1+e^{-W^{T} X }}
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (9)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (1)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (10)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (2)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
@@ -733,10 +706,6 @@ h(x)=\frac{1}{1+e^{-W^{T} X }}
     
       <li class="post">
         <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a>
       </li>
     
   </ul>
