@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-26T00:02:20+08:00</updated>
+  <updated>2016-12-26T00:06:16+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,232 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/"/>
+    <updated>2016-12-25T18:48:14+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>torch 的 <code>nn.Module</code> 是組成 neural network 的部分，但是要訓練一個 neural network ，就需要有 loss function 。而 <code>nn.Criterion</code> 就是用來計算 loss function 的值。<code>nn.Criterion</code> 是個抽象類別，所有種類的 loss function 都繼承於它。</p>
+
+<p>例如， loss funciton 用 Minimum Square Error 時， <script type="math/tex">\bar{y}</script> 為模型預測出來的數值， <script type="math/tex">y</script> 為正確的數值 ，則 loss function <script type="math/tex"> L (y, \bar{y}) </script> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2 
+
+</script>
+
+<p>在 torch 中，負責計算 Minimum Square Error 的 criterion 為 <code>nn.MSECriterion</code> 。</p>
+
+<!-- more -->
+
+<p>實作部份如下，首先，載入 <code>nn</code> 模組：</p>
+
+<p>``` lua</p>
+
+<p>require ‘nn’</p>
+
+<p>```</p>
+
+<p>建立 <code>nn.MSECriterion</code> ，命名為 <code>c1</code> ，如下：</p>
+
+<p>``` lua</p>
+
+<p>c1 = nn.MSECriterion()</p>
+
+<p>```</p>
+
+<p>假設模型預測出的數值 <script type="math/tex"> \bar{y} = 5</script> ，正確數值 <script type="math/tex">y=3</script> ，則：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2  = (3-5)^2 = 4
+
+</script>
+
+<p>實作如下，將 <code>y_ = 5</code> 與 <code>y = 3</code> 兩數值傳入 <code>c1</code> ，進行 forward propagation ，得出 loss function <code>l</code> 的數值。</p>
+
+<p>``` lua</p>
+
+<p>y_ = torch.Tensor{5}
+y = torch.Tensor{3}
+l = c1:forward(y_,y)
+print(l)</p>
+
+<p>```</p>
+
+<p>執行結果， <code>l = 4</code> ，如下：</p>
+
+<p>``` sh</p>
+
+<p>4	</p>
+
+<p>```</p>
+
+<h2 id="nncriterion--nnmsecriterion">nn.Criterion &amp; nn.MSECriterion</h2>
+
+<p>這邊講解 <code>nn.Criterion</code> 以及 <code>nn.MSECriterion</code> 的程式碼：</p>
+
+<p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
+
+<p><code>nn.MSECriterion</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/MSECriterion.lua">https://github.com/torch/nn/blob/master/MSECriterion.lua</a></p>
+
+<p>首先看到 <code>nn.Criterion</code> 的部分，先從 <code>init</code> 開始。</p>
+
+<p>``` lua nn/Criterion.lua</p>
+
+<p>local Criterion = torch.class(‘nn.Criterion’)</p>
+
+<p>function Criterion:__init()
+   self.gradInput = torch.Tensor()
+   self.output = 0
+end</p>
+
+<p>```</p>
+
+<p>從以上程式碼得知， <code>nn.Criterion</code> 雖然有 <code>output</code> 和 <code>gradInput</code> 這兩個變量，但它並沒有繼承 <code>nn.Module</code> 。</p>
+
+<p>再來看到 forward propagation 的部分， <code>nn.Criterion</code> 的 <code>forward</code> 和 <code>nn.Module</code> 的不一樣，因為它的輸入有 <code>input</code> 和 <code>target</code> 這兩個變量，如下：</p>
+
+<p>因為 loss function 的 forward propagation 需要有 input 和 target 這兩個數值才算得出來，而 module 中的 forward propagation 部分，通常只需要 input 的數值即可。</p>
+
+<p>``` lua nn/Criterion.lua</p>
+
+<p>function Criterion:forward(input, target)
+   return self:updateOutput(input, target)
+end</p>
+
+<p>```</p>
+
+<p>再來看到 <code>nn.MSECriterion</code> 的程式碼。</p>
+
+<p>``` lua nn/MSECriterion.lua</p>
+
+<p>function MSECriterion:__init(sizeAverage)
+   parent.__init(self)
+   if sizeAverage ~= nil then
+     self.sizeAverage = sizeAverage
+   else
+     self.sizeAverage = true
+   end
+end</p>
+
+<p>```</p>
+
+<p>其中， <code>sizeAverage</code> 是設定要不要將 output 根據 input 的維度來做平均，預設值為 <code>true</code> 。</p>
+
+<p>舉個例子，<code>y2_</code> 和 <code>y2</code> 分別為 input 與 target ，分別建立 <code>c2</code> 與 <code>c3</code> 兩個 <code>nn.MSECriterion</code> ， <code>c2</code> 的 <code>sizeAverage</code> 為 <code>true</code> ，而 <code>c3</code> 的 <code>sizeAverage</code> 為 <code>false</code> 。</p>
+
+<p>``` lua</p>
+
+<p>y2_ = torch.Tensor{5,5}
+y2 = torch.Tensor{3,3}
+c2 = nn.MSECriterion(true)
+c3 = nn.MSECriterion(false)</p>
+
+<p>```</p>
+
+<p>將 <code>y2_</code> 和 <code>y2</code> 都輸入 <code>c2</code> 和 <code>c3</code> ，進行 forward propagation ，比較其結果差異，程式碼如下：</p>
+
+<p>``` lua</p>
+
+<p>print(c2:forward(y2<em>,y2))
+print(c3:forward(y2</em>,y2))</p>
+
+<p>```</p>
+
+<p>則輸出結果如下：</p>
+
+<p>``` sh</p>
+
+<p>4	
+8</p>
+
+<p>```</p>
+
+<p>以上， 4 是 <code>sizeAverage</code> 為 <code>true</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減後再平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{(5-3)^2 + (5-3)^2 }{2} = 4
+
+</script>
+
+<p>而 8 是 <code>sizeAverage</code> 為 <code>false</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減，但沒平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+(5-3)^2 + (5-3)^2  = 8
+
+</script>
+
+<p>這裡要注意的是，不管 <code>sizeAverage</code> 是 <code>ture</code> 或 <code>false</code> ，也不論 input 的維度有多少，output 都是一維的純量。</p>
+
+<p>再來看到 <code>updateOutput</code> 的程式碼：</p>
+
+<p>``` lua nn/Criterion.lua</p>
+
+<p>function MSECriterion:updateOutput(input, target)
+   self.output_tensor = self.output_tensor or input.new(1)
+   input.THNN.MSECriterion_updateOutput(
+      input:cdata(),
+      target:cdata(),
+      self.output_tensor:cdata(),
+      self.sizeAverage
+   )
+   self.output = self.output_tensor[1]
+   return self.output
+end</p>
+
+<p>``` </p>
+
+<p>此部分的核心運算是用 C 來加速，在第三行會呼叫 C 的函數 <code>MSECriterion_updateOutput</code> ，再將結果存在 <code>output_tensor</code> ，而 lua 則從 <code>output_tensor</code> 中取出結果，傳到 <code>output</code> 。</p>
+
+<p>C 的程式碼在 <a href="https://github.com/torch/nn/blob/master/lib/THNN/generic/MSECriterion.c">MSECriterion.c</a> 檔案中：</p>
+
+<p>``` c  nn/lib/THNN/generic/MSECriterion.c</p>
+
+<p>void THNN_(MSECriterion_updateOutput)(
+          THNNState *state,
+          THTensor *input,
+          THTensor *target,
+          THTensor *output,
+          bool sizeAverage)
+{
+  THNN_CHECK_NELEMENT(input, target);
+  THNN_CHECK_DIM_SIZE(output, 1, 0, 1);</p>
+
+<p>real sum = 0;</p>
+
+<p>TH_TENSOR_APPLY2(real, input, real, target,
+    real z = (<em>input_data - *target_data);
+    sum += z</em>z;
+  );</p>
+
+<p>if (sizeAverage)
+    sum /= THTensor_(nElement)(input);</p>
+
+<p>THTensor_(set1d)(output, 0, sum);
+}</p>
+
+<p>```</p>
+
+<p>在第 14 ~ 15 行中可看到將 <code>input_data</code> 與 <code>target_data</code> 相減後得出 <code>z</code> ，並將 <code>z</code> 平方後累加，得到 <code>sum</code> ，而在 18 ~ 19 行中， <code>sum</code> 會根依序 <code>sizeAverage</code> 的值，來決定要不要除以所有元素的個數。</p>
+
+<p>最後一行則將 <code>sum</code> 的值存到 <code>output</code> 中，這個 <code>output</code> 所對應到 lua 中的 <code>output_tensor</code> 。</p>
+
+<p>關於 <code>updateGradInput</code> 以及 backward propagation 的部分，將在下回介紹。</p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 2 : NN.Container & NN.Sequential]]></title>
@@ -371,41 +597,77 @@ print(z)</p>
 
 <p>結果如下：</p>
 
-<p>{% codeblock lang:sh %}</p>
-
-<p>nn.Sequential {
-  [input -&gt; (1) -&gt; (2) -&gt; output]
-  (1): nn.Linear(2 -&gt; 3)
-  (2): nn.Sigmoid
-}
-{
-  gradInput : DoubleTensor - empty
-  modules : 
-    {
-      1 : 
-        nn.Linear(2 -&gt; 3)
-        {
-          gradBias : DoubleTensor - size: 3
-          weight : DoubleTensor - size: 3x2
-          _type : torch.DoubleTensor
-          output : DoubleTensor - size: 3
-          gradInput : DoubleTensor - empty
-          bias : DoubleTensor - size: 3
-          gradWeight : DoubleTensor - size: 3x2
-        }
-      2 : 
-        nn.Sigmoid
-        {
-          gradInput : DoubleTensor - empty
-          _type : torch.DoubleTensor
-          output : DoubleTensor - size: 3
-        }
-    }
-  _type : torch.DoubleTensor
-  output : DoubleTensor - size: 3
-}</p>
-
-<p>{% endcodeblock %}</p>
+<p><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;nn.Sequential <span class="o">{</span>
+</span><span class='line'>  <span class="o">[</span>input -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>1<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>2<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> output<span class="o">]</span>
+</span><span class='line'>  <span class="o">(</span>1<span class="o">)</span>: nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
+</span><span class='line'>  <span class="o">(</span>2<span class="o">)</span>: nn.Sigmoid
+</span><span class='line'><span class="o">}</span>
+</span><span class='line'><span class="o">{</span>
+</span><span class='line'>  gradInput : DoubleTensor - empty
+</span><span class='line'>  modules :
+</span><span class='line'>    <span class="o">{</span>
+</span><span class='line'>      <span class="m">1</span> :
+</span><span class='line'>        nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
+</span><span class='line'>        <span class="o">{</span>
+</span><span class='line'>          gradBias : DoubleTensor - size: 3
+</span><span class='line'>          weight : DoubleTensor - size: 3x2
+</span><span class='line'>          _type : torch.DoubleTensor
+</span><span class='line'>          output : DoubleTensor - size: 3
+</span><span class='line'>          gradInput : DoubleTensor - empty
+</span><span class='line'>          bias : DoubleTensor - size: 3
+</span><span class='line'>          gradWeight : DoubleTensor - size: 3x2
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>      <span class="m">2</span> :
+</span><span class='line'>        nn.Sigmoid
+</span><span class='line'>        <span class="o">{</span>
+</span><span class='line'>          gradInput : DoubleTensor - empty
+</span><span class='line'>          _type : torch.DoubleTensor
+</span><span class='line'>          output : DoubleTensor - size: 3
+</span><span class='line'>        <span class="o">}</span>
+</span><span class='line'>    <span class="o">}</span>
+</span><span class='line'>  _type : torch.DoubleTensor
+</span><span class='line'>  output : DoubleTensor - size: 3
+</span><span class='line'><span class="o">}</span>&lt;/p&gt;
+</span><span class='line'>
+</span><span class='line'>&lt;p&gt;
+</span></code></pre></td></tr></table></div></figure></p>
 
 <p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
 
@@ -875,7 +1137,7 @@ end</p>
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
 
-<p>{% raw %}
+<p>
 ```lua</p>
 
 <p>input={
@@ -885,7 +1147,7 @@ end</p>
 print(l2:forward(torch.Tensor(input)))</p>
 
 <p>```
-{% endraw %}</p>
+</p>
 
 <p>結果如下：</p>
 
@@ -1628,224 +1890,6 @@ J = - \text{log}(\frac{1}{1+e^{-\textbf{v}_I^T \textbf{w}_{pos} }}) - \sum_{neg}
 
 <p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Word2vec (Part 1 : Overview)]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview/"/>
-    <updated>2016-07-12T09:19:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2016/07/12/neural-network-word2vec-part-1-overview</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>文字的語意可以用向量來表示，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，如果把每種字當成一個維度，假設總共有一萬總字，那向量就會有一萬個維度。有兩種方法可降低維度，分別是 <em>singular value decomposition</em> 和 <em>word2vec</em> 。</p>
-
-<p>本文講解 <em>word2vec</em> 的原理。 <em>word2vec</em> 流程，總結如下：</p>
-
-<p><img src="/images/pic/pic_00191.png" alt="" /></p>
-
-<p>首先，將文字做 <em>one-hot encoding</em> ，然後再用 <em>word2vec</em> 類神經網路計算，求出壓縮後（維度降低後）的語意向量。</p>
-
-<!--more-->
-
-<h2 id="one-hot-encoding">One-Hot Encoding</h2>
-
-<p>一開始，不知道哪個字和哪個字語意相近，所以就假設每個字的語意是不相干的。也就是說，每個字的向量都是互相垂直。</p>
-
-<p>這邊舉個比較簡單的例子，假設總字彙量只有 4 個， 分別為 <em>dog, cat, run, fly</em> ，那麼，經過 <em>one-hot encoding</em> 的結果如下：</p>
-
-<p><img src="/images/pic/pic_00192.png" alt="" /></p>
-
-<p>如上圖， <em>dog</em> 的向量為 (1,0,0,0) ，只有在第一個維度是 1 ，其他維度是 0 ，而 <em>cat</em> 的向量為 (0,1,0,0) 只有在第一個維度是 1 ，其他維度是 0 。</p>
-
-<p>也就是說，每個字都有一個代表它的維度，而它 <em>one hot encoding</em> 的結果，只有在那個維度上是 1 ，其他維度都是 0 。這樣的話，任意兩個 <em>one hot encoding</em> 的向量內積結果，都會是 0 ，內積結果為 0 ，表示兩向量是垂直的。</p>
-
-<p>註：實際應用中，字彙量即是語料庫中的單字種類，通常會有幾千個甚至一萬個以上。</p>
-
-<h2 id="word2vec">word2vec</h2>
-
-<p><em>word2vec</em> 的神經網路架構如下，總共有三層， <em>input layer</em> 和 <em>output layer</em> 一樣大，中間的 <em>hidden layer</em> 比較小。</p>
-
-<p><img src="/images/pic/pic_00193.png" alt="" /></p>
-
-<p>如上圖，總字彙量有 4 個，那麼 <em>input layer</em> 和 <em>output layer</em> 的維度為 4， 每個維度分別代表一個字。 如果想要把向量維度降至三維， <em>hidden layer</em> 的維度為 3。</p>
-
-<p>另外要注意的是， <em>hidden layer</em> 沒有非線性的 <em>activation funciton</em> ，而 <em>output layer</em> 的 <em>activation function</em> 是 <em>sigmoid</em> ，這兩點會有什麼影響，之後會提到。</p>
-
-<p>其中，在 <em>input layer</em> 和 <em>hidden layer</em> 之間， 有 <script type="math/tex">4 \times 3</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{V}</script> ，而在 <em>hidden layer</em> 到 <em>output layer</em> 之間， 有 <script type="math/tex">3 \times 4</script> 個 <em>weight</em> ，在此命名為 <script type="math/tex">\textbf{W}</script> 。</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\textbf{V}=
-
-\begin{bmatrix}
-
-    v_{11} & v_{12} & v_{13}  \\
-
-    v_{21} & v_{22} & v_{23}  \\
-
-    v_{31} & v_{32} & v_{33}  \\
-
-    v_{41} & v_{42} & v_{43}  \\
-
-\end{bmatrix}
-
-\mspace{30mu}
-
-\textbf{W}^T=
-
-\begin{bmatrix}
-
-    w_{11} & w_{12} & w_{13}  \\
-
-    w_{21} & w_{22} & w_{23}  \\
-
-    w_{31} & w_{32} & w_{33}  \\
-
-    w_{41} & w_{42} & w_{43}  \\
-
-\end{bmatrix}
-
- %]]&gt;</script>
-
-<p>由於 <em>input</em> 是 <em>one hot encoding</em> 的向量，又因為 <em>hidden layer</em> 沒有 <em>sigmoid</em> 之類的非線性 <em>activation function</em>。 輸入到類神經網路後，在 <em>hidden layer</em> 所取得的值，即是 <script type="math/tex">\textbf{V}</script> 中某個橫排的值，如下：</p>
-
-<p><img src="/images/pic/pic_00194.png" alt="" /></p>
-
-<p>例如，輸入的是 <em>dog</em> 的 <em>one hot encoding</em> ，只有在第 1 個維度是 1 ，與 <script type="math/tex">\textbf{V}</script> 作矩陣相乘後，在 <em>hidden layer</em> 取得的值是 <script type="math/tex">\textbf{V}</script> 中的第一個橫排： <script type="math/tex">(v_{11}, v_{12}, v_{13})</script> ，這個向量就是 <em>dog</em> 壓縮後的語意向量。運算過程如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{bmatrix}
-
-1 & 0 & 0 & 0 
-
-\end{bmatrix}
-
-\begin{bmatrix}
-
-    v_{11} & v_{12} & v_{13}  \\
-
-    v_{21} & v_{22} & v_{23}  \\
-
-    v_{31} & v_{32} & v_{33}  \\
-
-    v_{41} & v_{42} & v_{43}  \\
-
-\end{bmatrix}
-
-= 
-
-\begin{bmatrix}
-
-v_{11} & v_{12} & v_{13}
-
-\end{bmatrix}
-
- %]]&gt;</script>
-
-<p>因此， <script type="math/tex">\textbf{V}</script> 中的某個橫排，就是某個字的語意向量。從反方向來看，由於 <em>output layer</em> 也是對應到字彙的 <em>one hot encoding</em> 因此， <script type="math/tex">\textbf{W}^T</script> 中的某個橫排，就是某個字的語意向量。</p>
-
-<p>所以，一個字分別在 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 中各有一個語意向量。但通常會選擇 <script type="math/tex">\textbf{V}</script> 中的語意向量，作為 <em>word2vec</em> 的輸出結果。</p>
-
-<h2 id="initializing-word2vec">Initializing word2vec</h2>
-
-<p>至於如何訓練這個類神經網路？ 訓練一個類神經網路的過程，第一步就是要先將 <em>weight</em> 作初始化。初始化即是隨機給每個 <em>weight</em> 不同的數值，這些數值介於 <script type="math/tex"> -N \sim N</script> 之間。</p>
-
-<p>因此，在還沒開始訓練之前，這些向量的方向都是隨機的，跟語意無關。</p>
-
-<p>舉 <em>dog</em> 和 <em>cat</em> 在 <script type="math/tex">\textbf{V}</script> 中的向量，為 <script type="math/tex">\textbf{V}_1,\textbf{V}_2</script> ，以及 <em>run</em> 和 <em>fly</em> 在 <script type="math/tex">\textbf{W}</script> 中的向量 為 <script type="math/tex">\textbf{W}_3,\textbf{W}_4</script> ，為例：</p>
-
-<p><img src="/images/pic/pic_00195.png" alt="" /></p>
-
-<p>由於 <script type="math/tex">\textbf{V}</script> 和 <script type="math/tex">\textbf{W}</script> 都是隨機初始化的，因此 <script type="math/tex">\textbf{V}_1, \textbf{V}_2, \textbf{W}_3, \textbf{W}_4 </script> 這些向量的方向都是隨機的，跟語意無關，如下圖所示：</p>
-
-<p><img src="/images/pic/pic_00196.png" alt="" /></p>
-
-<h2 id="training-word2vec">Training word2vec</h2>
-
-<p>訓練 <em>word2vec</em> 的目的，是希望讓語意向量真的跟語意有關。，在上一篇 <a href="/blog/2016/07/10/nlp-vector-space-semantics"> Vector Space of Semantics </a> 中提到，某字的語意，可從其上下文有哪些字來判斷。因此，可以用某字上下文的字，來做訓練，讓語意向量能抓到文字的語意。</p>
-
-<p>若 <em>dog</em> 的上下文中有 <em>run</em> ， 令 <em>dog</em> 為 <em>word2vec</em> 的 <em>input</em> ， <em>run</em> 為 <em>output</em> 則輸入類神經網路後，在 <em>run</em> 的位置，在經過 <em>sigmoid</em> 之前，得到的結果是 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積。經過了，<em>sigmoid</em> ，得到的值為：</p>
-
-<script type="math/tex; mode=display">
-
-\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}}
-
-</script>
-
-<p>由於 <em>run</em> 出現在 <em>dog</em> 的上下文中，所以要訓練類神經網路，在 <em>run</em> 位置可以輸出 1，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 1
-
-</script>
-
-<p>過程如下圖所示：</p>
-
-<p><img src="/images/pic/pic_00197.png" alt="" /></p>
-
-<p>根據上圖，如果要讓 <em>run</em> 的位置輸出為 1 ，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的內積要越大越好。</p>
-
-<p>內積要大，就是向量角度要越小，訓練過程中，會修正這兩個向量的角度，如下圖：</p>
-
-<p><img src="/images/pic/pic_00198.png" alt="" /></p>
-
-<p>上圖左方為先正之前，各向量的方向，上圖右方為修正之後的方向，其中，深藍色為修正後的，淺藍色為修正前的，畫在一起以便作比較。修正完後， <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度又更接近了。</p>
-
-<p>同理，若 <em>cat</em> 的上下文中有 <em>run</em> ，則用 <em>word2vec</em> 做同樣訓練，如下圖：</p>
-
-<p><img src="/images/pic/pic_00199.png" alt="" /></p>
-
-<p>修正向量的角度後，<script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_3</script> 的角度會更接近，結果如下圖：</p>
-
-<p><img src="/images/pic/pic_00200.png" alt="" /></p>
-
-<p>不過，以上訓練方法有個問題，就是訓練完後， <em>所有的向量都會位於同一條直線上，而無法分辨出每個字語意的差異</em> 。如果要讓 <em>word2vec</em> 學會分辨語意的差異，就需要加入反例，也就是 <em>不是出現在上下文的字</em> 。</p>
-
-<p>如果 <em>dog</em> 的上下文中，不會出現 <em>fly</em> ， <em>fly</em> 的向量為 <script type="math/tex">\textbf{W}_4</script> ，將 <em>dog</em> 輸入類神經網路後，在 <em>fly</em> 的位置，訓練其輸出結果為 0 ，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 0
-
-</script>
-
-<p>如下圖所示：</p>
-
-<p><img src="/images/pic/pic_00201.png" alt="" /></p>
-
-<p>如果要讓輸出結果接近 0，則 <script type="math/tex">\textbf{V}_1</script> 和 <script type="math/tex">\textbf{W}_4</script> 的內積要越小越好，也就是說，它們之間的角度要越大越好。修正這兩個向量的角度，如下圖：</p>
-
-<p><img src="/images/pic/pic_00202.png" alt="" /></p>
-
-<p>同理，若 <em>cat</em> 的上下文中沒有 <em>fly</em> ，則訓練其輸出 0 ：</p>
-
-<p><img src="/images/pic/pic_00203.png" alt="" /></p>
-
-<p>修正  <script type="math/tex">\textbf{V}_2</script> 和 <script type="math/tex">\textbf{W}_4</script> 的夾角，如下圖：</p>
-
-<p><img src="/images/pic/pic_00204.png" alt="" /></p>
-
-<p>訓練後，得出的這些語意向量，語意相近的，夾角越小，語意相差越遠的，夾角越大，如下圖：</p>
-
-<p><img src="/images/pic/pic_00205.png" alt="" /></p>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<ol>
-  <li>
-    <p><em>word2vec</em> 的 <em>backward propagation</em> 公式要怎麼推導，請看：<a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation">word2vec (part2 : Backward Propagation)</a></p>
-  </li>
-  <li>
-    <p>如何從無到有，不使用任何自動微分的套件，實作一個 <em>word2vec</em> ，請看：<a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation">word2vec (part3 : Implementation)</a></p>
-  </li>
-</ol>
-
-<p>註： 實際上， <em>word2vec</em> 的 <em>input layer</em> 和 <em>output layer</em> 各有兩種架構。<em>input layer</em> 有 <em>cbow</em> 和 <em>skip-gram</em> 兩種，<em>output layer</em> 有 <em>hierarchical sofrmax</em> 和 <em>negative sampling</em> 兩種，本文所寫的為 <em>skip-gram</em> 搭配 <em>negative sampling</em> 的架構。關於 <em>hierarchical softmax</em> 請參考<a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model">hierarchical sofrmax</a> 。</p>
 ]]></content>
   </entry>
   
