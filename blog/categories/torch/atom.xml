@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Torch | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/torch/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:31:03+08:00</updated>
+  <updated>2016-12-25T17:40:31+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -42,16 +42,20 @@
 
 <p>首先，載入 <code>nn</code> 套件：</p>
 
-<p><code>lua
-require 'nn'
-</code></p>
+<p>```lua</p>
+
+<p>require ‘nn’</p>
+
+<p>```</p>
 
 <p>建立以上兩個運算所需的Module，分別為 <code>nn.Linear</code> 和 <code>nn.Sigmoid</code> ，並將它們分別命名為 <code>l1</code> 和 <code>s1</code> ，如下：</p>
 
-<p><code>lua
-l1 = nn.Linear(2,3)
-s1 = nn.Sigmoid()
-</code></p>
+<p>```lua</p>
+
+<p>l1 = nn.Linear(2,3)
+s1 = nn.Sigmoid()</p>
+
+<p>```</p>
 
 <p>其中， <code>nn.Sigmoid</code> 為進行 sigmoid 運算所需的 module 。</p>
 
@@ -59,8 +63,9 @@ s1 = nn.Sigmoid()
 
 <p>假設 x 為一個二維向量 <script type="math/tex">[0,1]</script> ，先輸入 <code>l1</code> ，進行 forward propagation ，將運算結果傳給 <code>y</code> ，如下：</p>
 
-<p>```lua
-x = torch.Tensor{0,1}
+<p>```lua</p>
+
+<p>x = torch.Tensor{0,1}
 y = l1:forward(x)
 print(y)</p>
 
@@ -69,28 +74,34 @@ print(y)</p>
 <p>執行完後會印出 <code>l1</code> 的輸出值，也就是 <code>y</code> 的值，是個三維的向量，
 y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值關， <code>y</code> 值如下：</p>
 
-<p><code>sh
- 0.1948
+<p>```sh</p>
+
+<p>0.1948
  0.9780
  0.3982
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>再來將 <code>y</code> 輸入到 <code>s1</code> 中， 進行 forward propagation，將運算結果傳給 <code>z</code> ，如下：</p>
 
-<p><code>lua
-z = s1:forward(y)
-print(z)
-</code></p>
+<p>```lua</p>
+
+<p>z = s1:forward(y)
+print(z)</p>
+
+<p>```</p>
 
 <p>執行完後會印出 <code>z</code> 值，此值是由 <code>y</code> 的值經過 sigmoid function 的運算所得出來的， <code>z</code> 值如下：</p>
 
-<p><code>sh
- 0.5485
+<p>```sh</p>
+
+<p>0.5485
  0.7267
  0.5983
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>以上過程中，給定了 <code>x</code> 值，經過每一個 module 都要呼叫一次 <code>forward</code> ，最後才能取得 <code>z</code> 的值，
 如果一個 network 是由很多個 module 所組成的，這樣要呼叫很多次 <code>forward</code> ，會很麻煩。</p>
@@ -101,11 +112,13 @@ print(z)
 
 <p>例如，如果要將 <code>l1</code> 的輸出，傳入 <code>s1</code> ，則可以用 <code>nn.Sequential</code> 來達成。建立一個命名為 <code>n1</code> 的 sequential container ，將 <code>l1</code> 和 <code>s1</code> 串起來，方法如下：</p>
 
-<p><code>lua
-n1 = nn.Sequential()
+<p>```lua</p>
+
+<p>n1 = nn.Sequential()
 n1:add(l1)
-n1:add(s1)
-</code></p>
+n1:add(s1)</p>
+
+<p>```</p>
 
 <p>其中，<code>add</code> 是將 module 加入 container 的 function。</p>
 
@@ -113,20 +126,24 @@ n1:add(s1)
 
 <p>如此給定 <code>x</code> 之後，只要進行一次 forward 即可取得 <code>z</code> 的結果，如下：</p>
 
-<p><code>lua
-x = torch.Tensor{0,1}
+<p>```lua</p>
+
+<p>x = torch.Tensor{0,1}
 z = n1:forward(x)
-print(z)
-</code></p>
+print(z)</p>
+
+<p>```</p>
 
 <p>執行完後，會印出 <code>z</code> 的結果，如下：</p>
 
-<p><code>sh
- 0.5485
+<p>```sh</p>
+
+<p>0.5485
  0.7267
  0.5983
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <h2 id="nncontainer--nnsequential">nn.Container &amp; nn.Sequential</h2>
 
@@ -138,14 +155,16 @@ print(z)
 
 <p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p>```lua nn/Container.lua
-local Container, parent = torch.class(‘nn.Container’, ‘nn.Module’)</p>
+<p>```lua nn/Container.lua</p>
+
+<p>local Container, parent = torch.class(‘nn.Container’, ‘nn.Module’)</p>
 
 <p>function Container:__init(…)
     parent.__init(self, …)
     self.modules = {}
-end
-```</p>
+end</p>
+
+<p>```</p>
 
 <p>第1行處，看到 <code>nn.Container</code> 是從 <code>nn.Module</code> 繼承而來的，因此它具有 <code>nn.Module</code> 的 variable 及 function 。</p>
 
@@ -153,12 +172,14 @@ end
 
 <p>至於，要如何將 module 加到 container 中？可以用 <code>add</code> 加入。 <code>add</code> 的程式碼如下： </p>
 
-<p><code>lua nn/Container.lua
-function Container:add(module)
+<p>```lua nn/Container.lua</p>
+
+<p>function Container:add(module)
     table.insert(self.modules, module)
     return self
-end
-</code></p>
+end</p>
+
+<p>```</p>
 
 <p>在第2行可看到， <code>add</code> 可以把新的 module 加到 <code>modules</code> 中。</p>
 
@@ -180,46 +201,58 @@ end</p>
 
 <p>function Container:size()
     return #self.modules
-end
-```</p>
+end</p>
+
+<p>```</p>
 
 <p>再來是實作的部分，首先我們建立一個 sequential 的 container ，命名為 <code>n2</code> ，並以 <code>size</code> 取得它所含的 module 個數，如下：</p>
 
-<p><code>lua
-n2 = nn.Sequential()
-print(n2:size())
-</code></p>
+<p>```lua</p>
+
+<p>n2 = nn.Sequential()
+print(n2:size())</p>
+
+<p>```</p>
 
 <p>剛建立時， 由於 <code>n2</code> 的 <code>modules</code> 是空的，所以 <code>size</code> 是 0。執行結果如下：</p>
 
-<p><code>sh
-0	
-</code></p>
+<p>```sh</p>
+
+<p>0	</p>
+
+<p>```</p>
 
 <p>再來將 <code>l1</code> 和 <code>s1</code> 依序加入，再看看 <code>size</code> 的變化：</p>
 
-<p><code>lua
-n2:add(l1)
+<p>```lua</p>
+
+<p>n2:add(l1)
 n2:add(s1)
-print(n2:size())
-</code></p>
+print(n2:size())</p>
+
+<p>```</p>
 
 <p>此時已經加入了兩個 module 進去了，所以 <code>size</code> 會是 2 ，執行結果如下：</p>
 
-<p><code>sh
-2	
-</code></p>
+<p>```sh</p>
+
+<p>2	</p>
+
+<p>```</p>
 
 <p>可以用 <code>get</code> 取得加進去的 module ，例如，想取得第一個加進去的，作法如下：</p>
 
-<p><code>lua
-print(n2:get(1))
-</code></p>
+<p>```lua</p>
+
+<p>print(n2:get(1))</p>
+
+<p>```</p>
 
 <p>第一個加進去的為 <code>nn.Linear</code> ，執行結果如下：</p>
 
-<p><code>sh
-nn.Linear(2 -&gt; 3)
+<p>```sh</p>
+
+<p>nn.Linear(2 -&gt; 3)
 {
   gradBias : DoubleTensor - size: 3
   weight : DoubleTensor - size: 3x2
@@ -228,44 +261,52 @@ nn.Linear(2 -&gt; 3)
   gradInput : DoubleTensor - empty
   bias : DoubleTensor - size: 3
   gradWeight : DoubleTensor - size: 3x2
-}
-</code></p>
+}</p>
+
+<p>```</p>
 
 <p>再來看到 <code>nn.Sequential()</code> 的程式碼。</p>
 
-<p><code>lua nn/Sequential.lua
-local Sequential, _ = torch.class('nn.Sequential', 'nn.Container')
-</code></p>
+<p>```lua nn/Sequential.lua</p>
+
+<p>local Sequential, _ = torch.class(‘nn.Sequential’, ‘nn.Container’)</p>
+
+<p>```</p>
 
 <p>第一行顯示 <code>nn.Sequential</code> 繼承了 <code>nn.Container</code> 。它的 <code>init</code> 也與 <code>nn.Container</code> 共用，沒有再另外實作。</p>
 
 <p>再來看 <code>add</code> 的程式碼。</p>
 
-<p><code>lua nn/Sequential.lua
-function Sequential:add(module)
+<p>```lua nn/Sequential.lua</p>
+
+<p>function Sequential:add(module)
    if #self.modules == 0 then
       self.gradInput = module.gradInput
    end
    table.insert(self.modules, module)
    self.output = module.output
    return self
-end
-</code></p>
+end</p>
+
+<p>```</p>
 
 <p>在 <code>nn.Sequential</code> 中， <code>add</code> 除了會將 module 加到 <code>modules</code> 之外，它的 <code>output</code> 會是最後一個加進去的 module 的 <code>output</code> 。</p>
 
 <p>以下實作，將 <code>n2</code> 的 <code>output</code> 和它裡面的兩個 module 的 <code>output</code> 都印出來看看：</p>
 
-<p><code>lua
-print(n2:get(1).output)
+<p>```lua</p>
+
+<p>print(n2:get(1).output)
 print(n2:get(2).output)
-print(n2.output)
-</code></p>
+print(n2.output)</p>
+
+<p>```</p>
 
 <p>結果如下， <code>n2</code> 的 output 是第二個 module 的 output ：</p>
 
-<p>```sh
- 0.1948
+<p>```sh</p>
+
+<p>0.1948
  0.9780
  0.3982
 [torch.DoubleTensor of size 3]</p>
@@ -278,51 +319,61 @@ print(n2.output)
 <p>0.5485
  0.7267
  0.5983
-[torch.DoubleTensor of size 3]
-```</p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>再來看到 <code>updateOutput</code> 的部分：</p>
 
-<p><code>lua nn/Sequential.lua
-function Sequential:updateOutput(input)
+<p>```lua nn/Sequential.lua</p>
+
+<p>function Sequential:updateOutput(input)
    local currentOutput = input
    for i=1,#self.modules do
-      currentOutput = self:rethrowErrors(self.modules[i], i, 'updateOutput', currentOutput)
+      currentOutput = self:rethrowErrors(self.modules[i], i, ‘updateOutput’, currentOutput)
    end
    self.output = currentOutput
    return currentOutput
-end
-</code></p>
+end</p>
+
+<p>```</p>
 
 <p>以上可知，在第3行的 for 迴圈中， <code>modules</code> 中的 <code>module</code> 會依序進行  <code>updateOutput</code> ，並將其 <code>output</code> 傳遞到下個 <code>module</code> 的 <code>input</code> ，而 <code>nn.Sequential</code> 的 <code>output</code> 會是最後一個 <code>module</code> 的 <code>output</code></p>
 
 <p>假設輸入 <code>n2</code> 的 <code>x</code> 為 <script type="math/tex">[1,0]</script> ，則進行 forward propagation ，將輸出結果存到 <code>z</code> ，實作如下 ：</p>
 
-<p><code>lua
-x = torch.Tensor{1,0}
+<p>```lua</p>
+
+<p>x = torch.Tensor{1,0}
 z = n2:forward(x)
-print(z)
-</code></p>
+print(z)</p>
+
+<p>```</p>
 
 <p>透過 updateOutput 中的 for 迴圈，它會依序跑完內部所有的 module，並得出最後結果，結果如下：</p>
 
-<p><code>sh
- 0.5331
+<p>```sh</p>
+
+<p>0.5331
  0.6890
  0.5093
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>如果想看 <code>n2</code> 中有哪些 module ，以及它們的順序，也可以直接用 <code>print</code> 的方式，作法如下：</p>
 
-<p><code>lua 
-print(n2)
-</code></p>
+<p>```lua </p>
+
+<p>print(n2)</p>
+
+<p>```</p>
 
 <p>結果如下：</p>
 
-<p><code>sh
-nn.Sequential {
+<p>```sh</p>
+
+<p>nn.Sequential {
   [input -&gt; (1) -&gt; (2) -&gt; output]
   (1): nn.Linear(2 -&gt; 3)
   (2): nn.Sigmoid
@@ -352,8 +403,9 @@ nn.Sequential {
     }
   _type : torch.DoubleTensor
   output : DoubleTensor - size: 3
-}
-​</code></p>
+}</p>
+
+<p>​```</p>
 
 <p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
 
@@ -361,24 +413,26 @@ nn.Sequential {
 
 <p>這部分的程式碼於 <code>__tostring__</code> 這個函式中，程式碼如下：</p>
 
-<p><code>lua nn/Sequential.lua
-function Sequential:__tostring__()
-   local tab = '  '
-   local line = '\n'
-   local next = ' -&gt; '
-   local str = 'nn.Sequential'
-   str = str .. ' {' .. line .. tab .. '[input'
+<p>```lua nn/Sequential.lua</p>
+
+<p>function Sequential:<strong>tostring</strong>()
+   local tab = ‘  ‘
+   local line = ‘\n’
+   local next = ‘ -&gt; ‘
+   local str = ‘nn.Sequential’
+   str = str .. ‘ {‘ .. line .. tab .. ‘[input’
    for i=1,#self.modules do
-      str = str .. next .. '(' .. i .. ')'
+      str = str .. next .. ‘(‘ .. i .. ‘)’
    end
-   str = str .. next .. 'output]'
+   str = str .. next .. ‘output]’
    for i=1,#self.modules do
-      str = str .. line .. tab .. '(' .. i .. '): ' .. tostring(self.modules[i]):gsub(line, line .. tab)
+      str = str .. line .. tab .. ‘(‘ .. i .. ‘): ‘ .. tostring(self.modules[i]):gsub(line, line .. tab)
    end
-   str = str .. line .. '}'
+   str = str .. line .. ‘}’
    return str
-end
-</code></p>
+end</p>
+
+<p>```</p>
 
 <h2 id="materials">Materials</h2>
 
@@ -415,15 +469,19 @@ end
 
 <p>首先，載入 nn 套件：</p>
 
-<p><code>lua
-require 'nn'
-</code></p>
+<p>```lua</p>
+
+<p>require ‘nn’</p>
+
+<p>```</p>
 
 <p>建立一個 Linear Module：</p>
 
-<p><code>lua
-l1 = nn.Linear(2,3)
-</code></p>
+<p>```lua</p>
+
+<p>l1 = nn.Linear(2,3)</p>
+
+<p>```</p>
 
 <!--more-->
 
@@ -431,10 +489,12 @@ l1 = nn.Linear(2,3)
 
 <p>以上程式中，建立一個命名為 <code>l1</code> 的 module ，如果要取得它的 weight 和 bias ，可以用 <code>l1.weight</code> 和 <code>l1.bias</code> 取得，方法如下：</p>
 
-<p><code>lua
-print(l1.weight)
-print(l1.bias)
-</code></p>
+<p>```lua</p>
+
+<p>print(l1.weight)
+print(l1.bias)</p>
+
+<p>```</p>
 
 <p>執行結果如下：</p>
 
@@ -466,8 +526,9 @@ print(y)</p>
 
 <p>輸出結果 <code>y</code> 為一個三維向量，如下：</p>
 
-<p>```sh
- 0.7125
+<p>```sh</p>
+
+<p>0.7125
  0.3276
  0.0865
 [torch.DoubleTensor of size 3]</p>
@@ -484,13 +545,15 @@ print(y)</p>
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
-<p><code>lua nn/Module.lua
-function Module:__init()
+<p>```lua nn/Module.lua</p>
+
+<p>function Module:__init()
    self.gradInput = torch.Tensor()
    self.output = torch.Tensor()
    self._type = self.output:type()
-end
-</code></p>
+end</p>
+
+<p>```</p>
 
 <p><code>Module</code> 中最基本的成員有 <code>output</code> 和 <code>gradInput</code> 。
 <code>output</code> 為此 <code>Module</code> 的 forward propagation 結果，而 <code>gradInput</code> 為 backward propagation 的運算結果。
@@ -547,22 +610,27 @@ end</p>
 
 <p>假設  <script type="math/tex">\textbf{x}</script> 是二維， <script type="math/tex">\textbf{y}</script> 是三維，建立一個命名為 <code>l2</code> 的 Linear 模組：</p>
 
-<p><code>lua
-l2 = nn.Linear(2,3)
-</code></p>
+<p>```lua</p>
+
+<p>l2 = nn.Linear(2,3)</p>
+
+<p>```</p>
 
 <p>用以下方法印出 l2 的 <code>weight</code> , <code>bias</code> 和 <code>output</code> ：</p>
 
-<p><code>lua
-print(l2.weight)
+<p>```lua</p>
+
+<p>print(l2.weight)
 print(l2.bias)
-print(l2.output)
-</code></p>
+print(l2.output)</p>
+
+<p>```</p>
 
 <p>輸出結果如下：</p>
 
-<p>```sh
--0.2863  0.5541
+<p>```sh</p>
+
+<p>-0.2863  0.5541
 -0.6269  0.6557
 -0.3215 -0.1648
 [torch.DoubleTensor of size 3x2]</p>
@@ -580,14 +648,17 @@ print(l2.output)
 
 <p>如果想知道各個 variable 的 size ，還有個方式，就是直接用 print 的方式把它印出來，作法如下：</p>
 
-<p><code>lua
-print(l2)
-</code></p>
+<p>```lua</p>
+
+<p>print(l2)</p>
+
+<p>```</p>
 
 <p>執行結果如下：</p>
 
-<p><code>sh
-nn.Linear(2 -&gt; 3)
+<p>```sh</p>
+
+<p>nn.Linear(2 -&gt; 3)
 {
   gradBias : DoubleTensor - size: 3
   weight : DoubleTensor - size: 3x2
@@ -596,8 +667,9 @@ nn.Linear(2 -&gt; 3)
   gradInput : DoubleTensor - empty
   bias : DoubleTensor - size: 3
   gradWeight : DoubleTensor - size: 3x2
-}
-</code></p>
+}</p>
+
+<p>```</p>
 
 <p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
 
@@ -623,8 +695,9 @@ nn.Linear(2 -&gt; 3)
    end</p>
 
 <p>return self.output
-end
-```</p>
+end</p>
+
+<p>```</p>
 
 <p>以上可以分為兩部分來看，首先是當 <code>input:dim() ==1</code> 時，也就是 <code>input</code> 的維度為 1 ，也就是一次只輸入單筆資料的時候。第一步，會先調整 <code>output</code> 的 <code>size</code> 為適當的大小，再將 <code>bias</code> 複製到 <code>output</code> ，再讓 <code>input</code> 和 <code>weight</code> 進行矩陣相乘，並和 <code>output</code> 相加，再輸出結果。</p>
 
@@ -680,33 +753,41 @@ end
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入 <code>torch.Tensor{0,1}</code> 並印出結果：</p>
 
-<p><code>lua
-print(l2:forward(torch.Tensor{0,1}))
-</code></p>
+<p>```lua</p>
+
+<p>print(l2:forward(torch.Tensor{0,1}))</p>
+
+<p>```</p>
 
 <p>結果如下：</p>
 
-<p><code>sh
- 0.5225
+<p>```sh</p>
+
+<p>0.5225
  1.0683
  0.2766
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>這時已經進行過了 forward 運算，而 <code>output</code> 有值了，所以可以印出它的值，方法如下：</p>
 
-<p><code>lua
-print(l2.output)
-</code></p>
+<p>```lua</p>
+
+<p>print(l2.output)</p>
+
+<p>```</p>
 
 <p><code>output</code> 的值也是如下：</p>
 
-<p><code>sh
- 0.5225
+<p>```sh</p>
+
+<p>0.5225
  1.0683
  0.2766
-[torch.DoubleTensor of size 3]
-</code></p>
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
 
 <p>而當 <code>input:dim() ==2</code> 時，也就是 <code>input</code> 的維度為 2 ，也就是一次輸入多筆資料。這時需要先把 <code>weight</code> 進行轉置，再和 <code>input</code> ，並和 <code>bias</code> 相加，並將結果加到 <code>output</code> 並輸出。</p>
 
@@ -794,37 +875,45 @@ print(l2.output)
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
 
-<p>{% raw %}
-<code>lua
-input={
+<p>
+```lua</p>
+
+<p>input={
    {0,1},
    {2,1}
 }
-print(l2:forward(torch.Tensor(input)))
-</code>
-{% endraw %}</p>
+print(l2:forward(torch.Tensor(input)))</p>
+
+<p>```
+</p>
 
 <p>結果如下：</p>
 
-<p><code>sh
- 0.5225  1.0683  0.2766
+<p>```sh</p>
+
+<p>0.5225  1.0683  0.2766
 -0.0502 -0.1855 -0.3664
-[torch.DoubleTensor of size 2x3]
-</code></p>
+[torch.DoubleTensor of size 2x3]</p>
+
+<p>```</p>
 
 <p>也可印出 <code>output</code> 的值：</p>
 
-<p><code>lua
-print(l2.output)
-</code></p>
+<p>```lua</p>
+
+<p>print(l2.output)</p>
+
+<p>```</p>
 
 <p>結果如下：</p>
 
-<p><code>sh
- 0.5225  1.0683  0.2766
+<p>```sh</p>
+
+<p>0.5225  1.0683  0.2766
 -0.0502 -0.1855 -0.3664
-[torch.DoubleTensor of size 2x3]
-</code></p>
+[torch.DoubleTensor of size 2x3]</p>
+
+<p>```</p>
 
 <h2 id="materials">Materials</h2>
 

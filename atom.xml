@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:21:43+08:00</updated>
+  <updated>2016-12-25T17:40:31+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -144,6 +144,365 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 </span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
 </span></code></pre></td></tr></table></div></figure>
 
+<h2 id="nncontainer--nnsequential">nn.Container &amp; nn.Sequential</h2>
+
+<p>這邊要介紹 <code>nn.Container</code> 和 <code>nn.Sequential</code> 的源碼。</p>
+
+<p><code>nn.Container</code> 源碼：<a href="https://github.com/torch/nn/blob/master/Container.lua">https://github.com/torch/nn/blob/master/Container.lua</a></p>
+
+<p><code>nn.Sequential</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Sequential.lua">https://github.com/torch/nn/blob/master/Sequential.lua</a></p>
+
+<p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
+
+<figure class="code"><figcaption><span>nn/Container.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="kd">local</span> <span class="n">Container</span><span class="p">,</span> <span class="n">parent</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">class</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">nn.Container&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="s">nn.Module&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Container</span><span class="p">:</span><span class="n">__init</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+</span><span class="line">    <span class="n">parent</span><span class="p">.</span><span class="n">__init</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span>
+</span><span class="line">    <span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="o">=</span> <span class="p">{}</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第1行處，看到 <code>nn.Container</code> 是從 <code>nn.Module</code> 繼承而來的，因此它具有 <code>nn.Module</code> 的 variable 及 function 。</p>
+
+<p>第5行中，container 的變量 <code>modules</code> ，它是一個 lua table ，是用來存放加到 container 中的  module 。</p>
+
+<p>至於，要如何將 module 加到 container 中？可以用 <code>add</code> 加入。 <code>add</code> 的程式碼如下： </p>
+
+<figure class="code"><figcaption><span>nn/Container.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Container</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="nb">module</span><span class="p">)</span>
+</span><span class="line">    <span class="nb">table.insert</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">,</span> <span class="nb">module</span><span class="p">)</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">self</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在第2行可看到， <code>add</code> 可以把新的 module 加到 <code>modules</code> 中。</p>
+
+<figure class="code"><figcaption><span>nn/Container.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Container</span><span class="p">:</span><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>除了加進去之外，也可以用 <code>get</code> 取得 <code>modules</code> 中的某個元素，或是用 <code>size</code> 取得 <code>modules</code> 的大小，程式碼如下：</p>
+
+<figure class="code"><figcaption><span>nn/Container.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Container</span><span class="p">:</span><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+</span><span class="line">    <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+</span><span class="line"><span class="k">end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Container</span><span class="p">:</span><span class="n">size</span><span class="p">()</span>
+</span><span class="line">    <span class="k">return</span> <span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是實作的部分，首先我們建立一個 sequential 的 container ，命名為 <code>n2</code> ，並以 <code>size</code> 取得它所含的 module 個數，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">n2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Sequential</span><span class="p">()</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">:</span><span class="n">size</span><span class="p">())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>剛建立時， 由於 <code>n2</code> 的 <code>modules</code> 是空的，所以 <code>size</code> 是 0。執行結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">0	
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來將 <code>l1</code> 和 <code>s1</code> 依序加入，再看看 <code>size</code> 的變化：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">n2</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">l1</span><span class="p">)</span>
+</span><span class="line"><span class="n">n2</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">:</span><span class="n">size</span><span class="p">())</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>此時已經加入了兩個 module 進去了，所以 <code>size</code> 會是 2 ，執行結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">2	
+</span></code></pre></td></tr></table></div></figure>
+
+<p>可以用 <code>get</code> 取得加進去的 module ，例如，想取得第一個加進去的，作法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">:</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第一個加進去的為 <code>nn.Linear</code> ，執行結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">nn.Linear<span class="o">(</span><span class="m">2</span> -&gt; 3<span class="o">)</span>
+</span><span class="line"><span class="o">{</span>
+</span><span class="line">  gradBias : DoubleTensor - size: 3
+</span><span class="line">  weight : DoubleTensor - size: 3x2
+</span><span class="line">  _type : torch.DoubleTensor
+</span><span class="line">  output : DoubleTensor - size: 3
+</span><span class="line">  gradInput : DoubleTensor - empty
+</span><span class="line">  bias : DoubleTensor - size: 3
+</span><span class="line">  gradWeight : DoubleTensor - size: 3x2
+</span><span class="line"><span class="o">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來看到 <code>nn.Sequential()</code> 的程式碼。</p>
+
+<figure class="code"><figcaption><span>nn/Sequential.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="kd">local</span> <span class="n">Sequential</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">class</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">nn.Sequential&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="s">nn.Container&#39;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第一行顯示 <code>nn.Sequential</code> 繼承了 <code>nn.Container</code> 。它的 <code>init</code> 也與 <code>nn.Container</code> 共用，沒有再另外實作。</p>
+
+<p>再來看 <code>add</code> 的程式碼。</p>
+
+<figure class="code"><figcaption><span>nn/Sequential.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Sequential</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="nb">module</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span> <span class="o">=</span> <span class="n">module</span><span class="p">.</span><span class="n">gradInput</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">   <span class="nb">table.insert</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">,</span> <span class="nb">module</span><span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">module</span><span class="p">.</span><span class="n">output</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在 <code>nn.Sequential</code> 中， <code>add</code> 除了會將 module 加到 <code>modules</code> 之外，它的 <code>output</code> 會是最後一個加進去的 module 的 <code>output</code> 。</p>
+
+<p>以下實作，將 <code>n2</code> 的 <code>output</code> 和它裡面的兩個 module 的 <code>output</code> 都印出來看看：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">:</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">).</span><span class="n">output</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">:</span><span class="n">get</span><span class="p">(</span><span class="mi">2</span><span class="p">).</span><span class="n">output</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">.</span><span class="n">output</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下， <code>n2</code> 的 output 是第二個 module 的 output ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1948
+</span><span class="line"> 0.9780
+</span><span class="line"> 0.3982
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.5485
+</span><span class="line"> 0.7267
+</span><span class="line"> 0.5983
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.5485
+</span><span class="line"> 0.7267
+</span><span class="line"> 0.5983
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來看到 <code>updateOutput</code> 的部分：</p>
+
+<figure class="code"><figcaption><span>nn/Sequential.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Sequential</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">currentOutput</span> <span class="o">=</span> <span class="n">input</span>
+</span><span class="line">   <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="o">#</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span> <span class="k">do</span>
+</span><span class="line">      <span class="n">currentOutput</span> <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">rethrowErrors</span><span class="p">(</span><span class="n">self</span><span class="p">.</span><span class="n">modules</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span><span class="p">,</span> <span class="s1">&#39;</span><span class="s">updateOutput&#39;</span><span class="p">,</span> <span class="n">currentOutput</span><span class="p">)</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">currentOutput</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">currentOutput</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上可知，在第3行的 for 迴圈中， <code>modules</code> 中的 <code>module</code> 會依序進行  <code>updateOutput</code> ，並將其 <code>output</code> 傳遞到下個 <code>module</code> 的 <code>input</code> ，而 <code>nn.Sequential</code> 的 <code>output</code> 會是最後一個 <code>module</code> 的 <code>output</code></p>
+
+<p>假設輸入 <code>n2</code> 的 <code>x</code> 為 <script type="math/tex">[1,0]</script> ，則進行 forward propagation ，將輸出結果存到 <code>z</code> ，實作如下 ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">}</span>
+</span><span class="line"><span class="n">z</span> <span class="o">=</span> <span class="n">n2</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>透過 updateOutput 中的 for 迴圈，它會依序跑完內部所有的 module，並得出最後結果，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.5331
+</span><span class="line"> 0.6890
+</span><span class="line"> 0.5093
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果想看 <code>n2</code> 中有哪些 module ，以及它們的順序，也可以直接用 <code>print</code> 的方式，作法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">n2</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+<span class="line-number">23</span>
+<span class="line-number">24</span>
+<span class="line-number">25</span>
+<span class="line-number">26</span>
+<span class="line-number">27</span>
+<span class="line-number">28</span>
+<span class="line-number">29</span>
+<span class="line-number">30</span>
+<span class="line-number">31</span>
+<span class="line-number">32</span>
+<span class="line-number">33</span>
+<span class="line-number">34</span>
+<span class="line-number">35</span>
+<span class="line-number">36</span>
+<span class="line-number">37</span>
+<span class="line-number">38</span>
+<span class="line-number">39</span>
+<span class="line-number">40</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">nn.Sequential <span class="o">{</span>
+</span><span class="line">  <span class="o">[</span>input -&gt; <span class="o">(</span>1<span class="o">)</span> -&gt; <span class="o">(</span>2<span class="o">)</span> -&gt; output<span class="o">]</span>
+</span><span class="line">  <span class="o">(</span>1<span class="o">)</span>: nn.Linear<span class="o">(</span><span class="m">2</span> -&gt; 3<span class="o">)</span>
+</span><span class="line">  <span class="o">(</span>2<span class="o">)</span>: nn.Sigmoid
+</span><span class="line"><span class="o">}</span>
+</span><span class="line"><span class="o">{</span>
+</span><span class="line">  gradInput : DoubleTensor - empty
+</span><span class="line">  modules :
+</span><span class="line">    <span class="o">{</span>
+</span><span class="line">      <span class="m">1</span> :
+</span><span class="line">        nn.Linear<span class="o">(</span><span class="m">2</span> -&gt; 3<span class="o">)</span>
+</span><span class="line">        <span class="o">{</span>
+</span><span class="line">          gradBias : DoubleTensor - size: 3
+</span><span class="line">          weight : DoubleTensor - size: 3x2
+</span><span class="line">          _type : torch.DoubleTensor
+</span><span class="line">          output : DoubleTensor - size: 3
+</span><span class="line">          gradInput : DoubleTensor - empty
+</span><span class="line">          bias : DoubleTensor - size: 3
+</span><span class="line">          gradWeight : DoubleTensor - size: 3x2
+</span><span class="line">        <span class="o">}</span>
+</span><span class="line">      <span class="m">2</span> :
+</span><span class="line">        nn.Sigmoid
+</span><span class="line">        <span class="o">{</span>
+</span><span class="line">          gradInput : DoubleTensor - empty
+</span><span class="line">          _type : torch.DoubleTensor
+</span><span class="line">          output : DoubleTensor - size: 3
+</span><span class="line">        <span class="o">}</span>
+</span><span class="line">    <span class="o">}</span>
+</span><span class="line">  _type : torch.DoubleTensor
+</span><span class="line">  output : DoubleTensor - size: 3
+</span><span class="line"><span class="o">}</span>
+</span><span class="line">
+</span><span class="line">​<span class="sb">```</span>
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">以上結果可分成兩部分來看，第一部分是 <span class="sb">`</span>nn.Sequential<span class="sb">`</span> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。
+</span><span class="line">
+</span><span class="line">第二部份是詳細印出 <span class="sb">`</span>nn.Sequential<span class="sb">`</span> 中，有哪些成員 ，它有從 <span class="sb">`</span>nn.Module<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>gradInput<span class="sb">`</span> 即 <span class="sb">`</span>output<span class="sb">`</span> ，也有從 <span class="sb">`</span>nn.Container<span class="sb">`</span> 繼承而來的 <span class="sb">`</span>modules<span class="sb">`</span> 。而 <span class="sb">`</span>modules<span class="sb">`</span> 的部分會詳細列出裡面每個 module 有哪些成員。
+</span><span class="line">
+</span><span class="line">這部分的程式碼於 <span class="sb">`</span>__tostring__<span class="sb">`</span> 這個函式中，程式碼如下：
+</span></code></pre></td></tr></table></div></figure>
+<p>lua nn/Sequential.lua</p>
+
+<p>function Sequential:<strong>tostring</strong>()
+   local tab = ‘  ‘
+   local line = ‘\n’
+   local next = ‘ -&gt; ‘
+   local str = ‘nn.Sequential’
+   str = str .. ‘ {‘ .. line .. tab .. ‘[input’
+   for i=1,#self.modules do
+      str = str .. next .. ‘(‘ .. i .. ‘)’
+   end
+   str = str .. next .. ‘output]’
+   for i=1,#self.modules do
+      str = str .. line .. tab .. ‘(‘ .. i .. ‘): ‘ .. tostring(self.modules[i]):gsub(line, line .. tab)
+   end
+   str = str .. line .. ‘}’
+   return str
+end</p>
+
+<p>```</p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb</a></p>
 ]]></content>
   </entry>
   
