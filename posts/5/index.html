@@ -9,14 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1.Introduction 在python裡面, = 這個符號, 有可能是 pass by value 或是 pass by reference 如果 = 右方的 variable 是 value , 例如 int 則 = 是 pass by value ,如下 1
-2
-3
-4
-5
-6
-7
-8 &hellip;">
+  <meta name="description" content="1.Markov Model Hidden Markov Model 在 natural language processing 中, 常用於 part-of speech tagging 想要了解 Hidden Markov Model ,就要先了解什麼是 Markov Model 例如, &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -99,6 +92,56 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/">Hidden Markov Model</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-03T03:38:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:38 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="markov-model">1.Markov Model</h2>
+
+<p><em>Hidden Markov Model</em> 在 <em>natural language processing</em> 中,</p>
+
+<p>常用於 <em>part-of speech tagging</em></p>
+
+<p>想要了解 <em>Hidden Markov Model</em> ,就要先了解什麼是 <em>Markov Model</em></p>
+
+<p>例如, 可以把語料庫中,各種字串的機率分佈,</p>
+
+<p>看成是一個Random varaible 的 sequence , <script type="math/tex">X=(X_{1},X_{2},...,X_{T}) </script></p>
+
+<p>其中, <script type="math/tex">X</script> 的值是 alphabet (字)的集合 : <script type="math/tex">S=\{s_{1},s_{2},...,s_{n}\}</script></p>
+
+<p>如果想要知道一個字串出現的機率, 則可以把字串拆解成Bigram, 逐一用前一個字,來推估下一個字的機率是多少</p>
+
+<p>但是要先假設以下的 <em>Markov Assumption</em> </p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/03/natural-language-processing-hidden-markov-models/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -610,64 +653,6 @@ P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/03/15/logisti-regression-model/">Logistic Regression Model (3D)</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-03-15T01:47:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:47 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>這次來講一下機器學習(Machine Learning)的Logistic Model</p>
-
-<p>搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何</p>
-
-<p>至於機器學習（Machine Learning）是什麼？</p>
-
-<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
-
-<p>Logistic Regression是一種機器學習的Model,可以用來處理分類問題</p>
-
-<p>從input data的feature,可以判斷出output data該歸到那一類</p>
-
-<p>Logistic Regression的model如下</p>
-
-<script type="math/tex; mode=display">
-
-h(x)=\frac{1}{1+e^{-W^{T} X }}
-
-</script>
-
-<p>其中 <script type="math/tex">h(x)</script> 是hypothesis,藉由hypothesis,可以用已知的data來預知未知的data</p>
-
-<p><script type="math/tex">X</script>是input data, <script type="math/tex">W</script> 是weight,這兩者皆是矩陣</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/03/15/logisti-regression-model/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/6">&larr; Older</a>
@@ -689,6 +674,10 @@ h(x)=\frac{1}{1+e^{-W^{T} X }}
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
@@ -702,10 +691,6 @@ h(x)=\frac{1}{1+e^{-W^{T} X }}
     
       <li class="post">
         <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
       </li>
     
   </ul>

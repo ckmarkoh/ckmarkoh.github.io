@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:56:38+08:00</updated>
+  <updated>2016-12-26T00:01:59+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,261 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/"/>
+    <updated>2016-12-25T18:48:14+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>torch 的 <code>nn.Module</code> 是組成 neural network 的部分，但是要訓練一個 neural network ，就需要有 loss function 。而 <code>nn.Criterion</code> 就是用來計算 loss function 的值。<code>nn.Criterion</code> 是個抽象類別，所有種類的 loss function 都繼承於它。</p>
+
+<p>例如， loss funciton 用 Minimum Square Error 時， <script type="math/tex">\bar{y}</script> 為模型預測出來的數值， <script type="math/tex">y</script> 為正確的數值 ，則 loss function <script type="math/tex"> L (y, \bar{y}) </script> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2 
+
+</script>
+
+<p>在 torch 中，負責計算 Minimum Square Error 的 criterion 為 <code>nn.MSECriterion</code> 。</p>
+
+<!-- more -->
+
+<p>實作部份如下，首先，載入 <code>nn</code> 模組：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>建立 <code>nn.MSECriterion</code> ，命名為 <code>c1</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">c1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>假設模型預測出的數值 <script type="math/tex"> \bar{y} = 5</script> ，正確數值 <script type="math/tex">y=3</script> ，則：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2  = (3-5)^2 = 4
+
+</script>
+
+<p>實作如下，將 <code>y_ = 5</code> 與 <code>y = 3</code> 兩數值傳入 <code>c1</code> ，進行 forward propagation ，得出 loss function <code>l</code> 的數值。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">l</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果， <code>l = 4</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">4	
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="nncriterion--nnmsecriterion">nn.Criterion &amp; nn.MSECriterion</h2>
+
+<p>這邊講解 <code>nn.Criterion</code> 以及 <code>nn.MSECriterion</code> 的程式碼：</p>
+
+<p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
+
+<p><code>nn.MSECriterion</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/MSECriterion.lua">https://github.com/torch/nn/blob/master/MSECriterion.lua</a></p>
+
+<p>首先看到 <code>nn.Criterion</code> 的部分，先從 <code>init</code> 開始。</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="kd">local</span> <span class="n">Criterion</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">class</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">nn.Criterion&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">__init</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>從以上程式碼得知， <code>nn.Criterion</code> 雖然有 <code>output</code> 和 <code>gradInput</code> 這兩個變量，但它並沒有繼承 <code>nn.Module</code> 。</p>
+
+<p>再來看到 forward propagation 的部分， <code>nn.Criterion</code> 的 <code>forward</code> 和 <code>nn.Module</code> 的不一樣，因為它的輸入有 <code>input</code> 和 <code>target</code> 這兩個變量，如下：</p>
+
+<p>因為 loss function 的 forward propagation 需要有 input 和 target 這兩個數值才算得出來，而 module 中的 forward propagation 部分，通常只需要 input 的數值即可。</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來看到 <code>nn.MSECriterion</code> 的程式碼。</p>
+
+<figure class="code"><figcaption><span>nn/MSECriterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">MSECriterion</span><span class="p">:</span><span class="n">__init</span><span class="p">(</span><span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line">   <span class="n">parent</span><span class="p">.</span><span class="n">__init</span><span class="p">(</span><span class="n">self</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">sizeAverage</span> <span class="o">~=</span> <span class="kc">nil</span> <span class="k">then</span>
+</span><span class="line">     <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span> <span class="o">=</span> <span class="n">sizeAverage</span>
+</span><span class="line">   <span class="k">else</span>
+</span><span class="line">     <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span> <span class="o">=</span> <span class="kc">true</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>sizeAverage</code> 是設定要不要將 output 根據 input 的維度來做平均，預設值為 <code>true</code> 。</p>
+
+<p>舉個例子，<code>y2_</code> 和 <code>y2</code> 分別為 input 與 target ，分別建立 <code>c2</code> 與 <code>c3</code> 兩個 <code>nn.MSECriterion</code> ， <code>c2</code> 的 <code>sizeAverage</code> 為 <code>true</code> ，而 <code>c3</code> 的 <code>sizeAverage</code> 為 <code>false</code> 。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y2_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="n">y2</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">c2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+</span><span class="line"><span class="n">c3</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>將 <code>y2_</code> 和 <code>y2</code> 都輸入 <code>c2</code> 和 <code>c3</code> ，進行 forward propagation ，比較其結果差異，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y2_</span><span class="p">,</span><span class="n">y2</span><span class="p">))</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c3</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y2_</span><span class="p">,</span><span class="n">y2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則輸出結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">4	
+</span><span class="line">8
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上， 4 是 <code>sizeAverage</code> 為 <code>true</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減後再平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{(5-3)^2 + (5-3)^2 }{2} = 4
+
+</script>
+
+<p>而 8 是 <code>sizeAverage</code> 為 <code>false</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減，但沒平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+(5-3)^2 + (5-3)^2  = 8
+
+</script>
+
+<p>這裡要注意的是，不管 <code>sizeAverage</code> 是 <code>ture</code> 或 <code>false</code> ，也不論 input 的維度有多少，output 都是一維的純量。</p>
+
+<p>再來看到 <code>updateOutput</code> 的程式碼：</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">MSECriterion</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span> <span class="ow">or</span> <span class="n">input</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">   <span class="n">input</span><span class="p">.</span><span class="n">THNN</span><span class="p">.</span><span class="n">MSECriterion_updateOutput</span><span class="p">(</span>
+</span><span class="line">      <span class="n">input</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">target</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span>
+</span><span class="line">   <span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>此部分的核心運算是用 C 來加速，在第三行會呼叫 C 的函數 <code>MSECriterion_updateOutput</code> ，再將結果存在 <code>output_tensor</code> ，而 lua 則從 <code>output_tensor</code> 中取出結果，傳到 <code>output</code> 。</p>
+
+<p>C 的程式碼在 <a href="https://github.com/torch/nn/blob/master/lib/THNN/generic/MSECriterion.c">MSECriterion.c</a> 檔案中：</p>
+
+<figure class="code"><figcaption><span>nn/lib/THNN/generic/MSECriterion.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">THNN_</span><span class="p">(</span><span class="n">MSECriterion_updateOutput</span><span class="p">)(</span>
+</span><span class="line">          <span class="n">THNNState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">input</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">target</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">output</span><span class="p">,</span>
+</span><span class="line">          <span class="kt">bool</span> <span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">  <span class="n">THNN_CHECK_NELEMENT</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">);</span>
+</span><span class="line">  <span class="n">THNN_CHECK_DIM_SIZE</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">real</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">TH_TENSOR_APPLY2</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+</span><span class="line">    <span class="n">real</span> <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">input_data</span> <span class="o">-</span> <span class="o">*</span><span class="n">target_data</span><span class="p">);</span>
+</span><span class="line">    <span class="n">sum</span> <span class="o">+=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+</span><span class="line">  <span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="k">if</span> <span class="p">(</span><span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line">    <span class="n">sum</span> <span class="o">/=</span> <span class="n">THTensor_</span><span class="p">(</span><span class="n">nElement</span><span class="p">)(</span><span class="n">input</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">THTensor_</span><span class="p">(</span><span class="n">set1d</span><span class="p">)(</span><span class="n">output</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在第 14 ~ 15 行中可看到將 <code>input_data</code> 與 <code>target_data</code> 相減後得出 <code>z</code> ，並將 <code>z</code> 平方後累加，得到 <code>sum</code> ，而在 18 ~ 19 行中， <code>sum</code> 會根依序 <code>sizeAverage</code> 的值，來決定要不要除以所有元素的個數。</p>
+
+<p>最後一行則將 <code>sum</code> 的值存到 <code>output</code> 中，這個 <code>output</code> 所對應到 lua 中的 <code>output_tensor</code> 。</p>
+
+<p>關於 <code>updateGradInput</code> 以及 backward propagation 的部分，將在下回介紹。</p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb</a></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 2 : NN.Container & NN.Sequential]]></title>
@@ -146,11 +401,11 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 
 <h2 id="nncontainer--nnsequential">nn.Container &amp; nn.Sequential</h2>
 
-<p>這邊要介紹 <code>nn.Container</code> 和 <code>nn.Sequential</code> 的源碼。</p>
+<p>這邊要介紹 <code>nn.Container</code> 和 <code>nn.Sequential</code> 的程式碼。</p>
 
-<p><code>nn.Container</code> 源碼：<a href="https://github.com/torch/nn/blob/master/Container.lua">https://github.com/torch/nn/blob/master/Container.lua</a></p>
+<p><code>nn.Container</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Container.lua">https://github.com/torch/nn/blob/master/Container.lua</a></p>
 
-<p><code>nn.Sequential</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Sequential.lua">https://github.com/torch/nn/blob/master/Sequential.lua</a></p>
+<p><code>nn.Sequential</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Sequential.lua">https://github.com/torch/nn/blob/master/Sequential.lua</a></p>
 
 <p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
 
@@ -605,11 +860,11 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 
 <h2 id="nnmodule--nnlinear">nn.Module &amp; nn.Linear</h2>
 
-<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的源碼相當簡潔易懂，可以直接看源碼來了解它的功能是什麼。</p>
+<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的程式碼相當簡潔易懂，可以直接看程式碼來了解它的功能是什麼。</p>
 
-<p><code>nn.Module</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
+<p><code>nn.Module</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
 
-<p><code>nn.Linear</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
+<p><code>nn.Linear</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
@@ -7833,326 +8088,6 @@ S = \Sigma_{i}s_{i}
 
 <p>Yoshua Bengio, Réjean Ducharme, Pascal Vincent, and Christian Janvin. 2003. A neural probabilistic language model. J. Mach. Learn. Res. 3 (March 2003), 1137-1155.</p>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Machine Translation : IBM Model 1]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1/"/>
-    <updated>2015-02-21T09:31:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/02/21/mt-ibm-model-1</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>繼續之前<a href="http://ckmarkoh.github.io/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>所提到的，要計算 <em>Translation Model</em> <script type="math/tex">p(F∣E)</script> ，即給定某個英文句子 <script type="math/tex">E</script> ，則它被翻自成中文句子 <script type="math/tex">F</script> 的機率是多少？</p>
-
-<p>計算 <em>Translation Model</em> 需要用到較複雜的模型，例如 <em>IBM Model</em> 。而 <em>IBM Model 1</em>  是最基本的一種 <em>IBM Model</em> 。</p>
-
-<h2 id="alignment">Alignment</h2>
-
-<p>在講 <em>IBM Model 1</em> 之前，要先介紹 <em>alignment</em> 是什麼。因為，要將英文翻譯成中文，則中文字詞的順序可能跟英文字詞的順序，不太一樣。例如：</p>
-
-<blockquote>
-  <p>這不是一個蘋果
-This is not an apple </p>
-</blockquote>
-
-<p>這兩個句子，在中文中的 <strong>“不是”</strong> 英文為 <strong>“is not（是不）”</strong> 。為了考慮到字詞順序會變，因此要定義 <em>alignment</em> ，來記錄中文句子中的哪個字，對應到英文句子中的哪個字。</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00075.tiff" alt="" /></p>
-
-<p>此例中， <em>alignment</em> 為 <script type="math/tex">\{1\rightarrow 1,3\rightarrow 2,2\rightarrow 3,4 \rightarrow 4,5\rightarrow 5 \}</script>，表示第一個中文字對應到第一個英文字，第二個中文字對應到第三個英文字，以此類推。</p>
-
-<!--more-->
-
-<h2 id="ibm-model-1">IBM Model 1</h2>
-
-<p><em>IBM Model 1</em> 的公式如下：</p>
-
-<script type="math/tex; mode=display">
-
-P(F\mid E) = \sum_{A} P(F,A \mid E) = \sum_{A} P(F \mid E, A) \times P(A \mid E)
-
-</script>
-
-<p>此公式可分為 <script type="math/tex">P(F \mid E, A)</script> 和 <script type="math/tex">P(A \mid E)</script> 兩部分。</p>
-
-<p>第一部分為 <script type="math/tex">P(F \mid E, A)</script> ，給定一個 <em>alignment</em> <script type="math/tex">A</script> ，和英文句子 <script type="math/tex">E = (e_{1},e_{2}...,e_{I})</script> ，定義中文句子 <script type="math/tex">F = (f_{1},f_{2},...,f_{J})</script> 的出現機率為：</p>
-
-<script type="math/tex; mode=display">
-
-  P(F \mid E, A) = \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}})
-
-
-</script>
-
-<p>其中，<script type="math/tex"> t(f_{j} \mid e_{A_{j}}) </script> 表示在 <em>alignment</em> <script type="math/tex">A</script> 之下，對應到中文字 <script type="math/tex">f_{j}</script>的英文字 <script type="math/tex">e_{A_{j}}</script> ，翻譯成中文字 <script type="math/tex">f_{j}</script> 的機率。</p>
-
-<p>舉例，用先前提到的例句，以此公式算出的機率為：</p>
-
-<script type="math/tex; mode=display">
-
-  P(F \mid E, A) =  
-
-  t(\text{這} \mid \text{this}) \times
-
-  t(\text{不} \mid \text{not}) \times
-
-  t(\text{是} \mid \text{is}) \times
-
-  t(\text{一個} \mid \text{an}) \times
-
-  t(\text{蘋果} \mid \text{apple}) 
-
-</script>
-
-<p>其中， <script type="math/tex">t(\text{這} \mid \text{this})</script> 表示英文字 <strong>“this”</strong> 翻譯成中文字 <strong>“這”</strong> 的機率。 </p>
-
-<p>第二部分為<script type="math/tex">P(A \mid E)</script>，給定長度為 <script type="math/tex">I</script> 的英文句 <script type="math/tex">E</script>，將翻譯成長度為 <script type="math/tex">J</script> 的中文句，則 <em>alignment</em> 為 <script type="math/tex">A</script> 的機率為：</p>
-
-<script type="math/tex; mode=display">
-
-  P(A \mid E) = \frac{\epsilon}{(I+1)^{J}}
-
-
-</script>
-
-<p><em>IBM Model 1</em> 採用最簡單的假設：<strong>假設每個alignment所發生的機率都相同</strong> 。如果中文字長度為 <script type="math/tex">J</script> ，英文長度為 <script type="math/tex">I</script> ，則共有 <script type="math/tex">I^{J}</script> 種組合。但實際上，有些中文字（例如：的），沒有相對應的英文字，所以共有 <script type="math/tex">(I+1)^{J}</script> 種可能。另外，公式中的 <script type="math/tex">\epsilon</script> 為一常數。</p>
-
-<p>綜合以上兩項，可以得出 <em>IBM Model 1</em> 的公式為：</p>
-
-<script type="math/tex; mode=display">
-
-\begin{equation}
-
- P(F\mid E) = \sum_{A} P(F,A \mid E) = \sum_{A} P(F \mid E, A) \times P(A \mid E) \\
-
- = \sum_{A}  \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}}) \times  \frac{\epsilon}{(I+1)^{J}} \\
-
-\end{equation}
-
-</script>
-
-<p>通常，在求解的時候，不會把每一種 <em>alignment</em> 的結果都加起來，而是求出機率最大的 <em>alignment</em> ，並採用它來計算 <em>IBM Model</em> 的值，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\mathop{\arg\,\max}\limits_{A} P(F,A \mid E)
-
-= \mathop{\arg\,\max}\limits_{A} \prod_{j=1}^{J} t(f_{j} \mid e_{A_{j}}) \times  \frac{\epsilon}{(I+1)^{J}} 
-
-
-</script>
-
-<h2 id="em-algorithm">EM algorithm</h2>
-
-<p>在進行<a href="http://ckmarkoh.github.io/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>的演算法時，需從平行語料庫中訓練出模型。但通常平行語料庫中不會標記 <em>alignment</em> ，可是必須要先有 <em>alignment</em> ，才能得出 <script type="math/tex">t(f_{j} \mid e_{A_{j}})</script> 的值，這樣才能用 <em>IBM Model 1</em> 來計算。</p>
-
-<p>這時就需要用到 <em>EM algorithm</em> 從平行語料庫中，計算出 <script type="math/tex">t(f_{j} \mid e_{A_{j}})</script> 的值，以得出機率最大的 <em>alignment</em>。</p>
-
-<p>設 <script type="math/tex">(F^{(k)}, E^{(k)})</script> 為共 <script type="math/tex">k</script> 個句子的 <em>中-英</em> 平行語料庫，其中，<script type="math/tex"> F^{(k)} = (f_{1}^{(k)}, f_{2}^{(k)},...,f_{m_{k}}^{(k)} )</script> 為第 <script type="math/tex">k</script> 個中文句子， <script type="math/tex">f_{1}^{(k)}</script> 為此句第一個中文字，  <script type="math/tex">m_{k}</script> 為句子長度。<script type="math/tex"> E^{(k)} = (e_{1}^{(k)}, e_{2}^{(k)},...,e_{l_{k}}^{(k)} )</script> 為第 <script type="math/tex">k</script> 個英文句子。演算法如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-\text{1} & \text{For all e , f, set } t(f\mid e)  = 1 \mathbin{/} V \\
-
-\text{2} & \textbf{for } s = 1 ... S \\ 
-
-\text{3} & \mspace{20mu} \text{Set all counts } c = 0 \\
-
-\text{4}& \mspace{20mu} \textbf{for } k = 1...N \\
-
-\text{5}& \mspace{40mu} \textbf{for } i = 1...m_{k} \\
-
-\text{6}& \mspace{60mu} \textbf{for } j = 0...l_{k} \\
-
-\text{7}& \mspace{80mu} \delta (k,i,j) = t( f_{i}^{(k)} \mid e_{j}^{(k)}) \mathbin{/}  \Sigma_{j=0}^{l_{k}} t( f_{i}^{(k)} \mid e_{j}^{(k)}) \\
-
-\text{8}& \mspace{80mu} c(e_{j}^{(k)}, f_{i}^{(k)}) \leftarrow c(e_{j}^{(k)}, f_{i}^{(k)})  + \delta (k,i,j) \\
-
-\text{9}& \mspace{80mu} c(e_{j}^{(k)}) \leftarrow c(e_{j}^{(k)})  + \delta (k,i,j) \\
-
-\text{10}& \mspace{20mu} \text{Set all } t(f\mid e) = c(e,f) \mathbin{/}  c(e) \\
-
-\text{11}& \textbf{return } t
-
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>第1行先將所有的<script type="math/tex">t(f \mid e)</script> 初始化為 <script type="math/tex">\frac{1}{V}</script> ，其中，<script type="math/tex">V</script> 為語料庫中的中文詞類數量。</p>
-
-<p>第2行的 <script type="math/tex">S</script> 表示，總共進行了 <script type="math/tex">S</script> 次的運算。</p>
-
-<p>第3行的 <script type="math/tex">c</script> 用來計 <script type="math/tex">t(f \mid e)</script> 累加的值，初始化先設定為 <script type="math/tex">0</script> 。</p>
-
-<p>第4行用迴圈跑平行語料庫中所有的句子</p>
-
-<p>第5到第9行迴圈用來逐一跑中文和英文句中的每一個字。</p>
-
-<p>第5行跑中文句中的中文字。</p>
-
-<p>第6行跑英文字。由於有些中文字，沒有相對應的英文字，故英文句的迴圈從 <em>0</em> （沒有對應到任何字）開始跑。</p>
-
-<p>第7行算出 <script type="math/tex">\delta (k,i,j)</script> 的值，並於第8,9行累加到 <script type="math/tex">c</script> 中。</p>
-
-<p>第10行，算完所有的句子之後，用 <script type="math/tex">c(e,f)</script> 和 <script type="math/tex">c(e)</script> 來更新 <script type="math/tex">t(f\mid e)</script> 的值，再回到第3行，用新的 <script type="math/tex">t</script> 值來計算新的 <script type="math/tex">c</script> 值。</p>
-
-<p>第11行，以上迴圈重複跑過 <script type="math/tex">S</script> 次以後，回傳 <script type="math/tex">t</script> 的值。</p>
-
-<h2 id="implementation">Implementation</h2>
-
-<p>給定以下的平行語料庫</p>
-
-<blockquote>
-  <p>一本書 : a book
-一本雜誌 : a magazine
-這本書 : this book
-這本雜誌 : this magazine </p>
-</blockquote>
-
-<p>可用以下的程式碼 <em>EM Algorithm</em> 算出 <script type="math/tex">t</script> 的值。</p>
-
-<figure class="code"><figcaption><span>ibm1.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="c">#-*- encoding:utf-8 -*-</span>
-</span><span class="line"><span class="kn">import</span> <span class="nn">operator</span>
-</span><span class="line"><span class="n">CORPUS_CH</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span><span class="s">&#39;一本&#39;</span><span class="p">,</span><span class="s">&#39;書&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;一本&#39;</span><span class="p">,</span><span class="s">&#39;雜誌&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;這本&#39;</span><span class="p">,</span><span class="s">&#39;書&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;這本&#39;</span><span class="p">,</span><span class="s">&#39;雜誌&#39;</span><span class="p">],</span> <span class="p">]</span>
-</span><span class="line"><span class="n">CORPUS_EN</span> <span class="o">=</span> <span class="p">[</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;book&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">,</span><span class="s">&#39;magazine&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;this&#39;</span><span class="p">,</span><span class="s">&#39;book&#39;</span><span class="p">],</span> <span class="p">[</span><span class="s">&#39;this&#39;</span><span class="p">,</span><span class="s">&#39;magazine&#39;</span><span class="p">],</span> <span class="p">]</span>
-</span><span class="line"><span class="n">f_word</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span><span class="n">CORPUS_CH</span><span class="p">)))</span>
-</span><span class="line"><span class="n">e_word</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="nb">reduce</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">add</span><span class="p">,</span><span class="n">CORPUS_EN</span><span class="p">)))</span>
-</span><span class="line"><span class="n">T</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span class="line">
-</span><span class="line"><span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span> <span class="p">:</span>
-</span><span class="line">  <span class="n">C</span> <span class="o">=</span> <span class="p">{}</span>
-</span><span class="line">  <span class="k">for</span> <span class="n">m</span><span class="p">,</span><span class="n">l</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">CORPUS_CH</span><span class="p">,</span><span class="n">CORPUS_EN</span><span class="p">):</span>
-</span><span class="line">    <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span class="line">      <span class="k">for</span> <span class="n">fi</span> <span class="ow">in</span> <span class="n">m</span><span class="p">:</span>
-</span><span class="line">        <span class="k">for</span> <span class="n">ej</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
-</span><span class="line">          <span class="k">if</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
-</span><span class="line">            <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span>  <span class="o">=</span>  <span class="mf">1.0</span><span class="o">/</span><span class="nb">len</span><span class="p">(</span><span class="n">e_word</span><span class="p">)</span>
-</span><span class="line">    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">fi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
-</span><span class="line">      <span class="n">sum_t</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span> <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span> <span class="k">for</span> <span class="n">ej</span> <span class="ow">in</span> <span class="n">l</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1.0</span>
-</span><span class="line">      <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">ej</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
-</span><span class="line">        <span class="n">delta</span> <span class="o">=</span> <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">fi</span><span class="p">,</span><span class="n">ej</span><span class="p">)]</span> <span class="o">/</span> <span class="n">sum_t</span>
-</span><span class="line">        <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">,</span> <span class="n">fi</span><span class="p">)]</span> <span class="o">=</span>  <span class="n">C</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">,</span> <span class="n">fi</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta</span>
-</span><span class="line">        <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">)]</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">ej</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="n">delta</span>
-</span><span class="line">  <span class="k">print</span> <span class="s">&quot;---iteration:</span><span class="si">%s</span><span class="s">---&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-</span><span class="line">  <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
-</span><span class="line">    <span class="k">print</span> <span class="n">key</span><span class="p">,</span><span class="s">&quot;:&quot;</span><span class="p">,</span><span class="n">T</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-</span><span class="line">  <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">f_word</span><span class="p">:</span>
-</span><span class="line">    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">e_word</span><span class="p">:</span>
-</span><span class="line">      <span class="k">if</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="ow">in</span> <span class="n">C</span> <span class="ow">and</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="ow">in</span> <span class="n">C</span><span class="p">:</span>
-</span><span class="line">        <span class="n">T</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="n">e</span><span class="p">)]</span> <span class="o">=</span> <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">f</span><span class="p">)]</span> <span class="o">/</span> <span class="n">C</span><span class="p">[</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">e</span><span class="p">)]</span>
-</span><span class="line">
-</span><span class="line"><span class="k">print</span> <span class="s">&quot;---iteration:</span><span class="si">%s</span><span class="s">---&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
-</span><span class="line"><span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">T</span><span class="p">:</span>
-</span><span class="line">  <span class="k">print</span> <span class="n">key</span><span class="p">,</span><span class="s">&quot;:&quot;</span><span class="p">,</span><span class="n">T</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>執行 <em>python ibm1.py</em> 計算結果：</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-</pre></td><td class="code"><pre><code class="bash"><span class="line">&gt; python ibm1.py
-</span><span class="line">---iteration:0---
-</span><span class="line">雜誌<span class="p">|</span>magazine : 0.25
-</span><span class="line">書<span class="p">|</span>this : 0.25
-</span><span class="line">這本<span class="p">|</span>book : 0.25
-</span><span class="line">這本<span class="p">|</span>this : 0.25
-</span><span class="line">一本<span class="p">|</span>magazine : 0.25
-</span><span class="line">雜誌<span class="p">|</span>a : 0.25
-</span><span class="line">雜誌<span class="p">|</span>this : 0.25
-</span><span class="line">書<span class="p">|</span>book : 0.25
-</span><span class="line">一本<span class="p">|</span>a : 0.25
-</span><span class="line">這本<span class="p">|</span>magazine : 0.25
-</span><span class="line">一本<span class="p">|</span>book : 0.25
-</span><span class="line">書<span class="p">|</span>a : 0.25
-</span><span class="line">...
-</span><span class="line">---iteration:5---
-</span><span class="line">雜誌<span class="p">|</span>magazine : 0.941176470588
-</span><span class="line">書<span class="p">|</span>this : 0.0294117647059
-</span><span class="line">這本<span class="p">|</span>book : 0.0294117647059
-</span><span class="line">這本<span class="p">|</span>this : 0.941176470588
-</span><span class="line">一本<span class="p">|</span>magazine : 0.0294117647059
-</span><span class="line">雜誌<span class="p">|</span>a : 0.0294117647059
-</span><span class="line">雜誌<span class="p">|</span>this : 0.0294117647059
-</span><span class="line">書<span class="p">|</span>book : 0.941176470588
-</span><span class="line">一本<span class="p">|</span>a : 0.941176470588
-</span><span class="line">這本<span class="p">|</span>magazine : 0.0294117647059
-</span><span class="line">一本<span class="p">|</span>book : 0.0294117647059
-</span><span class="line">書<span class="p">|</span>a : 0.0294117647059
-</span></code></pre></td></tr></table></div></figure>
-
-<p>其中，初始值的 <script type="math/tex">t</script> ，不管是哪個中文字對應到哪個英文字，都是 <em>0.25</em> 。經過了五次的迴圈運算後，  <script type="math/tex">t</script> 值會逐漸收斂，漸與訓練資料吻合。例如 <script type="math/tex">t(\text{雜誌} \mid \text{magazine}) = 0.941</script> ，大於 <script type="math/tex">t(\text{一本} \mid \text{magazine}) = 0.029</script> 。表示英文字 <em>magazine</em> 較可能翻譯成中文字詞 <strong>“雜誌”</strong> ，而不是 <strong>“一本”</strong> 。</p>
-
-<h2 id="reference">Reference</h2>
-
-<p>本文參考至coursera線上課程</p>
-
-<h4 id="michael-collins-natural-language-processing">Michael Collins. Natural Language Processing</h4>
-
-<p>https://www.coursera.org/course/nlangp</p>
 ]]></content>
   </entry>
   

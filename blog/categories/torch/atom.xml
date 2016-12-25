@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Torch | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/torch/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:56:38+08:00</updated>
+  <updated>2016-12-26T00:02:20+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -147,11 +147,11 @@ print(z)</p>
 
 <h2 id="nncontainer--nnsequential">nn.Container &amp; nn.Sequential</h2>
 
-<p>這邊要介紹 <code>nn.Container</code> 和 <code>nn.Sequential</code> 的源碼。</p>
+<p>這邊要介紹 <code>nn.Container</code> 和 <code>nn.Sequential</code> 的程式碼。</p>
 
-<p><code>nn.Container</code> 源碼：<a href="https://github.com/torch/nn/blob/master/Container.lua">https://github.com/torch/nn/blob/master/Container.lua</a></p>
+<p><code>nn.Container</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Container.lua">https://github.com/torch/nn/blob/master/Container.lua</a></p>
 
-<p><code>nn.Sequential</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Sequential.lua">https://github.com/torch/nn/blob/master/Sequential.lua</a></p>
+<p><code>nn.Sequential</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Sequential.lua">https://github.com/torch/nn/blob/master/Sequential.lua</a></p>
 
 <p>首先，介紹 <code>nn.Container</code> ，先看 <code>init()</code> 的部分：</p>
 
@@ -371,77 +371,41 @@ print(z)</p>
 
 <p>結果如下：</p>
 
-<p><figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-<span class='line-number'>25</span>
-<span class='line-number'>26</span>
-<span class='line-number'>27</span>
-<span class='line-number'>28</span>
-<span class='line-number'>29</span>
-<span class='line-number'>30</span>
-<span class='line-number'>31</span>
-<span class='line-number'>32</span>
-<span class='line-number'>33</span>
-<span class='line-number'>34</span>
-<span class='line-number'>35</span>
-</pre></td><td class='code'><pre><code class='sh'><span class='line'>&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;nn.Sequential <span class="o">{</span>
-</span><span class='line'>  <span class="o">[</span>input -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>1<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> <span class="o">(</span>2<span class="o">)</span> -<span class="p">&amp;</span>gt<span class="p">;</span> output<span class="o">]</span>
-</span><span class='line'>  <span class="o">(</span>1<span class="o">)</span>: nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
-</span><span class='line'>  <span class="o">(</span>2<span class="o">)</span>: nn.Sigmoid
-</span><span class='line'><span class="o">}</span>
-</span><span class='line'><span class="o">{</span>
-</span><span class='line'>  gradInput : DoubleTensor - empty
-</span><span class='line'>  modules :
-</span><span class='line'>    <span class="o">{</span>
-</span><span class='line'>      <span class="m">1</span> :
-</span><span class='line'>        nn.Linear<span class="o">(</span><span class="m">2</span> -<span class="p">&amp;</span>gt<span class="p">;</span> 3<span class="o">)</span>
-</span><span class='line'>        <span class="o">{</span>
-</span><span class='line'>          gradBias : DoubleTensor - size: 3
-</span><span class='line'>          weight : DoubleTensor - size: 3x2
-</span><span class='line'>          _type : torch.DoubleTensor
-</span><span class='line'>          output : DoubleTensor - size: 3
-</span><span class='line'>          gradInput : DoubleTensor - empty
-</span><span class='line'>          bias : DoubleTensor - size: 3
-</span><span class='line'>          gradWeight : DoubleTensor - size: 3x2
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>      <span class="m">2</span> :
-</span><span class='line'>        nn.Sigmoid
-</span><span class='line'>        <span class="o">{</span>
-</span><span class='line'>          gradInput : DoubleTensor - empty
-</span><span class='line'>          _type : torch.DoubleTensor
-</span><span class='line'>          output : DoubleTensor - size: 3
-</span><span class='line'>        <span class="o">}</span>
-</span><span class='line'>    <span class="o">}</span>
-</span><span class='line'>  _type : torch.DoubleTensor
-</span><span class='line'>  output : DoubleTensor - size: 3
-</span><span class='line'><span class="o">}</span>&lt;/p&gt;
-</span><span class='line'>
-</span><span class='line'>&lt;p&gt;
-</span></code></pre></td></tr></table></div></figure></p>
+<p>{% codeblock lang:sh %}</p>
+
+<p>nn.Sequential {
+  [input -&gt; (1) -&gt; (2) -&gt; output]
+  (1): nn.Linear(2 -&gt; 3)
+  (2): nn.Sigmoid
+}
+{
+  gradInput : DoubleTensor - empty
+  modules : 
+    {
+      1 : 
+        nn.Linear(2 -&gt; 3)
+        {
+          gradBias : DoubleTensor - size: 3
+          weight : DoubleTensor - size: 3x2
+          _type : torch.DoubleTensor
+          output : DoubleTensor - size: 3
+          gradInput : DoubleTensor - empty
+          bias : DoubleTensor - size: 3
+          gradWeight : DoubleTensor - size: 3x2
+        }
+      2 : 
+        nn.Sigmoid
+        {
+          gradInput : DoubleTensor - empty
+          _type : torch.DoubleTensor
+          output : DoubleTensor - size: 3
+        }
+    }
+  _type : torch.DoubleTensor
+  output : DoubleTensor - size: 3
+}</p>
+
+<p>{% endcodeblock %}</p>
 
 <p>以上結果可分成兩部分來看，第一部分是 <code>nn.Sequential</code> 裡面每個 module 的順序，從 input 到 output 之間，依次進行了哪些運算。</p>
 
@@ -573,11 +537,11 @@ print(y)</p>
 
 <h2 id="nnmodule--nnlinear">nn.Module &amp; nn.Linear</h2>
 
-<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的源碼相當簡潔易懂，可以直接看源碼來了解它的功能是什麼。</p>
+<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的程式碼相當簡潔易懂，可以直接看程式碼來了解它的功能是什麼。</p>
 
-<p><code>nn.Module</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
+<p><code>nn.Module</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
 
-<p><code>nn.Linear</code> 源碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
+<p><code>nn.Linear</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
 
 <p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
 
@@ -911,7 +875,7 @@ end</p>
 
 <p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
 
-<p>
+<p>{% raw %}
 ```lua</p>
 
 <p>input={
@@ -921,7 +885,7 @@ end</p>
 print(l2:forward(torch.Tensor(input)))</p>
 
 <p>```
-</p>
+{% endraw %}</p>
 
 <p>結果如下：</p>
 

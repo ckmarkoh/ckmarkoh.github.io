@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="本篇介紹如何用python nltk 的應用,邏輯語意與lambda calculus 1.introduction 邏輯語意學在語意推導方面,通常會用到 使用就可以把一個句子的語意,從個別單字中推導出來 至於 是什麼呢？ 簡而言之,lambda calculus是一種數學運算,由以下三種元素組成 &hellip;">
+  <meta name="description" content="1.Introduction 這次來講一下機器學習(Machine Learning)的Logistic Model 搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何 至於機器學習（Machine Learning）是什麼？ 簡而言之,Machine &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,64 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/15/logisti-regression-model/">Logistic Regression Model (3D)</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-15T01:47:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:47 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>這次來講一下機器學習(Machine Learning)的Logistic Model</p>
+
+<p>搭上3D的風潮,讓我們來看看3D的Logistic Model畫出來會是如何</p>
+
+<p>至於機器學習（Machine Learning）是什麼？</p>
+
+<p>簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何</p>
+
+<p>Logistic Regression是一種機器學習的Model,可以用來處理分類問題</p>
+
+<p>從input data的feature,可以判斷出output data該歸到那一類</p>
+
+<p>Logistic Regression的model如下</p>
+
+<script type="math/tex; mode=display">
+
+h(x)=\frac{1}{1+e^{-W^{T} X }}
+
+</script>
+
+<p>其中 <script type="math/tex">h(x)</script> 是hypothesis,藉由hypothesis,可以用已知的data來預知未知的data</p>
+
+<p><script type="math/tex">X</script>是input data, <script type="math/tex">W</script> 是weight,這兩者皆是矩陣</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/15/logisti-regression-model/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -621,6 +679,10 @@ man(Socrates)= true
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
@@ -634,10 +696,6 @@ man(Socrates)= true
     
       <li class="post">
         <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
       </li>
     
   </ul>

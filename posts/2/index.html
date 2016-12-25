@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Gradient Descent 機器學習中，用 Gradient Descent 是解最佳化問題，最基本的方法。關於Gradient Descent的公式，請參考：Optimization Method – Gradient Descent &amp; AdaGrad 對於 Cost &hellip;">
+  <meta name="description" content="AdaGrad 本文接續 Optimization Method – Gradient Descent &amp; AdaGrad 。所提到的 AdaGrad ，及改良它的方法 – AdaDelta 。 在機器學習最佳化過程中，用 AdaGrad 可以隨著時間來縮小 Learning Rage ， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,63 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/02/08/optimization-method-adadelta/">AdaDelta</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-02-08T16:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>4:13 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="adagrad">AdaGrad</h2>
+
+<p>本文接續 <a href="/blog/2015/12/23/optimization-method-adagrad">Optimization Method – Gradient Descent &amp; AdaGrad </a>。所提到的 <em>AdaGrad</em> ，及改良它的方法 – <em>AdaDelta</em> 。</p>
+
+<p>在機器學習最佳化過程中，用 <em>AdaGrad</em> 可以隨著時間來縮小 <em>Learning Rage</em> ，以達到較好的收斂效果。<em>AdaGrad</em> 的公式如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& \textbf{G}_{t} = \sum_{n=0}^{t} \textbf{g}_{n}^{2} \\
+
+& \textbf{x}_{t+1} = \textbf{x}_{t} - \frac{\eta}{\sqrt{\textbf{G}_{t}}} \textbf{g}_{t} \\
+
+\end{align}
+
+ %]]></script>
+
+<p>不過， <em>AdaGrad</em> 有個缺點，由於 <script type="math/tex">\textbf{g}_{n}^{2}</script> 恆為正，故 <script type="math/tex">\textbf{G}_{t} </script> 只會隨著時間增加而遞增，所以 <script type="math/tex">\frac{\eta}{\sqrt{\textbf{G}_{t}}} </script> 只會隨著時間增加而一直遞減，如果 <em>Learning Rate</em> <script type="math/tex">\eta</script>的值太小，則 <em>AdaGrad</em> 會較慢才收斂。</p>
+
+<p>舉個例子，如果目標函數為 <script type="math/tex"> f(x,y) = y^2 - x^2  </script> ，起始點為 <script type="math/tex">(x,y) = (0.001,4)</script> ， <em>Learning Rate</em> <script type="math/tex">\eta=0.5</script> ，則整個最佳化的過程如下圖，曲面為目標函數，紅色的點為 <script type="math/tex">(x,y)</script> ：</p>
+
+<p><img src="/images/pic/pic_00157.png" alt="" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/02/08/optimization-method-adadelta/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -580,59 +637,6 @@ f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/02/21/mt-ibm-model-1/">Machine Translation : IBM Model 1</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-02-21T09:31:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>9:31 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>繼續之前<a href="/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>所提到的，要計算 <em>Translation Model</em> <script type="math/tex">p(F∣E)</script> ，即給定某個英文句子 <script type="math/tex">E</script> ，則它被翻自成中文句子 <script type="math/tex">F</script> 的機率是多少？</p>
-
-<p>計算 <em>Translation Model</em> 需要用到較複雜的模型，例如 <em>IBM Model</em> 。而 <em>IBM Model 1</em>  是最基本的一種 <em>IBM Model</em> 。</p>
-
-<h2 id="alignment">Alignment</h2>
-
-<p>在講 <em>IBM Model 1</em> 之前，要先介紹 <em>alignment</em> 是什麼。因為，要將英文翻譯成中文，則中文字詞的順序可能跟英文字詞的順序，不太一樣。例如：</p>
-
-<blockquote>
-  <p>這不是一個蘋果
-This is not an apple </p>
-</blockquote>
-
-<p>這兩個句子，在中文中的 <strong>“不是”</strong> 英文為 <strong>“is not（是不）”</strong> 。為了考慮到字詞順序會變，因此要定義 <em>alignment</em> ，來記錄中文句子中的哪個字，對應到英文句子中的哪個字。</p>
-
-<p><img src="/images/pic/pic_00075.tiff" alt="" /></p>
-
-<p>此例中， <em>alignment</em> 為 <script type="math/tex">\{1\rightarrow 1,3\rightarrow 2,2\rightarrow 3,4 \rightarrow 4,5\rightarrow 5 \}</script>，表示第一個中文字對應到第一個英文字，第二個中文字對應到第三個英文字，以此類推。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/02/21/mt-ibm-model-1/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -654,6 +658,10 @@ This is not an apple </p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
@@ -667,10 +675,6 @@ This is not an apple </p>
     
       <li class="post">
         <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
       </li>
     
   </ul>

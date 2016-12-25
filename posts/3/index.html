@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Information Retrieval 所謂的資訊檢索（ Information Retrieval )，就是從大量非結構的資料，例如網頁，根據某些關鍵字，找出具有此關鍵字的文件。例如，搜尋引擎，即是一種資訊檢索的應用。 資訊檢索的演算法，其實跟我們要在某本書中，找尋某個字的方法差不多。 &hellip;">
+  <meta name="description" content="Introduction 繼續之前統計機器翻譯所提到的，要計算 Translation Model ，即給定某個英文句子 ，則它被翻自成中文句子 的機率是多少？ 計算 Translation Model 需要用到較複雜的模型，例如 IBM Model 。而 IBM Model 1 是最基本的一種 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,59 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/02/21/mt-ibm-model-1/">Machine Translation : IBM Model 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-02-21T09:31:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2015</span></span> <span class='time'>9:31 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>繼續之前<a href="/blog/http://cpmarkchang.logdown.com/posts/239855-machine-translation-statistical-machine-translation">統計機器翻譯</a>所提到的，要計算 <em>Translation Model</em> <script type="math/tex">p(F∣E)</script> ，即給定某個英文句子 <script type="math/tex">E</script> ，則它被翻自成中文句子 <script type="math/tex">F</script> 的機率是多少？</p>
+
+<p>計算 <em>Translation Model</em> 需要用到較複雜的模型，例如 <em>IBM Model</em> 。而 <em>IBM Model 1</em>  是最基本的一種 <em>IBM Model</em> 。</p>
+
+<h2 id="alignment">Alignment</h2>
+
+<p>在講 <em>IBM Model 1</em> 之前，要先介紹 <em>alignment</em> 是什麼。因為，要將英文翻譯成中文，則中文字詞的順序可能跟英文字詞的順序，不太一樣。例如：</p>
+
+<blockquote>
+  <p>這不是一個蘋果
+This is not an apple </p>
+</blockquote>
+
+<p>這兩個句子，在中文中的 <strong>“不是”</strong> 英文為 <strong>“is not（是不）”</strong> 。為了考慮到字詞順序會變，因此要定義 <em>alignment</em> ，來記錄中文句子中的哪個字，對應到英文句子中的哪個字。</p>
+
+<p><img src="/images/pic/pic_00075.tiff" alt="" /></p>
+
+<p>此例中， <em>alignment</em> 為 <script type="math/tex">\{1\rightarrow 1,3\rightarrow 2,2\rightarrow 3,4 \rightarrow 4,5\rightarrow 5 \}</script>，表示第一個中文字對應到第一個英文字，第二個中文字對應到第三個英文字，以此類推。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/02/21/mt-ibm-model-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -699,67 +752,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/28/natural-language-processing-log-linear-model/">Log-Linear Model</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-28T11:00:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:00 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1. Introduction</h2>
-
-<p>在機器學習中有一種用於分類的演算法, 叫作 <em>Logistic Regression</em> , 可以把東西分成兩類</p>
-
-<p>而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 <em>Part of speech Tagging</em> 就是把一個字詞分類到名詞, 動詞, 形容詞, 之類的問題</p>
-
-<p>如果二元分類的 <em>Logistic Regression</em> , 推廣到多種類別分類, 就可以處理這種分類問題</p>
-
-<p>首先, 把二元分類的 <em>Logistic Regression</em> 公式, 稍做調整, 如下  </p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-
-&p(y=true|X) = \frac{1}{1+e^{-W \cdot X }} 
-
-= \frac{ e^{\frac{W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\[12pt]
-
-&p(y=false|X) = \frac{e^{-W \cdot X }}{1+e^{-W \cdot X }} 
-
-= \frac{ e^{\frac{-W \cdot X}{2}} }{ e^{\frac{W \cdot X}{2}}+e^{\frac{-W \cdot X}{2}}  } \\
-
-\end{align}
-
- %]]></script>
-
-<p>針對多類別的  <em>Logistic Regression</em> , 叫作 <em>Multinomial logistic regression</em> , 如果總共有 <script type="math/tex">k</script> 的類別, 每個類別的 <em>label</em> 為 <script type="math/tex">c_{i} , i \in k </script> , 則公式如下</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/28/natural-language-processing-log-linear-model/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -781,6 +773,10 @@ MathJax.Hub.Config({
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
@@ -794,10 +790,6 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/07/12/neural-network-word2vec-part-1-overview/">Word2vec (Part 1 : Overview)</a>
       </li>
     
   </ul>

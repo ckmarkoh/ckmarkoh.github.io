@@ -1,0 +1,496 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction torch 的 nn.Module 是組成 neural network 的部分，但是要訓練一個 neural network ，就需要有 loss function 。而 nn.Criterion 就是用來計算 loss function 的值。nn.Criterion &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50146000-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-12-25T18:48:14+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>6:48 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>torch 的 <code>nn.Module</code> 是組成 neural network 的部分，但是要訓練一個 neural network ，就需要有 loss function 。而 <code>nn.Criterion</code> 就是用來計算 loss function 的值。<code>nn.Criterion</code> 是個抽象類別，所有種類的 loss function 都繼承於它。</p>
+
+<p>例如， loss funciton 用 Minimum Square Error 時， <script type="math/tex">\bar{y}</script> 為模型預測出來的數值， <script type="math/tex">y</script> 為正確的數值 ，則 loss function <script type="math/tex"> L (y, \bar{y}) </script> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2 
+
+</script>
+
+<p>在 torch 中，負責計算 Minimum Square Error 的 criterion 為 <code>nn.MSECriterion</code> 。</p>
+
+<!-- more -->
+
+<p>實作部份如下，首先，載入 <code>nn</code> 模組：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>建立 <code>nn.MSECriterion</code> ，命名為 <code>c1</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">c1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>假設模型預測出的數值 <script type="math/tex"> \bar{y} = 5</script> ，正確數值 <script type="math/tex">y=3</script> ，則：</p>
+
+<script type="math/tex; mode=display">
+
+l( y , \bar{y}) = (y  - \bar{y} )^2  = (3-5)^2 = 4
+
+</script>
+
+<p>實作如下，將 <code>y_ = 5</code> 與 <code>y = 3</code> 兩數值傳入 <code>c1</code> ，進行 forward propagation ，得出 loss function <code>l</code> 的數值。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">l</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行結果， <code>l = 4</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">4	
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="nncriterion--nnmsecriterion">nn.Criterion &amp; nn.MSECriterion</h2>
+
+<p>這邊講解 <code>nn.Criterion</code> 以及 <code>nn.MSECriterion</code> 的程式碼：</p>
+
+<p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
+
+<p><code>nn.MSECriterion</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/MSECriterion.lua">https://github.com/torch/nn/blob/master/MSECriterion.lua</a></p>
+
+<p>首先看到 <code>nn.Criterion</code> 的部分，先從 <code>init</code> 開始。</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="kd">local</span> <span class="n">Criterion</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">class</span><span class="p">(</span><span class="s1">&#39;</span><span class="s">nn.Criterion&#39;</span><span class="p">)</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">__init</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">()</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="mi">0</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>從以上程式碼得知， <code>nn.Criterion</code> 雖然有 <code>output</code> 和 <code>gradInput</code> 這兩個變量，但它並沒有繼承 <code>nn.Module</code> 。</p>
+
+<p>再來看到 forward propagation 的部分， <code>nn.Criterion</code> 的 <code>forward</code> 和 <code>nn.Module</code> 的不一樣，因為它的輸入有 <code>input</code> 和 <code>target</code> 這兩個變量，如下：</p>
+
+<p>因為 loss function 的 forward propagation 需要有 input 和 target 這兩個數值才算得出來，而 module 中的 forward propagation 部分，通常只需要 input 的數值即可。</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來看到 <code>nn.MSECriterion</code> 的程式碼。</p>
+
+<figure class="code"><figcaption><span>nn/MSECriterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">MSECriterion</span><span class="p">:</span><span class="n">__init</span><span class="p">(</span><span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line">   <span class="n">parent</span><span class="p">.</span><span class="n">__init</span><span class="p">(</span><span class="n">self</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">sizeAverage</span> <span class="o">~=</span> <span class="kc">nil</span> <span class="k">then</span>
+</span><span class="line">     <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span> <span class="o">=</span> <span class="n">sizeAverage</span>
+</span><span class="line">   <span class="k">else</span>
+</span><span class="line">     <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span> <span class="o">=</span> <span class="kc">true</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中， <code>sizeAverage</code> 是設定要不要將 output 根據 input 的維度來做平均，預設值為 <code>true</code> 。</p>
+
+<p>舉個例子，<code>y2_</code> 和 <code>y2</code> 分別為 input 與 target ，分別建立 <code>c2</code> 與 <code>c3</code> 兩個 <code>nn.MSECriterion</code> ， <code>c2</code> 的 <code>sizeAverage</code> 為 <code>true</code> ，而 <code>c3</code> 的 <code>sizeAverage</code> 為 <code>false</code> 。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y2_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="n">y2</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">c2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+</span><span class="line"><span class="n">c3</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>將 <code>y2_</code> 和 <code>y2</code> 都輸入 <code>c2</code> 和 <code>c3</code> ，進行 forward propagation ，比較其結果差異，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c2</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y2_</span><span class="p">,</span><span class="n">y2</span><span class="p">))</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c3</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y2_</span><span class="p">,</span><span class="n">y2</span><span class="p">))</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>則輸出結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">4	
+</span><span class="line">8
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上， 4 是 <code>sizeAverage</code> 為 <code>true</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減後再平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{(5-3)^2 + (5-3)^2 }{2} = 4
+
+</script>
+
+<p>而 8 是 <code>sizeAverage</code> 為 <code>false</code> 的結果，也就是將 <code>y2_</code> 和 <code>y2</code> 的每個元素相減，但沒平均，如下：</p>
+
+<script type="math/tex; mode=display">
+
+(5-3)^2 + (5-3)^2  = 8
+
+</script>
+
+<p>這裡要注意的是，不管 <code>sizeAverage</code> 是 <code>ture</code> 或 <code>false</code> ，也不論 input 的維度有多少，output 都是一維的純量。</p>
+
+<p>再來看到 <code>updateOutput</code> 的程式碼：</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">MSECriterion</span><span class="p">:</span><span class="n">updateOutput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span> <span class="ow">or</span> <span class="n">input</span><span class="p">.</span><span class="n">new</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line">   <span class="n">input</span><span class="p">.</span><span class="n">THNN</span><span class="p">.</span><span class="n">MSECriterion_updateOutput</span><span class="p">(</span>
+</span><span class="line">      <span class="n">input</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">target</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span>
+</span><span class="line">   <span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">output_tensor</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">output</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>此部分的核心運算是用 C 來加速，在第三行會呼叫 C 的函數 <code>MSECriterion_updateOutput</code> ，再將結果存在 <code>output_tensor</code> ，而 lua 則從 <code>output_tensor</code> 中取出結果，傳到 <code>output</code> 。</p>
+
+<p>C 的程式碼在 <a href="https://github.com/torch/nn/blob/master/lib/THNN/generic/MSECriterion.c">MSECriterion.c</a> 檔案中：</p>
+
+<figure class="code"><figcaption><span>nn/lib/THNN/generic/MSECriterion.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+<span class="line-number">20</span>
+<span class="line-number">21</span>
+<span class="line-number">22</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">THNN_</span><span class="p">(</span><span class="n">MSECriterion_updateOutput</span><span class="p">)(</span>
+</span><span class="line">          <span class="n">THNNState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">input</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">target</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">output</span><span class="p">,</span>
+</span><span class="line">          <span class="kt">bool</span> <span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">  <span class="n">THNN_CHECK_NELEMENT</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">);</span>
+</span><span class="line">  <span class="n">THNN_CHECK_DIM_SIZE</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">real</span> <span class="n">sum</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">TH_TENSOR_APPLY2</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+</span><span class="line">    <span class="n">real</span> <span class="n">z</span> <span class="o">=</span> <span class="p">(</span><span class="o">*</span><span class="n">input_data</span> <span class="o">-</span> <span class="o">*</span><span class="n">target_data</span><span class="p">);</span>
+</span><span class="line">    <span class="n">sum</span> <span class="o">+=</span> <span class="n">z</span><span class="o">*</span><span class="n">z</span><span class="p">;</span>
+</span><span class="line">  <span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="k">if</span> <span class="p">(</span><span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line">    <span class="n">sum</span> <span class="o">/=</span> <span class="n">THTensor_</span><span class="p">(</span><span class="n">nElement</span><span class="p">)(</span><span class="n">input</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">THTensor_</span><span class="p">(</span><span class="n">set1d</span><span class="p">)(</span><span class="n">output</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sum</span><span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在第 14 ~ 15 行中可看到將 <code>input_data</code> 與 <code>target_data</code> 相減後得出 <code>z</code> ，並將 <code>z</code> 平方後累加，得到 <code>sum</code> ，而在 18 ~ 19 行中， <code>sum</code> 會根依序 <code>sizeAverage</code> 的值，來決定要不要除以所有元素的個數。</p>
+
+<p>最後一行則將 <code>sum</code> 的值存到 <code>output</code> 中，這個 <code>output</code> 所對應到 lua 中的 <code>output_tensor</code> 。</p>
+
+<p>關於 <code>updateGradInput</code> 以及 backward propagation 的部分，將在下回介紹。</p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb</a></p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2016-12-25T18:48:14+08:00'><span class='date'><span class='date-month'>Dec</span> <span class='date-day'>25</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>6:48 pm</span></time>
+      
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/" title="Previous Post: Torch NN Tutorial 2 : NN.Container & NN.Sequential">&laquo; Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (10)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (2)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2016 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'ckmarkoh-pages';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/';
+        var disqus_url = 'http://ckmarkoh.github.io/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
