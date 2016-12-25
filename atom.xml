@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-25T17:40:31+08:00</updated>
+  <updated>2016-12-25T17:44:37+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -120,7 +120,7 @@ y 的值會與 <code>l1.weight</code> 和 <code>l1.bias</code> 的初始值值�
 
 <p>其中，<code>add</code> 是將 module 加入 container 的 function。</p>
 
-<p>其實， <code>nn.Container</code> 也是從 <code>nn.Module</code> 繼承而來的，所以它也有 <code>forward</code> ，可以進行 forward propagation ，只要呼叫了 <code>nn.Container</code> 的 <code>forward</code> ，它就會自動將裡面的 module 進行 forward ，病輸出結果。</p>
+<p>其實， <code>nn.Container</code> 也是從 <code>nn.Module</code> 繼承而來的，所以它也有 <code>forward</code> ，可以進行 forward propagation ，只要呼叫了 <code>nn.Container</code> 的 <code>forward</code> ，它就會自動將裡面的 module 進行 forward ，並輸出結果。</p>
 
 <p>如此給定 <code>x</code> 之後，只要進行一次 forward 即可取得 <code>z</code> 的結果，如下：</p>
 
