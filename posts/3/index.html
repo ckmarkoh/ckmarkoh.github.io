@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 繼續之前統計機器翻譯所提到的，要計算 Translation Model ，即給定某個英文句子 ，則它被翻自成中文句子 的機率是多少？ 計算 Translation Model 需要用到較複雜的模型，例如 IBM Model 。而 IBM Model 1 是最基本的一種 &hellip;">
+  <meta name="description" content="Introduction 傳統的語言模型 Ngram ，只考慮一個句子中的前面幾個字，來預測下個字是什麼。 當使用較長的 Ngram 的時候，則在測試資料中，找到和訓練資料相同的機率，就會大幅降低，甚至使機率為0，此種現象稱為 curse of dimensionality 。這類問題，傳統上可用 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,60 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">Neural Probabilistic Language Model</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-15T02:38:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:38 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>傳統的語言模型 <em>Ngram</em> ，只考慮一個句子中的前面幾個字，來預測下個字是什麼。</p>
+
+<p>當使用較長的 <em>Ngram</em> 的時候，則在測試資料中，找到和訓練資料相同的機率，就會大幅降低，甚至使機率為0，此種現象稱為 <em>curse of dimensionality</em> 。這類問題，傳統上可用 <a href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing"><em>Smoothing, Interpolation</em> 或 <em>Backoff</em></a>來處理。</p>
+
+<p>另一種對付 <em>curse of dimensionality</em> 的方法，可以用 <em>Distributional Semantics</em> 的概念，即把詞彙的語意用向量來表示。在訓練資料中，根據這個詞和鄰近周圍的詞的關係，計算出向量中各個維度的值，得出來的值即可表示這個詞的語意。例如，假設在訓練資料中出現 <em>The cat is walking in the bedroom</em> 和 <em>A dog was running in a room</em> 這兩個句子，計算出 <em>dog</em> 和 <em>cat</em> 語意向量中的詞，可得出這兩個詞在語意上是相近的。</p>
+
+<p>所謂的 <em>Neural Probabilistic Language Model</em> ，即是用類神經網路，從語料庫中計算出各個詞彙的語意向量值。</p>
+
+<h2 id="neural-probabilistic-language-model">Neural Probabilistic Language Model</h2>
+
+<p>給定訓練資料為 <script type="math/tex"> w_{1} \cdots w_{T} </script> 一連串的字，每個字都可包含於詞庫 <script type="math/tex">V</script> 中，即 <script type="math/tex">w_{t} \in V</script> ，然後，用此資料訓練出語言模型：</p>
+
+<script type="math/tex; mode=display">
+
+
+f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
+
+
+</script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -696,62 +750,6 @@ This is not an apple </p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/30/ruby-enumerable-1/">Ruby Enumerable 1 : Collect , Inject</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-30T15:06:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>3:06 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>在 <em>ruby</em>  裡面, 也有類似 <em>functional programming style</em> 的東西, 像是 <em>map</em> , <em>reduce</em> 之類的</p>
-
-<p>但是這些不是像 <em>python</em> 那樣是屬於 <em>build in function</em> , 像這樣</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">*</span><span class="mi">2</span> <span class="p">,[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
-</span><span class="line"><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>在 <em>ruby</em> 裡面的 <em>map</em> 是這樣, 如下</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">001</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="o">].</span><span class="n">map</span><span class="p">{</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="n">x</span><span class="o">*</span><span class="mi">2</span><span class="p">}</span>
-</span><span class="line"><span class="o">=&gt;</span> <span class="o">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="o">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>它是 <em>Enumerable Type</em> 的 <em>Method</em> </p>
-
-<p>除此之外, <em>map</em> 和 <em>reduce</em> 在 <em>ruby</em> 裡面還有其他的別名, 就是 <em>collect</em> 和 <em>inject</em></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/30/ruby-enumerable-1/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -766,11 +764,15 @@ This is not an apple </p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (11)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
@@ -788,10 +790,6 @@ This is not an apple </p>
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -805,7 +803,7 @@ This is not an apple </p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - Mark Chang -
+  Copyright &copy; 2017 - Mark Chang -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

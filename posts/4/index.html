@@ -9,7 +9,9 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1. Introduction 在機器學習中有一種用於分類的演算法, 叫作 Logistic Regression , 可以把東西分成兩類 而在自然語言處理的應用, 常常需要處理多類別的分類問題, 像是 Part of speech Tagging 就是把一個字詞分類到名詞, 動詞, 形容詞, &hellip;">
+  <meta name="description" content="Introduction 在 ruby 裡面, 也有類似 functional programming style 的東西, 像是 map , reduce 之類的 但是這些不是像 python 那樣是屬於 build in function , 像這樣 1
+2
+&gt;&gt;&gt; map( &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +94,62 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/30/ruby-enumerable-1/">Ruby Enumerable 1 : Collect , Inject</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-30T15:06:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>3:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在 <em>ruby</em>  裡面, 也有類似 <em>functional programming style</em> 的東西, 像是 <em>map</em> , <em>reduce</em> 之類的</p>
+
+<p>但是這些不是像 <em>python</em> 那樣是屬於 <em>build in function</em> , 像這樣</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">*</span><span class="mi">2</span> <span class="p">,[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">])</span>
+</span><span class="line"><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="p">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在 <em>ruby</em> 裡面的 <em>map</em> 是這樣, 如下</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="ruby"><span class="line"><span class="n">irb</span><span class="p">(</span><span class="n">main</span><span class="p">):</span><span class="mo">001</span><span class="p">:</span><span class="mi">0</span><span class="o">&gt;</span> <span class="o">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="o">].</span><span class="n">map</span><span class="p">{</span><span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="n">x</span><span class="o">*</span><span class="mi">2</span><span class="p">}</span>
+</span><span class="line"><span class="o">=&gt;</span> <span class="o">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">8</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>它是 <em>Enumerable Type</em> 的 <em>Method</em> </p>
+
+<p>除此之外, <em>map</em> 和 <em>reduce</em> 在 <em>ruby</em> 裡面還有其他的別名, 就是 <em>collect</em> 和 <em>inject</em></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/30/ruby-enumerable-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -586,68 +644,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/">Davidsonian Event Semantics</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-04T17:13:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>4</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>5:13 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>所謂的形式語義學( <em>Formal Semantics</em> ), 是在研究, 如何把自然語言用邏輯形式來表達</p>
-
-<p>例如以下句子</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-
-&\text{John buttered the toast.} &(1.a)
-
-\end{align}
-
- %]]></script>
-
-<p>傳統上, 用一皆邏輯 <em>First Order Logic</em> 可以把這個句子表示成這樣</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-
-&butter(John,toast) &(1.b)
-
-\end{align}
-
- %]]></script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/04/formal-semantics-davidsonian-event-semantics/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -662,11 +658,15 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (11)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
@@ -684,10 +684,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -701,7 +697,7 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - Mark Chang -
+  Copyright &copy; 2017 - Mark Chang -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

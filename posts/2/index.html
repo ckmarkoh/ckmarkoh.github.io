@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="AdaGrad 本文接續 Optimization Method – Gradient Descent &amp; AdaGrad 。所提到的 AdaGrad ，及改良它的方法 – AdaDelta 。 在機器學習最佳化過程中，用 AdaGrad 可以隨著時間來縮小 Learning Rage ， &hellip;">
+  <meta name="description" content="Introduction 若某個有 個維度的 data 的產生，是跟某個有 個維度的 hidden variable 有關，在機率圖模型，表示成： 從這機率圖形，可得出 hidden variable 和 的聯合分佈機率： 若是給定 hidden variable 的值，則可產生 data ，如下 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,73 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/06/20/pgm-variational-inference/">Variational Inference</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-06-20T02:42:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:42 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>若某個有 <script type="math/tex">m</script> 個維度的 data <script type="math/tex">\textbf{x} = \{x_1,x_2,...,x_m\}</script> 的產生，是跟某個有 <script type="math/tex">n</script>個維度的 hidden variable <script type="math/tex">\textbf{z} = \{z_1,z_2,...,z_n\} </script> 有關，在機率圖模型，表示成：  </p>
+
+<p><img src="/images/pic/pic_00171.png" alt="" /></p>
+
+<p>從這機率圖形，可得出 hidden variable <script type="math/tex">\textbf{z}</script> 和 <script type="math/tex">\textbf{x}</script> 的聯合分佈機率：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x},\textbf{z})  = p(\textbf{z})p(\textbf{x}|\textbf{z})
+
+</script>
+
+<p>若是給定 hidden variable <script type="math/tex">\textbf{z}</script> 的值，則可產生 data <script type="math/tex">\textbf{x}</script> ，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{x}|\textbf{z}) 
+
+</script>
+
+<p>但如果給定 data <script type="math/tex">\textbf{x}</script> 的值，這組 data 所對應到的 hidden variable 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\frac{p(\textbf{x} | \textbf{z}) p(\textbf{z}) }{\int p(\textbf{x} | \textbf{z})p(\textbf{z}) \text{d}\textbf{z}} 
+
+
+</script>
+
+<p>其中，分母 <script type="math/tex">\int p(\textbf{x} \mid  \textbf{z})p(\textbf{z}) \text{d}\textbf{z}</script> 積分如果無法算出來的時候，就無法直接算出 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值，則要用估計的方法來計算 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值。</p>
+
+<p>Variational Inference 用來估計 <script type="math/tex">p(\textbf{z}\mid \textbf{x})</script> 的值 。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/06/20/pgm-variational-inference/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -583,60 +650,6 @@ MathJax.Hub.Config({
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">Neural Probabilistic Language Model</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-05-15T02:38:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>15</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>2:38 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>傳統的語言模型 <em>Ngram</em> ，只考慮一個句子中的前面幾個字，來預測下個字是什麼。</p>
-
-<p>當使用較長的 <em>Ngram</em> 的時候，則在測試資料中，找到和訓練資料相同的機率，就會大幅降低，甚至使機率為0，此種現象稱為 <em>curse of dimensionality</em> 。這類問題，傳統上可用 <a href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing"><em>Smoothing, Interpolation</em> 或 <em>Backoff</em></a>來處理。</p>
-
-<p>另一種對付 <em>curse of dimensionality</em> 的方法，可以用 <em>Distributional Semantics</em> 的概念，即把詞彙的語意用向量來表示。在訓練資料中，根據這個詞和鄰近周圍的詞的關係，計算出向量中各個維度的值，得出來的值即可表示這個詞的語意。例如，假設在訓練資料中出現 <em>The cat is walking in the bedroom</em> 和 <em>A dog was running in a room</em> 這兩個句子，計算出 <em>dog</em> 和 <em>cat</em> 語意向量中的詞，可得出這兩個詞在語意上是相近的。</p>
-
-<p>所謂的 <em>Neural Probabilistic Language Model</em> ，即是用類神經網路，從語料庫中計算出各個詞彙的語意向量值。</p>
-
-<h2 id="neural-probabilistic-language-model">Neural Probabilistic Language Model</h2>
-
-<p>給定訓練資料為 <script type="math/tex"> w_{1} \cdots w_{T} </script> 一連串的字，每個字都可包含於詞庫 <script type="math/tex">V</script> 中，即 <script type="math/tex">w_{t} \in V</script> ，然後，用此資料訓練出語言模型：</p>
-
-<script type="math/tex; mode=display">
-
-
-f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
-
-
-</script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -651,11 +664,15 @@ f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (11)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (3)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
@@ -673,10 +690,6 @@ f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
         <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
-      <li class="post">
-        <a href="/blog/2016/07/12/-word2vec-neural-networks-part-2-backward-propagation/">Word2vec (Part 2 : Backward Propagation)</a>
-      </li>
-    
   </ul>
 </section>
 
@@ -690,7 +703,7 @@ f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2016 - Mark Chang -
+  Copyright &copy; 2017 - Mark Chang -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

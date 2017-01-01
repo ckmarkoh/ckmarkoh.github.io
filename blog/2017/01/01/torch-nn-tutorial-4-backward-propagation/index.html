@@ -1,0 +1,766 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression) - Mark Chang's Blog</title>
+  <meta name="author" content="Mark Chang">
+
+  
+  <meta name="description" content="Introduction 本文以 Linear Regression 為例，介紹 Torch nn 如何進行 Backward Propagation。 Linear Regression 是以機器學習的方式，學出以下函數： 以 Gradient Descent 的方式來進行 Linear &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="Mark Chang's Blog" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="/javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+<!-- MathJax Configuration -->
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  jax: ["input/TeX", "output/SVG"],
+  tex2jax: {
+    inlineMath: [ ['$', '$'] ],
+    displayMath: [ ['$$', '$$']],
+    processEscapes: true,
+    skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  },
+  messageStyle: "none",
+  "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] }
+});
+</script>
+<script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML" type="text/javascript"></script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-50146000-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><hgroup>
+  <h1><a href="/">Mark Chang's Blog</a></h1>
+  
+    <h2>Machine Learning, Deep Learning and Python</h2>
+  
+</hgroup>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="sitesearch" value="ckmarkoh.github.io">
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About Me</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2017-01-01T14:00:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>2:00 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>本文以 Linear Regression 為例，介紹 Torch nn 如何進行 Backward Propagation。</p>
+
+<p>Linear Regression 是以機器學習的方式，學出以下函數：</p>
+
+<script type="math/tex; mode=display">
+
+y = wx+b
+
+</script>
+
+<p>以 Gradient Descent 的方式來進行 Linear regression 的流程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+&\text{1.} \mspace{20mu} \text{initialize } w \text{ and } b \\
+&\text{2.} \mspace{20mu} \text{for i=0 ; i < max_epoch; i++} \\
+&\text{3.} \mspace{40mu} \bar{y} = wx+b \\
+&\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
+&\text{5.} \mspace{40mu} \Delta w = 0 \\
+&   \mspace{60mu} \Delta b = 0 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+\end{align}
+ %]]></script>
+
+<p>其中 <script type="math/tex">x</script> 為 training data， <script type="math/tex">y</script> 為 golden value ， <script type="math/tex">\bar{y}</script> 為 predicted value， <script type="math/tex">w</script> 和 <script type="math/tex">b</script> 分別為 weight 和 bias 。 max_epoch 為 for 迴圈執行次數。</p>
+
+<p>以下詳細講解整個流程，並實作之。</p>
+
+<!--more-->
+
+<h2 id="linear-regression-by-gradient-descent">Linear Regression by Gradient Descent</h2>
+
+<p>首先，載入 <code>nn</code> 套件，並產生 Training Data <script type="math/tex">x</script> 及 <script type="math/tex">y</script> ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span><span class="n">resize</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上程式，假設 <script type="math/tex">y</script> 是由 <script type="math/tex">y = 2 x + 1 </script> 產生出來的。而訓練的目標，是要讓 <script type="math/tex">w=2, b=1</script> 。</p>
+
+<p>產生出來的 <code>x</code> 為 <code>[1,2,3]</code> ， <code>y</code> 為 <code>[3,5,7]</code> 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 1
+</span><span class="line"> 2
+</span><span class="line"> 3
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 3
+</span><span class="line"> 5
+</span><span class="line"> 7
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>為了方便以 batch 計算，將 <code>x</code> 及 <code>y</code> 調整成 3x1 的大小。</p>
+
+<p>建立完 training data 之後，可以開始進行 Linear Regression。</p>
+
+<p>第一步，將 <script type="math/tex">w</script> 和 <script type="math/tex">b</script> 以隨機值初始化。</p>
+
+<script type="math/tex; mode=display"> \text{1.}  \mspace{20mu} \text{initialize } w \text{ and } b </script>
+
+<p>建立 <code>nn.Linear</code> ，命名為 <code>l1</code> ，如下： </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>一開始， <code>weight</code> 和 <code>bias</code> 會以隨機值初始化，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.2055
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.7159
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是建立 loss function，命名為 <code>c1</code> ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">c1</span> <span class="o">=</span> nn.MSECriterion<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>由於 loss function 為 Mimimum Square Error，所以 criterion 採用 <code>nn.MSECriterion</code></p>
+
+<p>再來，這裡先講解 for 迴圈中進行的運算。</p>
+
+<p>第三步算 linear 的 forward propagation ：</p>
+
+<script type="math/tex; mode=display">\text{3.} \mspace{20mu} \bar{y} = wx+b </script>
+
+<p>將 <script type="math/tex">x,w,b</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+& \bar{y} = wx+b\\
+& =
+0.2055
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\
+\end{bmatrix}
++ 0.7159 \\
+& =
+\begin{bmatrix}
+ 0.2055 \times 1 + 0.7159 \\
+ 0.2055 \times 2 + 0.7159 \\
+ 0.2055 \times 3 + 0.7159 \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+ 0.9214 \\
+ 1.1269 \\
+ 1.3325 \\
+\end{bmatrix}
+\end{align}
+ %]]></script>
+
+<p>程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y_</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y_</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.9214
+</span><span class="line"> 1.1269
+</span><span class="line"> 1.3325
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第四步，計算 coss function 的 forward propagation ：</p>
+
+<script type="math/tex; mode=display">\text{4.} \mspace{20mu} J = (\bar{y} - y )^2 </script>
+
+<p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+& J = (\bar{y} - y)^2\\
+& =
+\begin{bmatrix}
+(0.9214 - 3)^2 \\
+(1.1269 - 5)^2 \\
+(1.3325 - 7)^2 \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+ 4.3206 \\
+ 15.0009 \\
+ 32.1206 \\
+\end{bmatrix}
+\end{align}
+ %]]></script>
+
+<p>如果輸入的值有多個維度，則 loss function 會將個維度的值，加起來平均，結果如下：</p>
+
+<script type="math/tex; mode=display">
+
+J = \frac{4.3206 + 15.0009 + 32.1206}{3} = 17.147313377985 
+
+</script>
+
+<p>計算 <script type="math/tex">J</script> 值的程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">j</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>loss 值 <code>j</code> 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">17.147313377985
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來，要進行 backward propagation。</p>
+
+<p>第五步，先將 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 歸零：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+&\text{5.} \mspace{40mu} \Delta w = 0 \\
+&   \mspace{60mu} \Delta b = 0 \\
+\end{align}
+ %]]></script>
+
+<p><script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 在程式中所對應的值，是 <code>l1</code> 的 <code>gradWeight</code> 和 <code>gradBias</code> 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">1e-154 *
+</span><span class="line"> -1.4917
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">1e-154 *
+</span><span class="line">-1.4917
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>可用函式 <code>zeroGradParameters</code> 將這兩個值歸零，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果為0，表示已歸零：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial y}</script> 的值。</p>
+
+<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) </script>
+
+<p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial y} = 2(\bar{y} - y)\\
+& =
+\begin{bmatrix}
+2(0.9214 - 3) \\
+2(1.1269 - 5) \\
+2(1.3325 - 7) \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+-1.3857 \\
+-2.5820 \\
+-3.7784 \\
+\end{bmatrix}
+\end{align}
+ %]]></script>
+
+<p>由於 <script type="math/tex">\bar{y}</script> 有三筆資料，每筆資料都會各算出一個微分結果。
+程式中，計算此值的方式即是呼叫 <code>c1</code> 的 <code>backward</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">dj_dy_</span> <span class="o">=</span><span class="n">c1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">dj_dy_</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出的結果即是 <script type="math/tex">\frac{\partial J}{\partial \bar{y} } </script> ，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-1.3857
+</span><span class="line">-2.5820
+</span><span class="line">-3.7784
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第七步，計算 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 的值：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+\end{align}
+ %]]></script>
+
+<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 值代入，即可算出它：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+& \Delta w =  \frac{\partial J}{\partial y} \times x \\
+&=
+\begin{bmatrix}
+-1.3857 \times 1\\
+-2.5820 \times 2\\
+-3.7784 \times 3\\
+\end{bmatrix}  \\
+&=
+\begin{bmatrix}
+-1.3857 \\
+-5.1640 \\
+-11.3352 \\
+\end{bmatrix}
+\end{align}
+ %]]></script>
+
+<p>如果輸值為有多筆資料，則 <script type="math/tex">\Delta w</script> 的最終結果會將每筆的結果累加起來，如下：</p>
+
+<script type="math/tex; mode=display">
+\Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
+</script>
+
+<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 中的每筆資料結果累積起來。</p>
+
+<script type="math/tex; mode=display">
+\Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461
+</script>
+
+<p>以程式來計算此兩值。呼叫 <code>l1</code> 的 <code>backward</code> ，輸入 <script type="math/tex">\frac{\partial J}{\partial \bar{y} }</script> 到 <code>backward</code> 後，它與  <script type="math/tex">\frac{\partial \bar{y}}{\partial w}</script> 和 <script type="math/tex">\frac{\partial \bar{y}}{\partial b}</script> 相乘後結果分別為 <script type="math/tex">\Delta w</script> 和 <script type="math/tex">\Delta b</script> ，此兩數分別儲存於 <code>gradWeight</code> 和 <code>gradBias</code> 。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dj_dy_</span> <span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-17.8849
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">-7.7461
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第八步，更新 weight 和 bias ，公式如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+\end{align}
+
+ %]]></script>
+
+<p>其中， <script type="math/tex">eta</script>  是指 learning rate 。令 <script type="math/tex">eta=0.2</script> ，更新 <script type="math/tex">w</script> 和 <script type="math/tex">b</script> ，數值如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+\begin{align}
+& w  - \eta \Delta w 
+= 0.2055 - 0.02 \times (- 17.8849) = 0.5632 \\
+& b - \eta \Delta b 
+= 0.7159 - 0.02 \times (-7.7461) = 0.8708 \\
+\end{align}
+ %]]></script>
+
+<p>程式中，更新 <code>l1</code> 的 <code>weight</code> 和 <code>bias</code> 可以用 <code>updateParameters</code> ，它的輸入即是 <script type="math/tex">eta</script> 。令 <script type="math/tex">eta=0.2</script> ，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>更新完後印出 <code>weight</code> 和 <code>bias</code> 的值，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.5632
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.8708
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>把第三到第八步的 for 迴圈，串連起來。此 for 迴圈連續跑 500 次，每 50 次印出一次結果，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="mi">500</span> <span class="k">do</span>
+</span><span class="line">    <span class="n">y_</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line">    <span class="n">j</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line">    <span class="n">dj_dy_</span> <span class="o">=</span><span class="n">c1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">dj_dy_</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+</span><span class="line">        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">i:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> loss:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> weight:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> bias:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">..</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行此程式，在訓練完 500 次以後，<code>loss</code> 會接近 0 ，而 <code>weight</code> 和 <code>bias</code> 會接近 2 和 1 了。結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">i:50 loss:0.015879173659737 weight:1.8543434015475 bias:1.3310995564975
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">i:100 loss:0.0098066687579948 weight:1.885537390716 bias:1.2602004152583
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">...
+</span><span class="line">
+</span><span class="line">i:450 loss:0.00033602903432248 weight:1.9788119352928 bias:1.0481654513272
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">i:500 loss:0.00020752499774989 weight:1.9833490852405 bias:1.0378514430405
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/4_backward_propagation_part_1.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/4_backward_propagation_part_1.ipynb
+</a></p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Mark Chang</span></span>
+
+      
+
+
+
+
+<time class='entry-date' datetime='2017-01-01T14:00:00+08:00'><span class='date'><span class='date-month'>Jan</span> <span class='date-day'>1</span><span class='date-suffix'>st</span>, <span class='date-year'>2017</span></span> <span class='time'>2:00 pm</span></time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/neural-networks/'>neural networks</a>, <a class='category' href='/blog/categories/torch/'>torch</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/" data-via="" data-counturl="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/" title="Previous Post: Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion">&laquo; Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Categories</h1>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+</section>
+<section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2017 - Mark Chang -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'ckmarkoh-pages';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/';
+        var disqus_url = 'http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = '//platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

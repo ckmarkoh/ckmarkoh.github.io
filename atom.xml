@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2016-12-26T00:06:16+08:00</updated>
+  <updated>2017-01-01T14:22:44+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,525 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/"/>
+    <updated>2017-01-01T14:00:00+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation</id>
+    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+
+<p>本文以 Linear Regression 為例，介紹 Torch nn 如何進行 Backward Propagation。</p>
+
+<p>Linear Regression 是以機器學習的方式，學出以下函數：</p>
+
+<script type="math/tex; mode=display">
+
+y = wx+b
+
+</script>
+
+<p>以 Gradient Descent 的方式來進行 Linear regression 的流程如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{1.} \mspace{20mu} \text{initialize } w \text{ and } b \\
+&\text{2.} \mspace{20mu} \text{for i=0 ; i < max_epoch; i++} \\
+&\text{3.} \mspace{40mu} \bar{y} = wx+b \\
+&\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
+&\text{5.} \mspace{40mu} \Delta w = 0 \\
+&   \mspace{60mu} \Delta b = 0 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+\end{align}
+ %]]&gt;</script>
+
+<p>其中 <script type="math/tex">x</script> 為 training data， <script type="math/tex">y</script> 為 golden value ， <script type="math/tex">\bar{y}</script> 為 predicted value， <script type="math/tex">w</script> 和 <script type="math/tex">b</script> 分別為 weight 和 bias 。 max_epoch 為 for 迴圈執行次數。</p>
+
+<p>以下詳細講解整個流程，並實作之。</p>
+
+<!--more-->
+
+<h2 id="linear-regression-by-gradient-descent">Linear Regression by Gradient Descent</h2>
+
+<p>首先，載入 <code>nn</code> 套件，並產生 Training Data <script type="math/tex">x</script> 及 <script type="math/tex">y</script> ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">require</span> <span class="s1">&#39;</span><span class="s">nn&#39;</span>
+</span><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span><span class="n">resize</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上程式，假設 <script type="math/tex">y</script> 是由 <script type="math/tex">y = 2 x + 1 </script> 產生出來的。而訓練的目標，是要讓 <script type="math/tex">w=2, b=1</script> 。</p>
+
+<p>產生出來的 <code>x</code> 為 <code>[1,2,3]</code> ， <code>y</code> 為 <code>[3,5,7]</code> 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 1
+</span><span class="line"> 2
+</span><span class="line"> 3
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 3
+</span><span class="line"> 5
+</span><span class="line"> 7
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>為了方便以 batch 計算，將 <code>x</code> 及 <code>y</code> 調整成 3x1 的大小。</p>
+
+<p>建立完 training data 之後，可以開始進行 Linear Regression。</p>
+
+<p>第一步，將 <script type="math/tex">w</script> 和 <script type="math/tex">b</script> 以隨機值初始化。</p>
+
+<script type="math/tex; mode=display"> \text{1.}  \mspace{20mu} \text{initialize } w \text{ and } b </script>
+
+<p>建立 <code>nn.Linear</code> ，命名為 <code>l1</code> ，如下： </p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>一開始， <code>weight</code> 和 <code>bias</code> 會以隨機值初始化，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.2055
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.7159
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來是建立 loss function，命名為 <code>c1</code> ：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"><span class="nv">c1</span> <span class="o">=</span> nn.MSECriterion<span class="o">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>由於 loss function 為 Mimimum Square Error，所以 criterion 採用 <code>nn.MSECriterion</code></p>
+
+<p>再來，這裡先講解 for 迴圈中進行的運算。</p>
+
+<p>第三步算 linear 的 forward propagation ：</p>
+
+<script type="math/tex; mode=display">\text{3.} \mspace{20mu} \bar{y} = wx+b </script>
+
+<p>將 <script type="math/tex">x,w,b</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \bar{y} = wx+b\\
+& =
+0.2055
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\
+\end{bmatrix}
++ 0.7159 \\
+& =
+\begin{bmatrix}
+ 0.2055 \times 1 + 0.7159 \\
+ 0.2055 \times 2 + 0.7159 \\
+ 0.2055 \times 3 + 0.7159 \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+ 0.9214 \\
+ 1.1269 \\
+ 1.3325 \\
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y_</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">y_</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.9214
+</span><span class="line"> 1.1269
+</span><span class="line"> 1.3325
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第四步，計算 coss function 的 forward propagation ：</p>
+
+<script type="math/tex; mode=display">\text{4.} \mspace{20mu} J = (\bar{y} - y )^2 </script>
+
+<p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& J = (\bar{y} - y)^2\\
+& =
+\begin{bmatrix}
+(0.9214 - 3)^2 \\
+(1.1269 - 5)^2 \\
+(1.3325 - 7)^2 \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+ 4.3206 \\
+ 15.0009 \\
+ 32.1206 \\
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>如果輸入的值有多個維度，則 loss function 會將個維度的值，加起來平均，結果如下：</p>
+
+<script type="math/tex; mode=display">
+
+J = \frac{4.3206 + 15.0009 + 32.1206}{3} = 17.147313377985 
+
+</script>
+
+<p>計算 <script type="math/tex">J</script> 值的程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">j</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>loss 值 <code>j</code> 如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">17.147313377985
+</span></code></pre></td></tr></table></div></figure>
+
+<p>再來，要進行 backward propagation。</p>
+
+<p>第五步，先將 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 歸零：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{5.} \mspace{40mu} \Delta w = 0 \\
+&   \mspace{60mu} \Delta b = 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p><script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 在程式中所對應的值，是 <code>l1</code> 的 <code>gradWeight</code> 和 <code>gradBias</code> 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">1e-154 *
+</span><span class="line"> -1.4917
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">1e-154 *
+</span><span class="line">-1.4917
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>可用函式 <code>zeroGradParameters</code> 將這兩個值歸零，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果為0，表示已歸零：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial y}</script> 的值。</p>
+
+<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) </script>
+
+<p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial y} = 2(\bar{y} - y)\\
+& =
+\begin{bmatrix}
+2(0.9214 - 3) \\
+2(1.1269 - 5) \\
+2(1.3325 - 7) \\
+\end{bmatrix} \\
+& =
+\begin{bmatrix}
+-1.3857 \\
+-2.5820 \\
+-3.7784 \\
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>由於 <script type="math/tex">\bar{y}</script> 有三筆資料，每筆資料都會各算出一個微分結果。
+程式中，計算此值的方式即是呼叫 <code>c1</code> 的 <code>backward</code> ，如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">dj_dy_</span> <span class="o">=</span><span class="n">c1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">dj_dy_</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出的結果即是 <script type="math/tex">\frac{\partial J}{\partial \bar{y} } </script> ，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-1.3857
+</span><span class="line">-2.5820
+</span><span class="line">-3.7784
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第七步，計算 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 的值：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 值代入，即可算出它：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \Delta w =  \frac{\partial J}{\partial y} \times x \\
+&=
+\begin{bmatrix}
+-1.3857 \times 1\\
+-2.5820 \times 2\\
+-3.7784 \times 3\\
+\end{bmatrix}  \\
+&=
+\begin{bmatrix}
+-1.3857 \\
+-5.1640 \\
+-11.3352 \\
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>如果輸值為有多筆資料，則 <script type="math/tex">\Delta w</script> 的最終結果會將每筆的結果累加起來，如下：</p>
+
+<script type="math/tex; mode=display">
+\Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
+</script>
+
+<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 中的每筆資料結果累積起來。</p>
+
+<script type="math/tex; mode=display">
+\Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461
+</script>
+
+<p>以程式來計算此兩值。呼叫 <code>l1</code> 的 <code>backward</code> ，輸入 <script type="math/tex">\frac{\partial J}{\partial \bar{y} }</script> 到 <code>backward</code> 後，它與  <script type="math/tex">\frac{\partial \bar{y}}{\partial w}</script> 和 <script type="math/tex">\frac{\partial \bar{y}}{\partial b}</script> 相乘後結果分別為 <script type="math/tex">\Delta w</script> 和 <script type="math/tex">\Delta b</script> ，此兩數分別儲存於 <code>gradWeight</code> 和 <code>gradBias</code> 。</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dj_dy_</span> <span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-17.8849
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">-7.7461
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>第八步，更新 weight 和 bias ，公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex">eta</script>  是指 learning rate 。令 <script type="math/tex">eta=0.2</script> ，更新 <script type="math/tex">w</script> 和 <script type="math/tex">b</script> ，數值如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& w  - \eta \Delta w 
+= 0.2055 - 0.02 \times (- 17.8849) = 0.5632 \\
+& b - \eta \Delta b 
+= 0.7159 - 0.02 \times (-7.7461) = 0.8708 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>程式中，更新 <code>l1</code> 的 <code>weight</code> 和 <code>bias</code> 可以用 <code>updateParameters</code> ，它的輸入即是 <script type="math/tex">eta</script> 。令 <script type="math/tex">eta=0.2</script> ，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>更新完後印出 <code>weight</code> 和 <code>bias</code> 的值，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.5632
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1x1<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.8708
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>把第三到第八步的 for 迴圈，串連起來。此 for 迴圈連續跑 500 次，每 50 次印出一次結果，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">for</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span><span class="mi">500</span> <span class="k">do</span>
+</span><span class="line">    <span class="n">y_</span> <span class="o">=</span> <span class="n">l1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span class="line">    <span class="n">j</span> <span class="o">=</span> <span class="n">c1</span><span class="p">:</span><span class="n">forward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line">    <span class="n">dj_dy_</span> <span class="o">=</span><span class="n">c1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">dj_dy_</span><span class="p">)</span>
+</span><span class="line">    <span class="n">l1</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</span><span class="line">    <span class="k">if</span> <span class="n">i</span><span class="o">%</span><span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">then</span>
+</span><span class="line">        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="s">i:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> loss:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> weight:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+</span><span class="line">           <span class="o">..</span> <span class="s2">&quot;</span><span class="s"> bias:&quot;</span> <span class="o">..</span> <span class="nb">tostring</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">..</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+</span><span class="line">    <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>執行此程式，在訓練完 500 次以後，<code>loss</code> 會接近 0 ，而 <code>weight</code> 和 <code>bias</code> 會接近 2 和 1 了。結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">i:50 loss:0.015879173659737 weight:1.8543434015475 bias:1.3310995564975
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">i:100 loss:0.0098066687579948 weight:1.885537390716 bias:1.2602004152583
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">...
+</span><span class="line">
+</span><span class="line">i:450 loss:0.00033602903432248 weight:1.9788119352928 bias:1.0481654513272
+</span><span class="line">
+</span><span class="line">
+</span><span class="line">i:500 loss:0.00020752499774989 weight:1.9833490852405 bias:1.0378514430405
+</span><span class="line">
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/4_backward_propagation_part_1.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/4_backward_propagation_part_1.ipynb
+</a></p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion]]></title>
@@ -264,7 +783,7 @@ l( y , \bar{y}) = (y  - \bar{y} )^2  = (3-5)^2 = 4
 
 <p>本次教學的完整程式碼於此：</p>
 
-<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_msecriterion.ipynb</a></p>
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_and_msecriterion.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/3_nn_criterion_and_msecriterion.ipynb</a></p>
 ]]></content>
   </entry>
   
@@ -7802,292 +8321,6 @@ P(b_{3} = 0| b_{2} = 0, b_{1} = 1, X=x)
 <h2 id="reference">Reference</h2>
 
 <p>Frederic Morin , Yoshua Bengio. Hierarchical probabilistic neural network language model. 2005</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Neural Probabilistic Language Model]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/05/15/neural-network-neural-probabilistic-language-model/"/>
-    <updated>2015-05-15T02:38:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/05/15/neural-network-neural-probabilistic-language-model</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>傳統的語言模型 <em>Ngram</em> ，只考慮一個句子中的前面幾個字，來預測下個字是什麼。</p>
-
-<p>當使用較長的 <em>Ngram</em> 的時候，則在測試資料中，找到和訓練資料相同的機率，就會大幅降低，甚至使機率為0，此種現象稱為 <em>curse of dimensionality</em> 。這類問題，傳統上可用 <a href="http://ckmarkoh.github.io/blog/2014/03/28/equations-for-nlp-ngram-smoothing"><em>Smoothing, Interpolation</em> 或 <em>Backoff</em></a>來處理。</p>
-
-<p>另一種對付 <em>curse of dimensionality</em> 的方法，可以用 <em>Distributional Semantics</em> 的概念，即把詞彙的語意用向量來表示。在訓練資料中，根據這個詞和鄰近周圍的詞的關係，計算出向量中各個維度的值，得出來的值即可表示這個詞的語意。例如，假設在訓練資料中出現 <em>The cat is walking in the bedroom</em> 和 <em>A dog was running in a room</em> 這兩個句子，計算出 <em>dog</em> 和 <em>cat</em> 語意向量中的詞，可得出這兩個詞在語意上是相近的。</p>
-
-<p>所謂的 <em>Neural Probabilistic Language Model</em> ，即是用類神經網路，從語料庫中計算出各個詞彙的語意向量值。</p>
-
-<h2 id="neural-probabilistic-language-model">Neural Probabilistic Language Model</h2>
-
-<p>給定訓練資料為 <script type="math/tex"> w_{1} \cdots w_{T} </script> 一連串的字，每個字都可包含於詞庫 <script type="math/tex">V</script> 中，即 <script type="math/tex">w_{t} \in V</script> ，然後，用此資料訓練出語言模型：</p>
-
-<script type="math/tex; mode=display">
-
-
-f(w_{t},...,w_{t-n+1}) = P(w_{t} \mid w_{1}^{t-1} )
-
-
-</script>
-
-<!--more-->
-
-<p>其中， <script type="math/tex"> P(w_{t} \mid w_{1}^{t-1} ) </script> 為，給定第 <script type="math/tex">w_{1}</script> 到 <script type="math/tex">w_{t-1}</script> 的條件下，出現 <script type="math/tex">w_{t}</script> 的機率，為了簡化計算，通常只考慮 <script type="math/tex">w_{t}</script> 前面 <script type="math/tex">n-1</script> 個字，故語言模型的函數為 <script type="math/tex">f(w_{t},...,w_{t-n+1})</script> 。</p>
-
-<p>可用以下兩部分來組成這個式子：</p>
-
-<p>1.建立一個矩陣 <script type="math/tex">C</script> 其維度為 <script type="math/tex">\mid V\mid \times m</script> 。此矩陣中的每一列，即代表詞庫 <script type="math/tex">V</script> 中的每個字所對應之維度為 <script type="math/tex">m</script> 的語意向量 ，例如， <script type="math/tex">w_{t}</script> 的語意向量為 <script type="math/tex">C(w_{t}) </script> 。</p>
-
-<p>2.語料庫中句子的某個字，跟其前面 <script type="math/tex">n-1</script> 個字的語意向量 <script type="math/tex">( C(w_{t-1}), ..., C(w_{t-n+1}) )</script> 有關， 用函數 <script type="math/tex">g</script> 來表示字 <script type="math/tex">w_{t}</script> 與前面 <script type="math/tex">n-1</script> 個字的關係，公式如下：</p>
-
-<script type="math/tex; mode=display">
-
-P(w_{t} \mid w_{1}^{t-1} ) = g(w_{t},w_{t-1}, ..., w_{t-n+1})
-
-
-</script>
-
-<p>用類神經網路，將 <script type="math/tex">( C(w_{t-1}), ..., C(w_{t-n+1}) )</script> 當成 <em>input</em> ， <script type="math/tex">w_{t}</script> 當成 <em>output</em> ，若 <script type="math/tex">w_{t}=i</script> 時，求 <script type="math/tex">P(w_{t}=i \mid w_{1}^{t-1} )</script> 的機率，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00076.png" alt="Neural Network of Neural Probabilistic Language Model" /></p>
-
-<p>其中，此類神經網路有個 <em>tanh</em> 函數的 <em>hidden layer</em> ， <em>input layer</em> 和 <em>hidden layer</em> 都連結到 <em>output layer</em> ，而 <em>output layer</em> 為一個 <em>softmax</em> 函數，將輸出做正規化，即是將所有 <em>output</em> 的值轉化後，其和為 <em>1</em> ， <em>softmax</em> 函數如下：</p>
-
-<script type="math/tex; mode=display">
-
-P(w_{t} \mid w_{t-1} , ... , w_{t-n+1} ) = \frac{e^{y_{w_{t}}}}{\sum_{i} e^{y_{i}}}  
-
-</script>
-
-<p><script type="math/tex">y</script> 為此類神經網路在 <em>softmax</em> 做正規化之前，所算出的值：</p>
-
-<script type="math/tex; mode=display">
-
-
-y = b+ W\times x + U \times tanh(d+H\times x)
-
-</script>
-
-<p>其中， <script type="math/tex">b</script> 和 <script type="math/tex">d</script> 為 <em>bias</em> ， <script type="math/tex">x</script> 為 <script type="math/tex">( C(w_{t-1}), ..., C(w_{t-n+1}) )</script>，而 <script type="math/tex">H</script> 、 <script type="math/tex">U</script> 與 <script type="math/tex">W</script> 為類神經網路從上一層傳到下一層時，各個值所佔的權重比例。此公式中各矩陣（或向量）維度如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00077.png" alt="" /></p>
-
-<p>在類神經網路中所對應的位置如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00078.png" alt="" /></p>
-
-<p>於此類神經網路中，可經由訓練而調整的參數為 <script type="math/tex">\theta </script> ，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\theta = (b,d,W,U,H,C)
-
-</script>
-
-<p>從 <script type="math/tex">b,d,W,U,H,C</script> 的維度，可得出共有 <script type="math/tex">\mid V\mid (1 + nm + h) + h(1 + (n − 1)m)</script> 個參數可調整。</p>
-
-<h2 id="training-the-neural-probabilistic-language-model">Training the Neural Probabilistic Language Model</h2>
-
-<p>要訓練此類神經網路，即是對 <script type="math/tex">P(w_{t} \mid w_{1}^{t-1} )</script> 做最佳化，並作 <em>regularization</em> 以防 <em>overfitting</em> ，即讓以下公式 <script type="math/tex">L</script> 為最佳解：</p>
-
-<script type="math/tex; mode=display">
-
-L = \frac{1}{T}\sum_{t} log(w_{t},w_{t-1},...,w_{t-n+1},\theta) +R(\theta)
-
-</script>
-
-<p>其中，<script type="math/tex">T</script> 為訓練資料的總字數，而 <script type="math/tex">R(\theta)</script> 作為 <em>regularization</em> 的用途。</p>
-
-<p>可用 <em>Stochastic Gradient Descent</em> 的方式來求得最佳解，其中 <script type="math/tex">\epsilon</script> 為 <em>learning rate</em> ：</p>
-
-<script type="math/tex; mode=display">
-
-\theta \leftarrow \theta + \epsilon \dfrac{\partial log P(w_{t} \mid w_{t-1} , ... , w_{t-n+1} )}{\partial \theta}
-
-</script>
-
-<p>一般而言，類神經網路都是以 <em>Backward Propogation</em> 的方法來訓練，此方法分為兩個階段： <em>Forward Phase</em> 與 <em>Backward Phase</em> 。即是先計算從 <em>input</em> 透過中間的每一層把值傳遞到 <em>output</em> ，再從 <em>output</em> 往回傳遞 <em>error</em> 到中間的每一層，去更新層與層之間權重的參數 。</p>
-
-<p>在此類神經網路的訓練過程中，運算的瓶頸在於從 <em>hidden layer</em> 到 <em>output layer</em> 這段，需要計算 <script type="math/tex">\mid V\mid (1+(n−1)m+h)</script> 個參數，因此通常採取平行化的運算，將此步驟的運算分配到不同的 <em>CPU</em> 。</p>
-
-<p>由於 <em>output layer</em>  的大小為 <script type="math/tex">\mid V\mid </script> ，若總共有 <script type="math/tex">M</script> 個 <em>CPU</em> ，則可將 <em>output layer</em> 分成 <script type="math/tex">M</script> 個區塊，則每個 <em>CPU</em> 負責計算一個區塊，也就是 <script type="math/tex"> ⌈\mid V\mid /M⌉ </script> 個 <em>output unit</em> ，而第 <script type="math/tex">i</script> 個 <em>CPU</em> 則從第 <script type="math/tex">i × ⌈\mid V \mid /M⌉ </script> 個 <em>output unit</em> 開始計算，詳細過程如下：</p>
-
-<p><strong>1.Forward Phase</strong></p>
-
-<p>(a) 根據 <em>input</em> 的詞彙，從矩陣 <script type="math/tex">C</script> 中取出相對應的語意向量：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& x(k) \leftarrow C(w_{t-k}) \\
-
-& x = (x(1),x(2),...,x(n-1))
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>(b) 將 <em>input</em> 的值傳遞到 <em>hidden layer</em> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& o \leftarrow d + H \times x \\
-
-& a \leftarrow tanh(o)
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>(c) 將 <em>hidden layer</em> 的值傳到 <em>output layer</em> 。</p>
-
-<p>這步驟要平行運算，即第 <script type="math/tex">i</script> 個 <em>CPU</em> 負責運算第 <script type="math/tex">i</script> 個區塊的 <em>output layer</em> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& s_{i} \leftarrow 0 \\ 
-
-& \text{Loop over } j \text{ in the i-th block }  \\
-
-& 1. \mspace{20mu}	y_{j} \leftarrow b_{j} + U_{j} \times a + W_{j} \times x  \\
-
-& 2. \mspace{20mu}	p_{j} \leftarrow e^{y_{j}} \\
-
-& 3. \mspace{20mu} s_{i} \leftarrow s_{i} + p_{j} \\
-
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>(d) 合併各個 <em>CPU</em> 所算出來的 <script type="math/tex">s_{i}</script>：</p>
-
-<script type="math/tex; mode=display">
-
-\begin{align}
-
-S = \Sigma_{i}s_{i}
-
-\end{align}
-
-</script>
-
-<p>(e) 將每個 <script type="math/tex">P_{w_{t}}</script> 正規化後取 <em>log</em> ，得出它們的 <script type="math/tex">L</script> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& p_{w_{t}}  \leftarrow \frac{ p_{w_{t}} }{ S }\\
-
-& L = log(p_{w_{t}}) 
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><em>註：本文所寫的演算法省略掉 Regularization 的過程。</em></p>
-
-<p><strong>2.Backward Phase</strong></p>
-
-<p>(a) 從 <em>output layer</em> 執行 <em>back propogation</em> 。</p>
-
-<p>在此過程中，第 <script type="math/tex">i</script> 個 <em>CPU</em> 負責計算 <em>output layer</em> 中第 <script type="math/tex">i</script> 個區塊的 <em>gradient</em> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\dfrac{ \partial L} { \partial a} \leftarrow 0 \\
-
-&\dfrac{ \partial L} { \partial x} \leftarrow 0 \\
-
-& \text{Loop over } j \text{ in the i-th block }  \\
-
-& 1. \mspace{20mu}	\dfrac{ \partial L} { \partial y_{j}}  
-
-\leftarrow 1_{j == w_{t}} - p_{j} \\
-
-& 2. \mspace{20mu}	b_{j} \leftarrow b_{j} + \epsilon \dfrac{\partial L }{\partial y_{j}} \\
-
-& 3. \mspace{20mu} \dfrac{ \partial L} { \partial x} \leftarrow 
-
-\dfrac{ \partial L} { \partial x} + \dfrac{ \partial L} { \partial y_{j}}W_{j} \\
-
-& 4. \mspace{20mu} \dfrac{ \partial L} { \partial a} \leftarrow 
-
-\dfrac{ \partial L} { \partial a} + \dfrac{ \partial L} { \partial y_{j}}U_{j} \\
-
-& 5. \mspace{20mu} W_{j} \leftarrow W_{j} + \epsilon\dfrac{ \partial L} { \partial y_{j}}x
-
-\\
-
-& 6. \mspace{20mu} U_{j} \leftarrow U_{j} + \epsilon\dfrac{ \partial L} { \partial y_{j}}a
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>(b) 把每個 <em>CPU</em> 算出來的 <script type="math/tex">\dfrac{ \partial L} { \partial a}</script> 與 <script type="math/tex">\dfrac{ \partial L} { \partial x}</script> 都加起來。</p>
-
-<p>(c) 用 <em>back propogation</em> 更新 <em>hidden layer</em> 到 <em>input layer</em> 之間的參數：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \text{Loop over } k \text{ between } 1 \text{ and } h  \\
-
-& \mspace{20mu} \dfrac{\partial L}{\partial o_{k}} \leftarrow (1-a_{k}^{2}) \dfrac{\partial L}{\partial a_{k}} \\
-
-& \dfrac{\partial L}{\partial x} \leftarrow \dfrac{\partial L}{\partial x} + H'\dfrac{\partial  L}{\partial o} \\
-
-& d \leftarrow d + \epsilon \dfrac{\partial L}{\partial o} \\
-
-& H \leftarrow H + \epsilon \dfrac{\partial L}{\partial o} x'
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>(d) 更新 <em>input layer</em> 的語意向量值（從第一個字到第 <script type="math/tex">n-1</script> 個字）：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \text{Loop over } k \text{ between } 1 \text{ and } n-1  \\
-
-& \mspace{20mu} C(w_{t-k}) \leftarrow C(w_{t-k}) + \epsilon \dfrac{\partial L}{\partial x(k)}
-
-\end{align}
-
- %]]&gt;</script>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p><em>Neural Probabilistic Language Model</em> 是2003年期間所提出的語言模型，但受限於當時的電腦運算能力，這個模型的複雜度實在太高，難以實際應用。</p>
-
-<p>近幾年來由於平行運算和 <em>GPU</em> 的發展，大幅提升了矩陣運算的效率，促成類神經網路與深度學習的發展。因此，建構在 <em>Neural Probabilistic Language Model</em> 的基礎之上，發展出了各種類神經網路相關的語言模型，一再突破了以往自然語言處理的瓶頸，包括近兩年來很熱門的 <em>word2vec</em> ，也是從它發展而來。</p>
-
-<h2 id="reference">Reference</h2>
-
-<p>Yoshua Bengio, Réjean Ducharme, Pascal Vincent, and Christian Janvin. 2003. A neural probabilistic language model. J. Mach. Learn. Res. 3 (March 2003), 1137-1155.</p>
-
 ]]></content>
   </entry>
   
