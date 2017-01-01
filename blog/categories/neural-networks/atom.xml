@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-01-01T16:34:22+08:00</updated>
+  <updated>2017-01-01T19:37:43+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,820 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/"/>
+    <updated>2017-01-01T18:36:08+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation</id>
+    <content type="html"><![CDATA[<h2 id="backward-propagation-in-nnmodule">Backward Propagation in nn.Module</h2>
+
+<p>本文接續 <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation (part 1)</a> ，與 <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5: Backward Propagation (part 2)</a> 講解 <code>nn.Module</code> 中， 與 backward propagation 有關的程式碼。</p>
+
+<p><code>nn.Module</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
+
+<p>與 backward propagation 有關的，主要有以下三個運算 ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{1.} \mspace{20mu} \Delta \textbf{W} = 0 \\
+&   \mspace{40mu} \Delta \textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>而這三個運算，分別對應到以下三個 function ：</p>
+
+<ol>
+  <li>
+    <p>zeroGradParameters</p>
+  </li>
+  <li>
+    <p>backward</p>
+  </li>
+  <li>
+    <p>updateParameters</p>
+  </li>
+</ol>
+
+<p>本文將詳細講解這三個 function 的程式碼內容。</p>
+
+<p>註：</p>
+
+<p>1.本文的 <script type="math/tex">\textbf{y}</script> 同前兩篇文（Torch NN Tutorial 4~5）中的 <script type="math/tex">\bar{y}</script> 。</p>
+
+<p>2.本文中的 <script type="math/tex">\textbf{W}</script> 為矩陣，而 <script type="math/tex">\textbf{x}</script> ，<script type="math/tex">\textbf{y}</script> 為向量。</p>
+
+<!--more-->
+
+<h2 id="zerogradparameters">1.zeroGradParameters</h2>
+
+<p>此步驟是將 <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 歸零。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \Delta \textbf{W} = 0 \\
+& \Delta \textbf{b} = 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>在程式中， <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+
+<p>``` lua nn/Module.lua</p>
+
+<p>function Module:zeroGradParameters()
+   local _,gradParams = self:parameters()
+   if gradParams then
+      for i=1,#gradParams do
+         gradParams[i]:zero()
+      end
+   end
+end</p>
+
+<p>```</p>
+
+<p>在第五行中，可看到 <code>gradParams[i]:zero()</code> ，即是將所有的 <code>gradParams</code> ，包含 <code>gradWeight</code> 及 <code>gradBias</code> 歸零。</p>
+
+<p>由於 <code>nn.Module</code> 本身沒有 <code>gradWeight</code> 和 <code>gradBias</code> ，如果要取得它們，就要透過 <code>self:parameters()</code> 來取得。
+<code>parameters</code> 的程式碼如下：</p>
+
+<p>``` lua nn/Module.lua</p>
+
+<p>function Module:parameters()
+   if self.weight and self.bias then
+      return {self.weight, self.bias}, {self.gradWeight, self.gradBias}
+   elseif self.weight then
+      return {self.weight}, {self.gradWeight}
+   elseif self.bias then
+      return {self.bias}, {self.gradBias}
+   else
+      return
+   end
+end</p>
+
+<p>```</p>
+
+<p>從第二行開始，可看到，如果繼承 <code>nn.Module</code> 的類別有實作 <code>weight</code> ，則回傳 <code>weight</code> 和 <code>gradWeight</code> ，以此類推。</p>
+
+<p>至於歸零的作用，因為在建立 Module 的時候， <code>gradWeight</code> 和 <code>gradBias</code> 並沒有被設為什麼值，它有可能是任意數。舉個例子，建立一個 <code>nn.Linear</code> ，命名為 <code>l1</code> ， input size 為 2， output size 為 3，一開始什麼都沒做，就直接印出  <code>gradWeight</code> 和 <code>gradBias</code> ，程式如下：</p>
+
+<p>``` lua</p>
+
+<p>l1 = nn.Linear(2,3)
+print(l1.gradWeight)
+print(l1.gradBias)</p>
+
+<p>```</p>
+
+<p>得出結果如下，它們可能是任意數：</p>
+
+<p>``` sh</p>
+
+<p>-1.2882e-231 -1.2882e-231
+ 2.1403e+161  3.9845e+252
+  7.7075e-43   4.5713e-71
+[torch.DoubleTensor of size 3x2]</p>
+
+<p>-1.2882e-231
+-1.2882e-231
+  1.1659e-28
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
+
+<p>如果用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+
+<p>``` lua</p>
+
+<p>l1:zeroGradParameters()
+print(l1.gradWeight)
+print(l1.gradBias)</p>
+
+<p>```</p>
+
+<p>結果如下，可看到它們都歸零了：</p>
+
+<p>``` sh</p>
+
+<p>0  0
+  0  0
+  0  0
+[torch.DoubleTensor of size 3x2]</p>
+
+<p>0
+  0
+  0
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
+
+<h2 id="backward">2.backward</h2>
+
+<p>再來看到 <code>backward</code> 的部分， <code>backward</code> 個功能由兩個 <code>function</code> 來執行，分別是 <code>updateGradInput</code> 及 <code>accGradParameters</code> 。</p>
+
+<p>``` lua nn/Module.lua</p>
+
+<p>function Module:backward(input, gradOutput, scale)
+   scale = scale or 1
+   self:updateGradInput(input, gradOutput)
+   self:accGradParameters(input, gradOutput, scale)
+   return self.gradInput
+end</p>
+
+<p>``` </p>
+
+<p>為何要分這兩部分？從數學公式上來看，如果 <code>input</code> 是 <script type="math/tex">\textbf{x}</script> ， <code>output</code> 是 <script type="math/tex">\textbf{y}</script> ，loss function 為 <script type="math/tex">J</script>   ，則：</p>
+
+<script type="math/tex; mode=display">
+ \textbf{y}=\textbf{W}\textbf{x}+\textbf{b}
+</script>
+
+<p><code>accGradParameters</code> 是負責計算以下兩項，也就是 <code>gradWeight</code> 和 <code>gradBias</code> 的值。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+& \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>除了以上兩項以外，如果 input 前面還有其他 layer 的話，就需計算 <script type="math/tex"> \frac{\partial J}{\partial \textbf{x}}</script> ，並將此值往前傳遞。</p>
+
+<p><code>updateGradInput</code> 是負責計算 <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值，也就是 <code>gradInput</code> 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}}
+
+</script>
+
+<p>在 <code>nn.Module</code> 中，這兩個 function 皆沒實作，需由繼承 <code>nn.Module</code> 的類別來實作。</p>
+
+<p>``` lua nn/Module.lua</p>
+
+<p>function Module:updateGradInput(input, gradOutput)
+   return self.gradInput
+end</p>
+
+<p>function Module:accGradParameters(input, gradOutput, scale)
+end</p>
+
+<p>```</p>
+
+<p><code>nn.Linear</code> 則實作了這兩個 function。</p>
+
+<p><code>nn.Linear</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
+
+<h3 id="updategradinput">updateGradInput</h3>
+
+<p>先看 <code>updateGradInput</code> 的程式碼：</p>
+
+<p>``` lua nn/Linear.lua</p>
+
+<p>function Linear:updateGradInput(input, gradOutput)
+   if self.gradInput then</p>
+
+<pre><code>  local nElement = self.gradInput:nElement()
+  self.gradInput:resizeAs(input)
+  if self.gradInput:nElement() ~= nElement then
+     self.gradInput:zero()
+  end
+  if input:dim() == 1 then
+     self.gradInput:addmv(0, 1, self.weight:t(), gradOutput)
+  elseif input:dim() == 2 then
+     self.gradInput:addmm(0, 1, gradOutput, self.weight)
+  end
+
+  return self.gradInput    end end
+</code></pre>
+
+<p>```</p>
+
+<p>此處可分為兩部分來看，在 <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module &amp; NN.Linear</a> 曾講到，當 <code>input:dim() == 1</code> 時，是一次輸入一筆資料。</p>
+
+<p>計算 <code>gradInput</code> 公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}}
+
+</script>
+
+<p>公式中的 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> ，在程式中是 loss function 的 <code>gradInput</code> ，並從 <code>updateGradInput</code> 的參數 <code>gradOutput</code> 輸入。</p>
+
+<p>假設 output size 為 3， input size 為 2，則在 forward propagation 時，<script type="math/tex">\textbf{y}</script> 是由以下公式算出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{y} = \textbf{W}\textbf{x} + \textbf{b} \\
+& \Rightarrow
+\begin{bmatrix}
+y_{1} \\
+y_{2} \\ 
+y_{3} \\
+\end{bmatrix}
+= 
+\begin{bmatrix}
+w_{11} & w_{12} \\
+w_{21} & w_{22} \\
+w_{31} & w_{32} \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1}
+x_{2}
+\end{bmatrix}
++
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+b_{3} \\
+\end{bmatrix} \\
+= 
+&\begin{bmatrix}
+w_{11}x_{1}+w_{12}x_{2}+b_{1} \\
+w_{21}x_{1}+w_{22}x_{2}+b_{2} \\
+w_{31}x_{1}+w_{32}x_{2}+b_{3} \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>而 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{x}} </script>  的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{x}} 
+ = 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
+\frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
+\frac{\partial y_{3}}{\partial x_{1}} & \frac{\partial y_{3}}{\partial x_{2}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial x_{1}} & \frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial x_{2}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial x_{1}} & \frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial x_{2}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial x_{1}} & \frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial x_{2}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+w_{11} & w_{12} \\
+w_{21} & w_{22} \\
+w_{31} & w_{32} \\
+\end{bmatrix}\\
+&= \textbf{W}
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\frac{\partial J}{\partial \textbf{x}} 
+=\begin{bmatrix}
+\frac{\partial J}{\partial x_{1}} \\
+\frac{\partial J}{\partial x_{2}}
+\end{bmatrix} \\
+&=\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{1}} 
+\\
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{2}} 
+\\
+\end{bmatrix} \\
+
+&=
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
+\frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
+\frac{\partial y_{3}}{\partial x_{1}} & \frac{\partial y_{3}}{\partial x_{2}} \\
+\end{bmatrix} ^{T}
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\ 
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix}\\
+
+&=
+W^{T}\frac{\partial J}{\partial \textbf{y}}
+\end{align}\\
+ %]]&gt;</script>
+
+<p>從以上結果得知，要先將 <code>weight</code> 轉置，再和 <code>gradOutput</code> 做 矩陣-向量 乘積。如同程式碼中所寫 <code>self.gradInput:addmv(0, 1, self.weight:t(), gradOutput)</code></p>
+
+<p>如果 <script type="math/tex">W</script> 和 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值分別如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W} =
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} \\
+& \frac{\partial J}{\partial \textbf{y}} = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>則， <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\frac{\partial J}{\partial \textbf{x}} 
+=W^{T}\frac{\partial J}{\partial \textbf{y}}\\
+&=
+\begin{bmatrix}
+ 0.1453 & 0.0635 & -0.1080 \\ 
+ 0.5062 & 0.4911 & 0.1747 \\
+ \end{bmatrix}
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+ 0.1453 \times 1 & 0.0635 \times 2  & -0.1080 \times 3  \\ 
+ 0.5062 \times 1 & 0.4911 \times 2  & 0.1747 \times 3  \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+-0.0516 \\
+ 2.0126 \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>執行 <code>updateGradInput</code>  ，程式碼如下：</p>
+
+<p>``` lua</p>
+
+<p>dj_dy = torch.Tensor{1,2,3}
+x = torch.Tensor{4,5}
+l1:updateGradInput( x,dj_dy )
+print(l1.gradInput)</p>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p>``` sh</p>
+
+<p>-0.0516
+ 2.0126
+[torch.DoubleTensor of size 2]</p>
+
+<p>```</p>
+
+<p>以上程式碼，輸入 <code>x</code> 只是為了滿足 <code>input:dim() == 1</code> 的條件， 而 <code>x</code> 的數值是不會影響結果的。</p>
+
+<p>至於 <code>input:dim() == 2</code> 的情況，推導方式同上，在此不詳細推導。</p>
+
+<p>再來看 <code>accGradParameters</code> 的程式碼：</p>
+
+<h3 id="accgradparameters">accGradParameters</h3>
+
+<p>``` lua nn/Linear.lua</p>
+
+<p>function Linear:accGradParameters(input, gradOutput, scale)
+   scale = scale or 1
+   if input:dim() == 1 then
+      self.gradWeight:addr(scale, gradOutput, input)
+      if self.bias then self.gradBias:add(scale, gradOutput) end
+   elseif input:dim() == 2 then
+      self.gradWeight:addmm(scale, gradOutput:t(), input)
+      if self.bias then
+         – update the size of addBuffer if the input is not the same size as the one we had in last updateGradInput
+         updateAddBuffer(self, input)
+         self.gradBias:addmv(scale, gradOutput:t(), self.addBuffer)
+      end
+   end
+end</p>
+
+<p>```</p>
+
+<p>先看到 <code>input:dim() == 1</code> 的情形，計算 <code>gradWeight</code> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+ \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
+
+</script>
+
+<p>公式中的 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> ，在程式中是 loss function 的 <code>gradInput</code> ，並從 <code>updateGradInput</code> 的參數 <code>gradOutput</code> 輸入。</p>
+
+<p>假設 output size 為 3， input size 為 2，則 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{W}} </script>  的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial w_{11}} & \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial y_{2}}{\partial w_{21}} & \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial y_{3}}{\partial w_{31}} & \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{11}} & \frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{12}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{21}} & \frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{22}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{31}} & \frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{W}} </script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{11}} &
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{21}} &
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{31}} &
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} x_{1} &
+\frac{\partial J}{\partial y_{1}} x_{2} \\
+\frac{\partial J}{\partial y_{2}} x_{1} &
+\frac{\partial J}{\partial y_{2}} x_{2} \\
+\frac{\partial J}{\partial y_{3}} x_{1} &
+\frac{\partial J}{\partial y_{3}} x_{2} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} &  x_{2} \\
+\end{bmatrix}\\
+&= \frac{\partial J}{\partial \textbf{y}} \textbf{x}^{T}
+\end{align}
+ %]]&gt;</script>
+
+<p>如果 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值同前例， <script type="math/tex">\textbf{x}</script> 的值如下：</p>
+
+<script type="math/tex; mode=display">
+\textbf{x} =
+\begin{bmatrix}
+4 \\
+5 \\
+\end{bmatrix} 
+</script>
+
+<p>則， <script type="math/tex">\frac{\partial J}{\partial \textbf{W}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+= \frac{\partial J}{\partial \textbf{y}}\textbf{x}^{T}\\
+& = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}
+\begin{bmatrix}
+4 & 5 
+\end{bmatrix}\\ 
+&=
+\begin{bmatrix}
+1 \times 4 & 1 \times 5 \\
+2 \times 4 & 2 \times 5 \\
+3 \times 4 & 3 \times 5 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>計算 <code>gradBias</code> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+ \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
+
+</script>
+
+<p>而 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{b}} </script>  這項的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{b}} 
+= 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial y_{2}}{\partial b_{2}} \\
+\frac{\partial y_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial b_{1}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial b_{2}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+1 \\
+1 \\
+1 \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{b}} </script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{b}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{2}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix} \\
+&= \frac{\partial J}{\partial \textbf{y}} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{b}} </script> 的值，和 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值相同。</p>
+
+<p>執行 <code>accGradParameters</code>  ，程式碼如下：</p>
+
+<p>``` lua</p>
+
+<p>dj_dy = torch.Tensor{1,2,3}
+x = torch.Tensor{4,5}
+print( l1:accGradParameters( x,dj_dy ))
+print(l1.gradWeight)
+print(l1.gradBias)</p>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p>``` sh</p>
+
+<p>4   5
+  8  10
+ 12  15
+[torch.DoubleTensor of size 3x2]</p>
+
+<p>1
+ 2
+ 3
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
+
+<p>至於 <code>input:dim() == 2</code> 的情況，推導方式同上，在此不詳細推導。</p>
+
+<h2 id="updateparameters">updateParameters</h2>
+
+<p>此函數在 <code>nn.Module</code> 中即有實作其內容，它所進行的運算相當簡單，就是更新 <script type="math/tex">\textbf{W}</script> 和 <script type="math/tex">\textbf{b}</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
+& \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>程式碼如下：</p>
+
+<p>``` lua  nn/Module.lua</p>
+
+<p>function Module:updateParameters(learningRate)
+   local params, gradParams = self:parameters()
+   if params then
+      for i=1,#params do
+         params[i]:add(-learningRate, gradParams[i])
+      end
+   end
+end</p>
+
+<p>```</p>
+
+<p>其中，公式中的 <script type="math/tex">\eta</script> 即為程式碼中的 <code>learningRate</code> ，而程式中的第五行，則是負責將 <code>weight</code> 和 <code>bias</code> 更新。 其中， <code>weight</code> 和 <code>bias</code> 由第二行的 <code>parameters</code> 函數所取得，回傳到 <code>param</code> 中，而 <code>gradWeight</code> 和 <code>gradBias</code> 也用同樣方式取得，回傳到 <code>gradParams</code> 中。</p>
+
+<p>假設 <script type="math/tex">\eta = 0.02</script> ，<script type="math/tex">\textbf{W} , \textbf{b} , \frac{\partial J}{\partial \textbf{W}} ,  \frac{\partial J}{\partial \textbf{b}}</script> 的值分別如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\textbf{W}=
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} \\
+&\textbf{b}=
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} \\
+& \frac{\partial J}{\partial \textbf{W}} = 
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& \frac{\partial J}{\partial \textbf{b}} = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新 <script type="math/tex">\textbf{W}</script> 和 <script type="math/tex">\textbf{b}</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W}  - \eta \Delta \textbf{W} \\
+& = 
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& = 
+\begin{bmatrix}
+ 0.0653 & 0.4062 \\
+-0.0965 & 0.2911 \\
+-0.3480 & -0.1253 \\
+\end{bmatrix} \\
+
+& \textbf{b}  - \eta \Delta \textbf{b} \\
+& = 
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+ 0.1863 \\
+-0.2035 \\ 
+-0.1483 \\
+\end{bmatrix} 
+\end{align}
+ %]]&gt;</script>
+
+<p>印出 <code>l1</code> 的 <code>weight</code> 和 <code>bias</code> ，執行 <code>updateParameters</code> ，比較執行前後的 <code>weight</code> 和 <code>bias</code> 差異，程式如下：</p>
+
+<p>``` lua</p>
+
+<p>print(l1.weight)
+print(l1.bias)
+l1:updateParameters(0.02)
+print(l1.weight)
+print(l1.bias)</p>
+
+<p>```</p>
+
+<p>結果如下：</p>
+
+<p>``` sh</p>
+
+<p>0.1453  0.5062
+ 0.0635  0.4911
+-0.1080  0.1747
+[torch.DoubleTensor of size 3x2]</p>
+
+<p>0.2063
+-0.1635
+-0.0883
+[torch.DoubleTensor of size 3]</p>
+
+<p>0.0653  0.4062
+-0.0965  0.2911
+-0.3480 -0.1253
+[torch.DoubleTensor of size 3x2]</p>
+
+<p>0.1863
+-0.2035
+-0.1483
+[torch.DoubleTensor of size 3]</p>
+
+<p>```</p>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb
+</a></p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )]]></title>
@@ -39,7 +853,7 @@ end</p>
 
 <p>```</p>
 
-<p><code>nn,Criterion</code> 的 <code>backward</code> 只做一件事，也就是 <code>updateGradInput</code> ，而  <code>updateGradInput</code> 的運算內容則由繼承它的類別來實作。</p>
+<p><code>nn.Criterion</code> 的 <code>backward</code> 只做一件事，也就是 <code>updateGradInput</code> ，而  <code>updateGradInput</code> 的運算內容則由繼承它的類別來實作。</p>
 
 <!--more-->
 
@@ -1396,488 +2210,6 @@ end</p>
 <p>本次教學的完整程式碼於此：</p>
 
 <p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/2_nn_container_and_sequential.ipynb</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Torch NN Tutorial 1 : NN.Module & NN.Linear]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module/"/>
-    <updated>2016-12-19T22:36:47+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>此系列講解如何用 torch 實作 neural network 。</p>
-
-<p>本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。</p>
-
-<p>以 torch 實作 neural network 時，最常用的套件為 <a href="https://github.com/torch/nn">nn</a>，而在 <code>nn</code> 中，建構 neural network 最基本的單位為 <a href="https://github.com/torch/nn/blob/master/Module.lua">nn.Module</a> 。 <code>nn.Module</code> 是一個抽象類別，所有建構 neural network 本身有關的 module ，都是從 <code>nn.Module</code> 所繼承而來。</p>
-
-<p>舉個例子，如果要實作以下運算：</p>
-
-<script type="math/tex; mode=display">
-
-\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} 
-
-</script>
-
-<p>假設 <script type="math/tex">\textbf{x}</script> 為 2 維的 input ，而 <script type="math/tex">\textbf{y}</script> 為 3 維的output， <script type="math/tex">\textbf{W},\textbf{b}</script> 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。</p>
-
-<p>使用 torch 實作此運算的方法如下：</p>
-
-<p>首先，載入 nn 套件：</p>
-
-<p>```lua</p>
-
-<p>require ‘nn’</p>
-
-<p>```</p>
-
-<p>建立一個 Linear Module：</p>
-
-<p>```lua</p>
-
-<p>l1 = nn.Linear(2,3)</p>
-
-<p>```</p>
-
-<!--more-->
-
-<p>其中， <a href="https://github.com/torch/nn/blob/master/Linear.lua">nn.Linear</a> 即是用來進行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 這類的線性運算所用的模組，它繼承了 <code>nn.Module</code> 。 而 2 和 3 分別代表了 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 </p>
-
-<p>以上程式中，建立一個命名為 <code>l1</code> 的 module ，如果要取得它的 weight 和 bias ，可以用 <code>l1.weight</code> 和 <code>l1.bias</code> 取得，方法如下：</p>
-
-<p>```lua</p>
-
-<p>print(l1.weight)
-print(l1.bias)</p>
-
-<p>```</p>
-
-<p>執行結果如下：</p>
-
-<p>```sh</p>
-
-<p>0.1453  0.5062
- 0.0635  0.4911
--0.1080  0.1747
-[torch.DoubleTensor of size 3x2]</p>
-
-<p>0.2063
--0.1635
--0.0883
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
-
-<p>其中， size 3x2 的 tensor 為 weight, size 3 的 tensor 為 bias。</p>
-
-<p>用此 module 可以執行運算，令 x 為一個二維向量 <script type="math/tex">[0,1]</script> ，輸入此 module ，進行 forward propagation ，也就是說，執行 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的運算， 並輸出結果為 <script type="math/tex">\textbf{y}</script>  ，實作如下：</p>
-
-<p>```lua</p>
-
-<p>x = torch.Tensor{0,1}
-y = l1:forward(x)
-print(y)</p>
-
-<p>```</p>
-
-<p>輸出結果 <code>y</code> 為一個三維向量，如下：</p>
-
-<p>```sh</p>
-
-<p>0.7125
- 0.3276
- 0.0865
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
-
-<h2 id="nnmodule--nnlinear">nn.Module &amp; nn.Linear</h2>
-
-<p>這邊要更進一步介紹 <code>nn.Module</code> 和 <code>nn.Linear</code> 的內容是什麼。由於 torch 的程式碼相當簡潔易懂，可以直接看程式碼來了解它的功能是什麼。</p>
-
-<p><code>nn.Module</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
-
-<p><code>nn.Linear</code> 程式碼： <a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
-
-<p>首先，介紹 <code>nn.Module</code> ，先看 <code>init()</code> 的部分：</p>
-
-<p>```lua nn/Module.lua</p>
-
-<p>function Module:__init()
-   self.gradInput = torch.Tensor()
-   self.output = torch.Tensor()
-   self._type = self.output:type()
-end</p>
-
-<p>```</p>
-
-<p><code>Module</code> 中最基本的成員有 <code>output</code> 和 <code>gradInput</code> 。
-<code>output</code> 為此 <code>Module</code> 的 forward propagation 結果，而 <code>gradInput</code> 為 backward propagation 的運算結果。
-這些變量一開始都會被初始化為 空的 tensor 。</p>
-
-<p>註：本文先不講解 backward propagation 與 <code>gradInput</code> 的部分，交由之後的教學文章來解釋。</p>
-
-<p>在 <code>Module:forward</code> 的部分，是用來進行 forward propagation的，如下：</p>
-
-<p>```lua nn/Module.lua</p>
-
-<p>function Module:updateOutput(input)
-   return self.output
-end</p>
-
-<p>function Module:forward(input)
-   return self:updateOutput(input)
-end</p>
-
-<p>```</p>
-
-<p>先看 forward 的部分， Module 沒有運算的實作，僅單純輸出 <code>output</code> 值。如果呼叫了 forward propagation ，則從 <code>Module:updateOutput</code> 就直接輸出了 <code>output</code> 。</p>
-
-<p>而 <code>nn.Linear</code> 則實作了 forward propagation。</p>
-
-<p>所謂的 Linear，即是指 <script type="math/tex">\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} </script> 的線性運算。</p>
-
-<p>再來看 <code>nn.Linear</code> 的程式碼，先看 <code>init()</code> 的部分：</p>
-
-<p>```lua nn/Linear.lua</p>
-
-<p>local Linear, parent = torch.class(‘nn.Linear’, ‘nn.Module’)</p>
-
-<p>function Linear:__init(inputSize, outputSize, bias)
-   parent.__init(self)
-   local bias = ((bias == nil) and true) or bias
-   self.weight = torch.Tensor(outputSize, inputSize)
-   self.gradWeight = torch.Tensor(outputSize, inputSize)
-   if bias then
-      self.bias = torch.Tensor(outputSize)
-      self.gradBias = torch.Tensor(outputSize)
-   end
-   self:reset()
-end</p>
-
-<p>```</p>
-
-<p>在第1行， <code>nn.Linear</code> 繼承了 <code>nn.Module</code> 。</p>
-
-<p>在第3行開始可以看到，建構 Linear 所需的參數有 <code>inputSize</code> , <code>outputSize</code> 和 <code>bias</code> 。 <code>bias</code>  不一定要給，如果沒有給，則預設值會讓它是隨機的。除非 <code>bias=false</code> ，則此 Linear Module 就不會有 <code>bias</code> 。
-從6~10行中，它比 <code>nn.Module</code> 多了 <code>weigt</code> 和 <code>bias</code> 這兩個變量，而 <code>reset()</code> 則是將它們初始化。</p>
-
-<p>如果要建立一個 Linear Module，則要給定 <code>inputSize</code> 和 <code>outputSize</code> ，也就是 <script type="math/tex">\textbf{x}</script> 和 <script type="math/tex">\textbf{y}</script> 的維度。</p>
-
-<p>假設  <script type="math/tex">\textbf{x}</script> 是二維， <script type="math/tex">\textbf{y}</script> 是三維，建立一個命名為 <code>l2</code> 的 Linear 模組：</p>
-
-<p>```lua</p>
-
-<p>l2 = nn.Linear(2,3)</p>
-
-<p>```</p>
-
-<p>用以下方法印出 l2 的 <code>weight</code> , <code>bias</code> 和 <code>output</code> ：</p>
-
-<p>```lua</p>
-
-<p>print(l2.weight)
-print(l2.bias)
-print(l2.output)</p>
-
-<p>```</p>
-
-<p>輸出結果如下：</p>
-
-<p>```sh</p>
-
-<p>-0.2863  0.5541
--0.6269  0.6557
--0.3215 -0.1648
-[torch.DoubleTensor of size 3x2]</p>
-
-<p>-0.0316
- 0.4126
- 0.4415
-[torch.DoubleTensor of size 3]</p>
-
-<p>[torch.DoubleTensor with no dimension]</p>
-
-<p>```</p>
-
-<p>其中，<code>weight</code> 和 <code>bias</code> 會被初始化隨機成 size 3x2 和 size 3 的 double tensor ，而最後一行顯示出 <code>output</code> 還是空的（with no dimension）。</p>
-
-<p>如果想知道各個 variable 的 size ，還有個方式，就是直接用 print 的方式把它印出來，作法如下：</p>
-
-<p>```lua</p>
-
-<p>print(l2)</p>
-
-<p>```</p>
-
-<p>執行結果如下：</p>
-
-<p>```sh</p>
-
-<p>nn.Linear(2 -&gt; 3)
-{
-  gradBias : DoubleTensor - size: 3
-  weight : DoubleTensor - size: 3x2
-  _type : torch.DoubleTensor
-  output : DoubleTensor - empty
-  gradInput : DoubleTensor - empty
-  bias : DoubleTensor - size: 3
-  gradWeight : DoubleTensor - size: 3x2
-}</p>
-
-<p>```</p>
-
-<p>要讓 <code>output</code> 有值，就要進行 forward propagation 。而 <code>Linear:updateOutput</code> 則是實作了 <code>Module:updateOutput</code> 中， forward propagation 運算的實際內容，程式碼如下：</p>
-
-<p>```lua nn/Linear.lua</p>
-
-<p>function Linear:updateOutput(input)
-   if input:dim() == 1 then
-      self.output:resize(self.weight:size(1))
-      if self.bias then self.output:copy(self.bias) else self.output:zero() end
-      self.output:addmv(1, self.weight, input)
-   elseif input:dim() == 2 then
-      local nframe = input:size(1)
-      local nElement = self.output:nElement()
-      self.output:resize(nframe, self.weight:size(1))
-      if self.output:nElement() ~= nElement then
-         self.output:zero()
-      end
-      updateAddBuffer(self, input)
-      self.output:addmm(0, self.output, 1, input, self.weight:t())
-      if self.bias then self.output:addr(1, self.addBuffer, self.bias) end
-   else
-      error(‘input must be vector or matrix’)
-   end</p>
-
-<p>return self.output
-end</p>
-
-<p>```</p>
-
-<p>以上可以分為兩部分來看，首先是當 <code>input:dim() ==1</code> 時，也就是 <code>input</code> 的維度為 1 ，也就是一次只輸入單筆資料的時候。第一步，會先調整 <code>output</code> 的 <code>size</code> 為適當的大小，再將 <code>bias</code> 複製到 <code>output</code> ，再讓 <code>input</code> 和 <code>weight</code> 進行矩陣相乘，並和 <code>output</code> 相加，再輸出結果。</p>
-
-<p>從數學公式上來看，輸入值 <script type="math/tex">\textbf{x}</script> 是一維的向量，進行的運算如下：</p>
-
-<script type="math/tex; mode=display">
-\textbf{W}\textbf{x} + \textbf{b}
-</script>
-
-<p>此時， <script type="math/tex">\textbf{W}</script> 放前面，而 <script type="math/tex">\textbf{x}</script> 放後面。</p>
-
-<p>例如當輸入值向量 <script type="math/tex">[0,1]</script> 時，則矩陣運算的結果為：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{align}
-&\begin{bmatrix}
--0.2863 & 0.5541 \\
--0.6269 & 0.6557 \\
--0.3215 & -0.1648 \\
-\end{bmatrix}
-\begin{bmatrix}
-0 \\
-1
-\end{bmatrix}
-+ 
-\begin{bmatrix}
--0.0316 \\
- 0.4126 \\
- 0.4415 \\
-\end{bmatrix}
-=
-\begin{bmatrix}
--0.2863 \times 0 + 0.5541 \times 1  -0.0316 \\
--0.6269 \times 0 + 0.6557 \times 1 + 0.4126\\
--0.3215 \times 0  -0.1648 \times 1 + 0.4415\\
-\end{bmatrix}\\
-&=
-\begin{bmatrix}
-0.5541 -0.0316 \\
-0.6557 + 0.4126\\
--0.1648 + 0.4415\\
-\end{bmatrix}
-=
-\begin{bmatrix}
-  0.5225 \\
-  1.0683  \\
-  0.2766 \\
-\end{bmatrix}
-\end{align}
-
- %]]&gt;</script>
-
-<p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入 <code>torch.Tensor{0,1}</code> 並印出結果：</p>
-
-<p>```lua</p>
-
-<p>print(l2:forward(torch.Tensor{0,1}))</p>
-
-<p>```</p>
-
-<p>結果如下：</p>
-
-<p>```sh</p>
-
-<p>0.5225
- 1.0683
- 0.2766
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
-
-<p>這時已經進行過了 forward 運算，而 <code>output</code> 有值了，所以可以印出它的值，方法如下：</p>
-
-<p>```lua</p>
-
-<p>print(l2.output)</p>
-
-<p>```</p>
-
-<p><code>output</code> 的值也是如下：</p>
-
-<p>```sh</p>
-
-<p>0.5225
- 1.0683
- 0.2766
-[torch.DoubleTensor of size 3]</p>
-
-<p>```</p>
-
-<p>而當 <code>input:dim() ==2</code> 時，也就是 <code>input</code> 的維度為 2 ，也就是一次輸入多筆資料。這時需要先把 <code>weight</code> 進行轉置，再和 <code>input</code> ，並和 <code>bias</code> 相加，並將結果加到 <code>output</code> 並輸出。</p>
-
-<p>一次輸入多筆資料的目的是為了加速運算，因為用矩陣對矩陣的相乘的方式就可以來加速。這樣同時輸入的一批資料，就稱為 batch 。</p>
-
-<p>從公式上來看，輸入值 <script type="math/tex">\textbf{X}</script> 是二維的矩陣，則進行以下矩陣運算：</p>
-
-<script type="math/tex; mode=display">
-\textbf{X}\textbf{W}^{T} + \textbf{B}
-</script>
-
-<p>此時， <script type="math/tex">\textbf{X}</script> 放前面，而 <script type="math/tex">\textbf{W}</script> 進行轉置後放後面。</p>
-
-<p>而 <script type="math/tex">\textbf{B}</script> 是將 <script type="math/tex">\textbf{b}</script> 轉置以後，再複製其橫排所形成的矩陣，以便和前面的矩陣相乘結果來相加。</p>
-
-<p>例如當輸入資料有兩筆向量 <script type="math/tex">[0, 1]</script> 和 <script type="math/tex">[2, 1]</script> 時，則可以組成以下矩陣 (2x2) ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{bmatrix}
-0 &1 \\
-2 &1 \\
-\end{bmatrix}
-
-
- %]]&gt;</script>
-
-<p>則矩陣運算的過程如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{align}
-&
-\begin{bmatrix}
-0 &1 \\
-2 &1 \\
-\end{bmatrix}
-\begin{bmatrix}
--0.2863 & -0.6269 & -0.3215 \\
- 0.5541 & 0.6557 & -0.1648 \\
- \end{bmatrix}
-+ 
-\begin{bmatrix}
--0.0316 & 0.4126 & 0.4415 \\
--0.0316 & 0.4126 & 0.4415 
-\end{bmatrix}\\
-&
-=
-\begin{bmatrix}
-   -0.2863 \times 0 +  0.5541 \times 1
-&  -0.6269 \times 0 +  0.6557 \times 1
-&  -0.3215 \times 0   -0.1648 \times 1\\
-
-   -0.2863 \times 2 +  0.5541 \times 1
-&  -0.6269 \times 2 +  0.6557 \times 1
-&  -0.3215 \times 2   -0.1648 \times 1\\
-\end{bmatrix}\\
-&
-+ 
-\begin{bmatrix}
--0.0316 & 0.4126 & 0.4415 \\
--0.0316 & 0.4126 & 0.4415 
-\end{bmatrix}\\
-&
-=
-\begin{bmatrix}
-0.5541 -0.0316
-& 0.6557 +0.4126
-& -0.1648 +0.4415 \\
--0.0186  -0.0316
-& -0.5981 +0.4126
-& -0.8079 +0.4415 \\
-\end{bmatrix}\\
-&
-=
-\begin{bmatrix}
- 0.5225 & 1.0683  & 0.2766 \\
--0.0502 & -0.1855 & -0.3664 \\
-\end{bmatrix}
-\end{align}\\
-
- %]]&gt;</script>
-
-<p>輸出結果為一個 2x3 的矩陣，每一個橫排為一個三維向量，代表著每一筆資料經過線性運算的結果。</p>
-
-<p>實作以上算式，呼叫 <code>l2:forward</code> ，輸入由 <code>{0,1}</code> 和 <code>{2,1}</code> 這兩筆資料組成的 batch， 並印出結果：</p>
-
-<p>
-```lua</p>
-
-<p>input={
-   {0,1},
-   {2,1}
-}
-print(l2:forward(torch.Tensor(input)))</p>
-
-<p>```
-</p>
-
-<p>結果如下：</p>
-
-<p>```sh</p>
-
-<p>0.5225  1.0683  0.2766
--0.0502 -0.1855 -0.3664
-[torch.DoubleTensor of size 2x3]</p>
-
-<p>```</p>
-
-<p>也可印出 <code>output</code> 的值：</p>
-
-<p>```lua</p>
-
-<p>print(l2.output)</p>
-
-<p>```</p>
-
-<p>結果如下：</p>
-
-<p>```sh</p>
-
-<p>0.5225  1.0683  0.2766
--0.0502 -0.1855 -0.3664
-[torch.DoubleTensor of size 2x3]</p>
-
-<p>```</p>
-
-<h2 id="materials">Materials</h2>
-
-<p>本次教學的完整程式碼於此：</p>
-
-<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb</a></p>
-
 ]]></content>
   </entry>
   

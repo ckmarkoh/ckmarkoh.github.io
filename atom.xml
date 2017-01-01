@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-01-01T16:34:22+08:00</updated>
+  <updated>2017-01-01T19:37:43+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,909 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/"/>
+    <updated>2017-01-01T18:36:08+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation</id>
+    <content type="html"><![CDATA[<h2 id="backward-propagation-in-nnmodule">Backward Propagation in nn.Module</h2>
+
+<p>本文接續 <a href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation (part 1)</a> ，與 <a href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5: Backward Propagation (part 2)</a> 講解 <code>nn.Module</code> 中， 與 backward propagation 有關的程式碼。</p>
+
+<p><code>nn.Module</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Module.lua">https://github.com/torch/nn/blob/master/Module.lua</a></p>
+
+<p>與 backward propagation 有關的，主要有以下三個運算 ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{1.} \mspace{20mu} \Delta \textbf{W} = 0 \\
+&   \mspace{40mu} \Delta \textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>而這三個運算，分別對應到以下三個 function ：</p>
+
+<ol>
+  <li>
+    <p>zeroGradParameters</p>
+  </li>
+  <li>
+    <p>backward</p>
+  </li>
+  <li>
+    <p>updateParameters</p>
+  </li>
+</ol>
+
+<p>本文將詳細講解這三個 function 的程式碼內容。</p>
+
+<p>註：</p>
+
+<p>1.本文的 <script type="math/tex">\textbf{y}</script> 同前兩篇文（Torch NN Tutorial 4~5）中的 <script type="math/tex">\bar{y}</script> 。</p>
+
+<p>2.本文中的 <script type="math/tex">\textbf{W}</script> 為矩陣，而 <script type="math/tex">\textbf{x}</script> ，<script type="math/tex">\textbf{y}</script> 為向量。</p>
+
+<!--more-->
+
+<h2 id="zerogradparameters">1.zeroGradParameters</h2>
+
+<p>此步驟是將 <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 歸零。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \Delta \textbf{W} = 0 \\
+& \Delta \textbf{b} = 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>在程式中， <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">_</span><span class="p">,</span><span class="n">gradParams</span> <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">parameters</span><span class="p">()</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">gradParams</span> <span class="k">then</span>
+</span><span class="line">      <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="o">#</span><span class="n">gradParams</span> <span class="k">do</span>
+</span><span class="line">         <span class="n">gradParams</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span><span class="n">zero</span><span class="p">()</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>在第五行中，可看到 <code>gradParams[i]:zero()</code> ，即是將所有的 <code>gradParams</code> ，包含 <code>gradWeight</code> 及 <code>gradBias</code> 歸零。</p>
+
+<p>由於 <code>nn.Module</code> 本身沒有 <code>gradWeight</code> 和 <code>gradBias</code> ，如果要取得它們，就要透過 <code>self:parameters()</code> 來取得。
+<code>parameters</code> 的程式碼如下：</p>
+
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">parameters</span><span class="p">()</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span> <span class="ow">and</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span>
+</span><span class="line">      <span class="k">return</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span><span class="p">},</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">gradBias</span><span class="p">}</span>
+</span><span class="line">   <span class="k">elseif</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span> <span class="k">then</span>
+</span><span class="line">      <span class="k">return</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">},</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">}</span>
+</span><span class="line">   <span class="k">elseif</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span>
+</span><span class="line">      <span class="k">return</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">bias</span><span class="p">},</span> <span class="p">{</span><span class="n">self</span><span class="p">.</span><span class="n">gradBias</span><span class="p">}</span>
+</span><span class="line">   <span class="k">else</span>
+</span><span class="line">      <span class="k">return</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>從第二行開始，可看到，如果繼承 <code>nn.Module</code> 的類別有實作 <code>weight</code> ，則回傳 <code>weight</code> 和 <code>gradWeight</code> ，以此類推。</p>
+
+<p>至於歸零的作用，因為在建立 Module 的時候， <code>gradWeight</code> 和 <code>gradBias</code> 並沒有被設為什麼值，它有可能是任意數。舉個例子，建立一個 <code>nn.Linear</code> ，命名為 <code>l1</code> ， input size 為 2， output size 為 3，一開始什麼都沒做，就直接印出  <code>gradWeight</code> 和 <code>gradBias</code> ，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>得出結果如下，它們可能是任意數：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-1.2882e-231 -1.2882e-231
+</span><span class="line"> 2.1403e+161  3.9845e+252
+</span><span class="line">  7.7075e-43   4.5713e-71
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">-1.2882e-231
+</span><span class="line">-1.2882e-231
+</span><span class="line">  1.1659e-28
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">zeroGradParameters</span><span class="p">()</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下，可看到它們都歸零了：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">  <span class="m">0</span>  0
+</span><span class="line">  <span class="m">0</span>  0
+</span><span class="line">  <span class="m">0</span>  0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line">  0
+</span><span class="line">  0
+</span><span class="line">  0
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="backward">2.backward</h2>
+
+<p>再來看到 <code>backward</code> 的部分， <code>backward</code> 個功能由兩個 <code>function</code> 來執行，分別是 <code>updateGradInput</code> 及 <code>accGradParameters</code> 。</p>
+
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span class="line">   <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span> <span class="ow">or</span> <span class="mi">1</span>
+</span><span class="line">   <span class="n">self</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">)</span>
+</span><span class="line">   <span class="n">self</span><span class="p">:</span><span class="n">accGradParameters</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>為何要分這兩部分？從數學公式上來看，如果 <code>input</code> 是 <script type="math/tex">\textbf{x}</script> ， <code>output</code> 是 <script type="math/tex">\textbf{y}</script> ，loss function 為 <script type="math/tex">J</script>   ，則：</p>
+
+<script type="math/tex; mode=display">
+ \textbf{y}=\textbf{W}\textbf{x}+\textbf{b}
+</script>
+
+<p><code>accGradParameters</code> 是負責計算以下兩項，也就是 <code>gradWeight</code> 和 <code>gradBias</code> 的值。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+& \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>除了以上兩項以外，如果 input 前面還有其他 layer 的話，就需計算 <script type="math/tex"> \frac{\partial J}{\partial \textbf{x}}</script> ，並將此值往前傳遞。</p>
+
+<p><code>updateGradInput</code> 是負責計算 <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值，也就是 <code>gradInput</code> 的值，如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}}
+
+</script>
+
+<p>在 <code>nn.Module</code> 中，這兩個 function 皆沒實作，需由繼承 <code>nn.Module</code> 的類別來實作。</p>
+
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span>
+</span><span class="line"><span class="k">end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">accGradParameters</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>nn.Linear</code> 則實作了這兩個 function。</p>
+
+<p><code>nn.Linear</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Linear.lua">https://github.com/torch/nn/blob/master/Linear.lua</a></p>
+
+<h3 id="updategradinput">updateGradInput</h3>
+
+<p>先看 <code>updateGradInput</code> 的程式碼：</p>
+
+<figure class="code"><figcaption><span>nn/Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Linear</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">)</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span> <span class="k">then</span>
+</span><span class="line">
+</span><span class="line">      <span class="kd">local</span> <span class="n">nElement</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">nElement</span><span class="p">()</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">resizeAs</span><span class="p">(</span><span class="n">input</span><span class="p">)</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">nElement</span><span class="p">()</span> <span class="o">~=</span> <span class="n">nElement</span> <span class="k">then</span>
+</span><span class="line">         <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">zero</span><span class="p">()</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">then</span>
+</span><span class="line">         <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">addmv</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">:</span><span class="n">t</span><span class="p">(),</span> <span class="n">gradOutput</span><span class="p">)</span>
+</span><span class="line">      <span class="k">elseif</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">then</span>
+</span><span class="line">         <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">addmm</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">self</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">
+</span><span class="line">      <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>此處可分為兩部分來看，在 <a href="http://ckmarkoh.github.io/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module &amp; NN.Linear</a> 曾講到，當 <code>input:dim() == 1</code> 時，是一次輸入一筆資料。</p>
+
+<p>計算 <code>gradInput</code> 公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+\frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}}
+
+</script>
+
+<p>公式中的 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> ，在程式中是 loss function 的 <code>gradInput</code> ，並從 <code>updateGradInput</code> 的參數 <code>gradOutput</code> 輸入。</p>
+
+<p>假設 output size 為 3， input size 為 2，則在 forward propagation 時，<script type="math/tex">\textbf{y}</script> 是由以下公式算出：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{y} = \textbf{W}\textbf{x} + \textbf{b} \\
+& \Rightarrow
+\begin{bmatrix}
+y_{1} \\
+y_{2} \\ 
+y_{3} \\
+\end{bmatrix}
+= 
+\begin{bmatrix}
+w_{11} & w_{12} \\
+w_{21} & w_{22} \\
+w_{31} & w_{32} \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1}
+x_{2}
+\end{bmatrix}
++
+\begin{bmatrix}
+b_{1} \\
+b_{2} \\
+b_{3} \\
+\end{bmatrix} \\
+= 
+&\begin{bmatrix}
+w_{11}x_{1}+w_{12}x_{2}+b_{1} \\
+w_{21}x_{1}+w_{22}x_{2}+b_{2} \\
+w_{31}x_{1}+w_{32}x_{2}+b_{3} \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>而 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{x}} </script>  的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{x}} 
+ = 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
+\frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
+\frac{\partial y_{3}}{\partial x_{1}} & \frac{\partial y_{3}}{\partial x_{2}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial x_{1}} & \frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial x_{2}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial x_{1}} & \frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial x_{2}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial x_{1}} & \frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial x_{2}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+w_{11} & w_{12} \\
+w_{21} & w_{22} \\
+w_{31} & w_{32} \\
+\end{bmatrix}\\
+&= \textbf{W}
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\frac{\partial J}{\partial \textbf{x}} 
+=\begin{bmatrix}
+\frac{\partial J}{\partial x_{1}} \\
+\frac{\partial J}{\partial x_{2}}
+\end{bmatrix} \\
+&=\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{1}} 
+\\
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{2}} 
+\\
+\end{bmatrix} \\
+
+&=
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
+\frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
+\frac{\partial y_{3}}{\partial x_{1}} & \frac{\partial y_{3}}{\partial x_{2}} \\
+\end{bmatrix} ^{T}
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\ 
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix}\\
+
+&=
+W^{T}\frac{\partial J}{\partial \textbf{y}}
+\end{align}\\
+ %]]&gt;</script>
+
+<p>從以上結果得知，要先將 <code>weight</code> 轉置，再和 <code>gradOutput</code> 做 矩陣-向量 乘積。如同程式碼中所寫 <code>self.gradInput:addmv(0, 1, self.weight:t(), gradOutput)</code></p>
+
+<p>如果 <script type="math/tex">W</script> 和 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值分別如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W} =
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} \\
+& \frac{\partial J}{\partial \textbf{y}} = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}
+\end{align}
+ %]]&gt;</script>
+
+<p>則， <script type="math/tex">\frac{\partial J}{\partial \textbf{x}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\frac{\partial J}{\partial \textbf{x}} 
+=W^{T}\frac{\partial J}{\partial \textbf{y}}\\
+&=
+\begin{bmatrix}
+ 0.1453 & 0.0635 & -0.1080 \\ 
+ 0.5062 & 0.4911 & 0.1747 \\
+ \end{bmatrix}
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+ 0.1453 \times 1 & 0.0635 \times 2  & -0.1080 \times 3  \\ 
+ 0.5062 \times 1 & 0.4911 \times 2  & 0.1747 \times 3  \\
+\end{bmatrix} \\
+&=
+\begin{bmatrix}
+-0.0516 \\
+ 2.0126 \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>執行 <code>updateGradInput</code>  ，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">dj_dy</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span><span class="n">dj_dy</span> <span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradInput</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">-0.0516
+</span><span class="line"> 2.0126
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 2<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以上程式碼，輸入 <code>x</code> 只是為了滿足 <code>input:dim() == 1</code> 的條件， 而 <code>x</code> 的數值是不會影響結果的。</p>
+
+<p>至於 <code>input:dim() == 2</code> 的情況，推導方式同上，在此不詳細推導。</p>
+
+<p>再來看 <code>accGradParameters</code> 的程式碼：</p>
+
+<h3 id="accgradparameters">accGradParameters</h3>
+
+<figure class="code"><figcaption><span>nn/Linear.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Linear</span><span class="p">:</span><span class="n">accGradParameters</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+</span><span class="line">   <span class="n">scale</span> <span class="o">=</span> <span class="n">scale</span> <span class="ow">or</span> <span class="mi">1</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">then</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">:</span><span class="n">addr</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">,</span> <span class="n">input</span><span class="p">)</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span> <span class="n">self</span><span class="p">.</span><span class="n">gradBias</span><span class="p">:</span><span class="n">add</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">)</span> <span class="k">end</span>
+</span><span class="line">   <span class="k">elseif</span> <span class="n">input</span><span class="p">:</span><span class="n">dim</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">then</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">:</span><span class="n">addmm</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">:</span><span class="n">t</span><span class="p">(),</span> <span class="n">input</span><span class="p">)</span>
+</span><span class="line">      <span class="k">if</span> <span class="n">self</span><span class="p">.</span><span class="n">bias</span> <span class="k">then</span>
+</span><span class="line">         <span class="c1">-- update the size of addBuffer if the input is not the same size as the one we had in last updateGradInput</span>
+</span><span class="line">         <span class="n">updateAddBuffer</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">input</span><span class="p">)</span>
+</span><span class="line">         <span class="n">self</span><span class="p">.</span><span class="n">gradBias</span><span class="p">:</span><span class="n">addmv</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="n">gradOutput</span><span class="p">:</span><span class="n">t</span><span class="p">(),</span> <span class="n">self</span><span class="p">.</span><span class="n">addBuffer</span><span class="p">)</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>先看到 <code>input:dim() == 1</code> 的情形，計算 <code>gradWeight</code> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+ \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
+
+</script>
+
+<p>公式中的 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> ，在程式中是 loss function 的 <code>gradInput</code> ，並從 <code>updateGradInput</code> 的參數 <code>gradOutput</code> 輸入。</p>
+
+<p>假設 output size 為 3， input size 為 2，則 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{W}} </script>  的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial w_{11}} & \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial y_{2}}{\partial w_{21}} & \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial y_{3}}{\partial w_{31}} & \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{11}} & \frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{12}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{21}} & \frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{22}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{31}} & \frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{W}} </script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{11}} &
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{21}} &
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{31}} &
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} x_{1} &
+\frac{\partial J}{\partial y_{1}} x_{2} \\
+\frac{\partial J}{\partial y_{2}} x_{1} &
+\frac{\partial J}{\partial y_{2}} x_{2} \\
+\frac{\partial J}{\partial y_{3}} x_{1} &
+\frac{\partial J}{\partial y_{3}} x_{2} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} &  x_{2} \\
+\end{bmatrix}\\
+&= \frac{\partial J}{\partial \textbf{y}} \textbf{x}^{T}
+\end{align}
+ %]]&gt;</script>
+
+<p>如果 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值同前例， <script type="math/tex">\textbf{x}</script> 的值如下：</p>
+
+<script type="math/tex; mode=display">
+\textbf{x} =
+\begin{bmatrix}
+4 \\
+5 \\
+\end{bmatrix} 
+</script>
+
+<p>則， <script type="math/tex">\frac{\partial J}{\partial \textbf{W}}</script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+= \frac{\partial J}{\partial \textbf{y}}\textbf{x}^{T}\\
+& = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}
+\begin{bmatrix}
+4 & 5 
+\end{bmatrix}\\ 
+&=
+\begin{bmatrix}
+1 \times 4 & 1 \times 5 \\
+2 \times 4 & 2 \times 5 \\
+3 \times 4 & 3 \times 5 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>計算 <code>gradBias</code> 的公式如下：</p>
+
+<script type="math/tex; mode=display">
+
+ \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
+
+</script>
+
+<p>而 <script type="math/tex"> \frac{\partial \textbf{y}}{\partial \textbf{b}} </script>  這項的結果如下，</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{b}} 
+= 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial y_{2}}{\partial b_{2}} \\
+\frac{\partial y_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial b_{1}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial b_{2}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+1 \\
+1 \\
+1 \\
+\end{bmatrix}\\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{b}} </script> 的值為：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{b}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{2}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix} \\
+&= \frac{\partial J}{\partial \textbf{y}} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>因此， <script type="math/tex"> \frac{\partial J}{\partial \textbf{b}} </script> 的值，和 <script type="math/tex">\frac{\partial J}{\partial \textbf{y}}</script> 的值相同。</p>
+
+<p>執行 <code>accGradParameters</code>  ，程式碼如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">dj_dy</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="n">x</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">}</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span> <span class="n">l1</span><span class="p">:</span><span class="n">accGradParameters</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span><span class="n">dj_dy</span> <span class="p">))</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradWeight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">gradBias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line">  <span class="m">4</span>   5
+</span><span class="line">  <span class="m">8</span>  10
+</span><span class="line"> <span class="m">12</span>  15
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 1
+</span><span class="line"> 2
+</span><span class="line"> 3
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>至於 <code>input:dim() == 2</code> 的情況，推導方式同上，在此不詳細推導。</p>
+
+<h2 id="updateparameters">updateParameters</h2>
+
+<p>此函數在 <code>nn.Module</code> 中即有實作其內容，它所進行的運算相當簡單，就是更新 <script type="math/tex">\textbf{W}</script> 和 <script type="math/tex">\textbf{b}</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
+& \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+\end{align}
+ %]]&gt;</script>
+
+<p>程式碼如下：</p>
+
+<figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Module</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="n">learningRate</span><span class="p">)</span>
+</span><span class="line">   <span class="kd">local</span> <span class="n">params</span><span class="p">,</span> <span class="n">gradParams</span> <span class="o">=</span> <span class="n">self</span><span class="p">:</span><span class="n">parameters</span><span class="p">()</span>
+</span><span class="line">   <span class="k">if</span> <span class="n">params</span> <span class="k">then</span>
+</span><span class="line">      <span class="k">for</span> <span class="n">i</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="o">#</span><span class="n">params</span> <span class="k">do</span>
+</span><span class="line">         <span class="n">params</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span><span class="n">add</span><span class="p">(</span><span class="o">-</span><span class="n">learningRate</span><span class="p">,</span> <span class="n">gradParams</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span class="line">      <span class="k">end</span>
+</span><span class="line">   <span class="k">end</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>其中，公式中的 <script type="math/tex">\eta</script> 即為程式碼中的 <code>learningRate</code> ，而程式中的第五行，則是負責將 <code>weight</code> 和 <code>bias</code> 更新。 其中， <code>weight</code> 和 <code>bias</code> 由第二行的 <code>parameters</code> 函數所取得，回傳到 <code>param</code> 中，而 <code>gradWeight</code> 和 <code>gradBias</code> 也用同樣方式取得，回傳到 <code>gradParams</code> 中。</p>
+
+<p>假設 <script type="math/tex">\eta = 0.02</script> ，<script type="math/tex">\textbf{W} , \textbf{b} , \frac{\partial J}{\partial \textbf{W}} ,  \frac{\partial J}{\partial \textbf{b}}</script> 的值分別如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\textbf{W}=
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} \\
+&\textbf{b}=
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} \\
+& \frac{\partial J}{\partial \textbf{W}} = 
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& \frac{\partial J}{\partial \textbf{b}} = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>更新 <script type="math/tex">\textbf{W}</script> 和 <script type="math/tex">\textbf{b}</script> ：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \textbf{W}  - \eta \Delta \textbf{W} \\
+& = 
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& = 
+\begin{bmatrix}
+ 0.0653 & 0.4062 \\
+-0.0965 & 0.2911 \\
+-0.3480 & -0.1253 \\
+\end{bmatrix} \\
+
+& \textbf{b}  - \eta \Delta \textbf{b} \\
+& = 
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+ 0.1863 \\
+-0.2035 \\ 
+-0.1483 \\
+\end{bmatrix} 
+\end{align}
+ %]]&gt;</script>
+
+<p>印出 <code>l1</code> 的 <code>weight</code> 和 <code>bias</code> ，執行 <code>updateParameters</code> ，比較執行前後的 <code>weight</code> 和 <code>bias</code> 差異，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span><span class="line"><span class="n">l1</span><span class="p">:</span><span class="n">updateParameters</span><span class="p">(</span><span class="mf">0.02</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">weight</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">l1</span><span class="p">.</span><span class="n">bias</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+<span class="line-number">17</span>
+<span class="line-number">18</span>
+<span class="line-number">19</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.1453  0.5062
+</span><span class="line"> 0.0635  0.4911
+</span><span class="line">-0.1080  0.1747
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.2063
+</span><span class="line">-0.1635
+</span><span class="line">-0.0883
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.0653  0.4062
+</span><span class="line">-0.0965  0.2911
+</span><span class="line">-0.3480 -0.1253
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x2<span class="o">]</span>
+</span><span class="line">
+</span><span class="line"> 0.1863
+</span><span class="line">-0.2035
+</span><span class="line">-0.1483
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb
+</a></p>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )]]></title>
@@ -42,7 +945,7 @@
 </span><span class="line"><span class="k">end</span>
 </span></code></pre></td></tr></table></div></figure>
 
-<p><code>nn,Criterion</code> 的 <code>backward</code> 只做一件事，也就是 <code>updateGradInput</code> ，而  <code>updateGradInput</code> 的運算內容則由繼承它的類別來實作。</p>
+<p><code>nn.Criterion</code> 的 <code>backward</code> 只做一件事，也就是 <code>updateGradInput</code> ，而  <code>updateGradInput</code> 的運算內容則由繼承它的類別來實作。</p>
 
 <!--more-->
 
@@ -7760,710 +8663,6 @@ n_{out,s} - y_{s}  & \text{if } s = t \\
 
 <p>https://www.coursera.org/course/neuralnets</p>
 
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Neural Networks Backward Propagation]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation/"/>
-    <updated>2015-05-28T07:47:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>在做 <a href="http://ckmarkoh.github.io/blog/2014/03/15/logisti-regression-model">Logistic Regression</a>的時候，可以用 <em>gradient descent</em> 來做訓練，而類神經網路本身即是很多層的 <em>Logistic Regression</em> 所構成，也可以用同樣方法來做訓練。</p>
-
-<p>但類神經網路在訓練過程時，需要分為兩個步驟，為： <em>Forward Phase</em> 與 <em>Backward Phase</em> 。 也就是要先從 <em>input</em> 把值傳到 <em>output</em>，再從 <em>output</em> 往回傳遞 <em>error</em> 到每一層的神經元，去更新層與層之間權重的參數。</p>
-
-<h2 id="forward-phase">Forward Phase</h2>
-
-<p>在 <em>Forward Phase</em> 時，先從 <em>input</em> 將值一層層傳遞到 <em>output</em>。</p>
-
-<p>對於一個簡單的神經元 <script type="math/tex">n</script> ，如下圖 <a name="pic1">＜圖一＞</a>：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00086.png" alt="" /></p>
-
-<p>將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 和 <em>bias</em> <script type="math/tex">b</script> 輸入到神經元 <script type="math/tex">n</script> 到輸出的過程，分成兩步，分別為 <script type="math/tex">n_{in}</script>， <script type="math/tex">n_{out}</script> ，過程如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& n_{in} = w_{1} x_{1}+w_{2}  x_{2}+w_{b} \\
-
-& n_{out} = \frac{1} {1+e^{-n_{in} } }
-
-\end{align}
-
- %]]&gt;</script>
-
-<!--more-->
-
-<p>在輸入神經元時， <script type="math/tex">n_{in}</script> 先將 <em>input</em> 值和其權重作乘積。</p>
-
-<p>在輸出神經元時， <script type="math/tex">n_{out}</script> 將 <script type="math/tex">n_{in}</script> 的值用 <em>sigmoid function</em> 轉成值範圍從 <em>0</em> 到 <em>1</em> 的函數。</p>
-
-<p>傳遞到 <script type="math/tex">n_{out}</script> 後，可與訓練資料的答案 <script type="math/tex">y</script> 用 <em>cost function</em> 來計算其差值，並用 <em>backward propagation</em> 修正權重 <script type="math/tex">w_{1}</script> 、 <script type="math/tex">w_{2}</script> 和 <script type="math/tex">w_{b}</script> 。</p>
-
-<p>對於一個簡單的類神經網路，共有兩層，四個神經元，如下圖<a name="pic2">＜圖二＞</a>：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00087.png" alt="" /></p>
-
-<p>其值傳遞的過程如下：</p>
-
-<p>1.把 <script type="math/tex">x</script> 和 <script type="math/tex">y</script> 和 <em>bias</em> <script type="math/tex">b</script> 傳入到第一層神經元 <script type="math/tex">n_{11}</script> 及 <script type="math/tex">n_{12}</script> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& n_{11(in)} = w_{11,x} x+w_{11,y} y+w_{11,b} \\
-
-& n_{12(in)} = w_{12,x} x+w_{12,y} y+w_{12,b} \\
-
-& n_{11(out)} = \frac{1} {1+e^{-n_{11(in)} } } \\
-
-& n_{12(out)} = \frac{1} {1+e^{-n_{12(in)} } } \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>其中，<script type="math/tex">n_{11(in)}</script> 表示傳入神經元 <script type="math/tex">n_{11}</script> 的值，而 <script type="math/tex">n_{11(out)}</script> 表示傳出神經元 <script type="math/tex">n_{11}</script> 的值，而 <script type="math/tex">w_{11,x}</script> 表示值從 <script type="math/tex">x</script> 傳入 <script type="math/tex">n_{11}</script> 時，所乘上的權重</p>
-
-<p>2.第一層神經元將其輸出值 <script type="math/tex"> n_{11(out)}</script> 和 <script type="math/tex">n_{12(out)}</script> 傳到第二層神經元 <script type="math/tex"> n_{21}</script> 和 <script type="math/tex"> n_{22}</script>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& n_{21(in)} = w_{21,11} n_{11(out)} + w_{21,12} n_{12(out)}+w_{21,b} \\
-
-& n_{22(in)} = w_{22,11} n_{11(out)} + w_{22,12} n_{12(out)}+w_{22,b} \\
-
-& n_{21(out)} = \frac{1} {1+e^{-n_{21(in)} } } \\
-
-& n_{22(out)} = \frac{1} {1+e^{-n_{22(in)} } } \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>傳遞完後，可與訓練資料的答案 <script type="math/tex">z_{1}</script> 和 <script type="math/tex">z_{2}</script> 用 <em>cost function</em> 來計算其差值，並用 <em>backward propagation</em> 修正權重。</p>
-
-<h2 id="derivation-of-gradient-descent">Derivation of Gradient Descent</h2>
-
-<p>在講解 <em>backward Phase</em> 之前，先推導類神經網路的 <em>gradient descent</em> 公式和 <em>backward propagation</em> 的原理：</p>
-
-<p>對於<a href="#pic1">＜圖一＞</a>中的一個簡單的神經元 <script type="math/tex">n</script>，將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 傳遞到 <script type="math/tex">n_{out}</script> 所得出的值和 <script type="math/tex">y</script> 的值做比較，我們可用以下的 <em>cost function</em> 來計算：</p>
-
-<script type="math/tex; mode=display">
-
-J =- y\times log(n_{out}) - (1-y)\times log (1 -n_{out} ) 
-
-</script>
-
-<p>從以上 <em>cost function</em> 可得知，如果 <script type="math/tex">n_{out}</script> 和 <script type="math/tex">y</script> 都等於 <em>0</em> ，或者都等於 <em>1</em> ，則 <em>cost</em> 會是 <em>0</em> ，若 <script type="math/tex">n_{out}</script> 和 <script type="math/tex">y</script> 其中有一個是 <em>1</em> ，而另一個是 <em>0</em> ，則 <em>cost</em> 會趨近於無限大。</p>
-
-<p>用 <em>gradient Descent</em> 調整 <script type="math/tex">w_{1}</script> 、 <script type="math/tex">w_{2} </script> 和 <script type="math/tex">w_{b}</script> 來做訓練時，可用以下公式<a name="eq1">＜公式一＞</a>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{1} \leftarrow w_{1} - \eta \dfrac{\partial J}{\partial w_{1}} \\
-
-& w_{2} \leftarrow w_{2} - \eta \dfrac{\partial J}{\partial w_{2}} \\
-
-& w_{b} \leftarrow w_{b} - \eta \dfrac{\partial J}{\partial w_{b}} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>其中， <script type="math/tex">\eta</script> 為 <em>learning rate</em> ，用來控制訓練的速度。</p>
-
-<p>接著要推導這個公式怎麼算，首先，將 <script type="math/tex">\dfrac{\partial J}{\partial w_{1}}</script> 的微分用 <em>chain rule</em> 展開，如下 <a name="eq2">＜公式二＞</a>：</p>
-
-<script type="math/tex; mode=display">
-
-\dfrac{\partial J}{\partial w_{1}}
-
-= \dfrac{\partial J}{\partial n_{out}} 
-
- \dfrac{\partial n_{out}}{\partial n_{in}}
-
- \dfrac{\partial n_{in}}{\partial w_{1}}
-
-</script>
-
-<p>以上公式，總共有 <script type="math/tex">\dfrac{\partial J}{\partial n_{out}} </script> 、 <script type="math/tex">\dfrac{\partial n_{out}}{\partial n_{in}}</script> 與 <script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{1}}</script> 三個部份的微分要算。</p>
-
-<p>1.<script type="math/tex">\dfrac{\partial J}{\partial n_{out}} </script>：</p>
-
-<script type="math/tex; mode=display">
-
- \dfrac{\partial J}{\partial n_{out}} 
-
- = -y \dfrac{\partial log(n_{out})}{\partial n_{out}}- (1-y) \dfrac{\partial log (1 -n_{out} )}{\partial n_{out}} \\
-
- = -\frac{y}{n_{out}}+\frac{1-y}{1-n_{out}}
-
-</script>
-
-<p>2.<script type="math/tex">\dfrac{\partial n_{out}}{\partial n_{in}}</script>：</p>
-
-<script type="math/tex; mode=display">
-
-\dfrac{\partial n_{out}}{\partial n_{in}} = \dfrac{\partial}{\partial n_{in}}(\frac{1}{1+e^{-n_{in}}})
-
-=\frac{e^{-n_{in}}}{(1+e^{-n_{in}})^{2}} 
-
-= \frac{1}{1+e^{-n_{in}}}  \frac{e^{-n_{in}}}{1+e^{-n_{in}}} \\
-
-= n_{out}(1- n_{out})
-
-
-</script>
-
-<p>3.<script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{1}}</script>：</p>
-
-<script type="math/tex; mode=display">
-
-\dfrac{\partial n_{in}}{\partial w_{1}} = \dfrac{\partial}{\partial w_{1}} (w_{1} x_{1}+w_{2} x_{2}+w_{b}) \\
-
-= x_{1}
-
-</script>
-
-<p>代入以上三個結果到<a href="#eq2">＜公式二＞</a>，可得出 <script type="math/tex">\dfrac{\partial J}{\partial w_{1}}</script> 的值，如下：</p>
-
-<script type="math/tex; mode=display">
-
-\dfrac{\partial J}{\partial w_{1}} 
-
-= \dfrac{\partial J}{\partial n_{out}} 
-
- \dfrac{\partial n_{out}}{\partial n_{in}}
-
- \dfrac{\partial n_{in}}{\partial w_{1}} \\
-
- = (-\frac{y}{n_{out}}+\frac{1-y}{1-n_{out}})  n_{out}(1- n_{out})  x_{1} \\
-
- = (n_{out}-y) x_{1}
-
-</script>
-
-<p>同理可得出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{2}} </script> 與 <script type="math/tex">\dfrac{\partial J}{\partial w_{b}} </script> 的值，分別為：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \dfrac{\partial J}{\partial w_{2}} 
-
-= \dfrac{\partial J}{\partial n_{out}} 
-
- \dfrac{\partial n_{out}}{\partial n_{in}}
-
- \dfrac{\partial n_{in}}{\partial w_{2}}
-
-=(n_{out}-y) x_{2} \\
-
-& \dfrac{\partial J}{\partial w_{b}} 
-
-= \dfrac{\partial J}{\partial n_{out}} 
-
- \dfrac{\partial n_{out}}{\partial n_{in}}
-
- \dfrac{\partial n_{in}}{\partial w_{b}}
-
-= (n_{out}-y)
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>其中， <script type="math/tex">\dfrac{\partial n_{in}}{\partial w_{b}}</script> 的結果為：</p>
-
-<script type="math/tex; mode=display">
-
-\dfrac{\partial n_{in}}{\partial w_{b}} = \dfrac{\partial}{\partial w_{b}} (w_{1} x_{1}+w_{2} x_{2}+w_{b}) = 1
-
-
-</script>
-
-<p>將 <script type="math/tex"> \dfrac{\partial J}{\partial w_{1}}</script> 、 <script type="math/tex"> \dfrac{\partial J}{\partial w_{2}} </script> 和 <script type="math/tex"> \dfrac{\partial J}{\partial w_{b}} </script> 的結果代入<a href="#eq1">＜公式一＞</a>，得出：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{1} \leftarrow w_{1} - \eta (n_{out}-y) x_{1} \\
-
-& w_{2} \leftarrow w_{2} - \eta (n_{out}-y) x_{2}  \\
-
-& w_{b} \leftarrow w_{b} - \eta (n_{out}-y) \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<h2 id="derivation-of-backward-propagation">Derivation of Backward Propagation</h2>
-
-<p>若要推導超過一層的類神經網路的 <em>gradient descent</em> 公式，就要用到 <em>backward propagation</em> 。</p>
-
-<p>對於<a href="#pic2">＜圖二＞</a>中的一個簡單的類神經網路，它的 <em>cost function</em> 如下：</p>
-
-<script type="math/tex; mode=display">
-
-J =-( z_{1}\times log(n_{21(out)}) + (1-z_{1})\times log (1 -n_{21(out)} ) + z_{2}\times log(n_{22(out)}) + (1-z_{2})\times log (1 -n_{22(out)} ))
-
-</script>
-
-<p>對於最後一層與倒數第二層之間的權重改變，可用 <em>gradient descent</em> ，如下<a name="eq3">＜公式三＞</a>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{21,11} \leftarrow w_{21,11} - \eta \dfrac{\partial J}{\partial w_{21,11}} \\
-
-& w_{21,12} \leftarrow w_{21,12} - \eta \dfrac{\partial J}{\partial w_{21,12}} \\
-
-& w_{21,b} \leftarrow w_{21,b} - \eta \dfrac{\partial J}{\partial w_{21,b}} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>可用先前推導出單一神經元時的微分結果，得出：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-
-& \dfrac{\partial J}{\partial w_{21,11}} 
-
-= \dfrac{\partial J}{\partial n_{21(out)}} 
-
- \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
-
- \dfrac{\partial n_{21(in)}}{\partial w_{21,11}}
-
-= (n_{21(out)}-z_{1}) n_{11(out)} \\
-
-
-& \dfrac{\partial J}{\partial w_{21,12}} 
-
-= \dfrac{\partial J}{\partial n_{21(out)}} 
-
- \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
-
- \dfrac{\partial n_{21(in)}}{\partial w_{21,12}}
-
-= (n_{21(out)}-z_{1})n_{12(out)} \\
-
-
-& \dfrac{\partial J}{\partial w_{21,b}} 
-
-= \dfrac{\partial J}{\partial n_{21(out)}} 
-
- \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
-
- \dfrac{\partial n_{21(in)}}{\partial w_{21,b}}
-
-= (n_{21(out)}-z_{1})
-
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>同理可求出 <script type="math/tex">w_{22,11}</script> 、 <script type="math/tex">w_{22,12}</script> 和 <script type="math/tex">w_{22,b}</script> 相對應的公式。</p>
-
-<p>在要推導更往前一層的權重變化公式之前，先觀察以上公式，發現它們有共同的部分： <script type="math/tex">n_{21(out)}-z_{1}</script> ，可以用 <script type="math/tex">\delta_{21(in)}</script> 來表示這個值，即：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \delta_{21(in)} = \dfrac{\partial J}{\partial n_{21(out)}} 
-
- \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}
-
-= n_{21(out)}-z_{1} \\
-
-& \dfrac{\partial J}{\partial w_{21,11}} = \delta_{21(in)}  n_{11(out)}\\
-
-& \dfrac{\partial J}{\partial w_{21,12}} = \delta_{21(in)}  n_{12(out)}\\
-
-& \dfrac{\partial J}{\partial w_{21,b}} = \delta_{21(in)}
-
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><script type="math/tex">\delta_{21(in)}</script> 的物理意義如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00088.png" alt="" /></p>
-
-<p>圖中， <script type="math/tex">\delta_{21(out)}</script> 是 <script type="math/tex">J</script> 在神經元 <script type="math/tex">n_{21}</script> 輸出點的微分值，可以把 <script type="math/tex">\delta_{21(in)}</script> 看成是 <script type="math/tex">\delta_{21(out)}</script> <strong>從神經元</strong> <script type="math/tex">n_{21}</script> <strong>的輸出點往回傳到輸入點</strong>，即乘上 <script type="math/tex">\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}}</script> 。因此，這過程又稱為 <em>backward propagation</em> 。</p>
-
-<p>將 <script type="math/tex">\delta_{21(in)}</script> 置換到<a href="#eq3">＜公式三＞</a>，得出這一層推導的最後結果：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{21,11} \leftarrow w_{21,11} - \eta  \delta_{21(in)}  n_{11(out)} \\
-
-& w_{21,12} \leftarrow w_{21,12} - \eta  \delta_{21(in)}  n_{12(out)} \\
-
-& w_{21,b} \leftarrow w_{21,b} - \eta  \delta_{21(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>同理， <script type="math/tex">w_{22,11},w_{22,12}, w_{22,b} </script> 的 <em>gradient descent</em> 公式，也可用相同方法推導出來：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{22,11} \leftarrow w_{22,11} - \eta  \delta_{22(in)}  n_{11(out)} \\
-
-& w_{22,12} \leftarrow w_{22,12} - \eta  \delta_{22(in)}  n_{12(out)} \\
-
-& w_{22,b} \leftarrow w_{22,b} - \eta  \delta_{22(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>再來，要推導更往前一層的權重變化公式，要用 <em>gradient descent</em> <a name="eq4">＜公式四＞</a>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{11,x} \leftarrow w_{11,x} - \eta \dfrac{\partial J}{\partial w_{11,x}} \\
-
-& w_{11,y} \leftarrow w_{11,y} - \eta \dfrac{\partial J}{\partial w_{11,y}} \\
-
-& w_{11,b} \leftarrow w_{11,b} - \eta \dfrac{\partial J}{\partial w_{11,b}} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>舉 <script type="math/tex">w_{11,x}</script> 為例，用 <em>chain rule</em> 求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,x}}</script> 的值，如下<a name="eq5">＜公式五＞</a>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\dfrac{\partial J}{\partial w_{11,x}}
-
-=\dfrac{\partial J}{\partial n_{21(out)}}  \dfrac{\partial n_{21(out)}}{\partial w_{11,x}}
-
-+ \dfrac{\partial J}{\partial n_{22(out)}}  \dfrac{\partial n_{22(out)}}{\partial w_{11,x}}
-
-\\
-
-&= \dfrac{\partial J}{\partial n_{21(out)}} 
-
-\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} 
-
-\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
-
-\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
-
-\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} 
-
-+ \dfrac{\partial J_{2}}{\partial n_{22(out)}} 
-
-\dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} 
-
-\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
-
-\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
-
-\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} \\
-
-
-& = (
-
-\dfrac{\partial J}{\partial n_{21(out)}} 
-
-\dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} 
-
-\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
-
-+ \dfrac{\partial J}{\partial n_{22(out)}} 
-
-\dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} 
-
-\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
-
-)  
-
-\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
-
-\dfrac{\partial n_{11(in)}}{\partial w_{11,x}} 
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>其中， <script type="math/tex">\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} </script> 、 <script type="math/tex">\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} </script> 、 <script type="math/tex">\dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} </script> 和 <script type="math/tex">\dfrac{\partial n_{11(in)}}{\partial w_{11,x}}</script> 這四項的值分別為：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\dfrac{\partial n_{21(in)}}{\partial n_{11(out)}} 
-
-= \dfrac{\partial }{\partial n_{11(out)}}( w_{21,11}n_{11(out)} + w_{21,12}n_{12(out)}+w_{21,b} )
-
-= w_{21,11} \\
-
-&\dfrac{\partial n_{22(in)}}{\partial n_{11(out)}} 
-
-= \dfrac{\partial }{\partial n_{11(out)}}( w_{22,11} n_{11(out)} + w_{22,12} n_{12(out)}+w_{22,b} )
-
-= w_{22,11} \\
-
-& \dfrac{\partial n_{11(out)}}{\partial n_{11(in)}} 
-
-= \dfrac{\partial} {\partial n_{11(in)}}( \frac{1} {1+e^{-n_{11(in)} } } )
-
-= n_{11(out)}(1-n_{11(out)}) \\
-
-& \dfrac{\partial n_{11(in)}}{\partial w_{11,x}}
-
-= \dfrac{\partial}{\partial w_{11,x}} (w_{11,x} x+w_{11,y} y+w_{11,b} ) 
-
-= x \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>再代入這些值與之前推導出的 <script type="math/tex">\dfrac{\partial J}{\partial n_{21(out)}} \dfrac{\partial n_{21(out)}}{\partial n_{21(in)}} </script> 和 <script type="math/tex">\dfrac{\partial J}{\partial n_{22(out)}} \dfrac{\partial n_{22(out)}}{\partial n_{22(in)}} </script> 的值到<a href="#eq5">＜公式五＞</a>，可求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,x}}</script> 為：</p>
-
-<script type="math/tex; mode=display">
-
- \dfrac{\partial J}{\partial w_{11,x}}
-
- = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)})  x
-
-</script>
-
-<p>同理，可求出 <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,y}}</script> 和  <script type="math/tex"> \dfrac{\partial J}{\partial w_{11,b}}</script> 的值分別為：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\dfrac{\partial J}{\partial w_{11,y}} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} ) n_{11(out)}(1-n_{11(out)})  y \\
-
-&\dfrac{\partial J}{\partial w_{11,b}} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)}) \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>如同前一層所推導的，以上公式也有相同部分，也可以用 <script type="math/tex">\delta_{11(in)}</script> 來簡化它們，如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\delta_{11(in)} = ( (n_{21(out)}-z_{1})  w_{21,11} + (n_{22(out)}-z_{2})  w_{22,11} )  n_{11(out)}(1-n_{11(out)}) \\
-
-& \dfrac{\partial J}{\partial w_{11,x}} =\delta_{11(in)}  x \\
-
-&\dfrac{\partial J}{\partial w_{11,y}} = \delta_{11(in)}  y \\
-
-&\dfrac{\partial J}{\partial w_{11,b}} =\delta_{11(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>可把 <script type="math/tex">\delta_{11(in)}</script> 用後面層傳回來的的 <script type="math/tex">\delta</script> 來表示，如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\delta_{11(out)} = w_{21,11}  \delta_{21(in)} + w_{22,11}  \delta_{22(in)} \\
-
-&\delta_{11(in)} = \delta_{11(out)}  n_{11(out)}(1-n_{11(out)}) = \delta_{11(out)}  \dfrac{\partial n_{11(out)}}{\partial n_{11(in)}}
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>這些 <script type="math/tex">\delta</script> 的物理意義如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00089.png" alt="" /></p>
-
-<p>從圖中可以看到， <script type="math/tex">\delta_{11(out)}</script> 是 <strong>由</strong> <script type="math/tex">\delta_{21(in)}</script> <strong>和</strong> <script type="math/tex">\delta_{22(in)}</script> <strong>往反方向傳遞，再乘上其權重</strong> <script type="math/tex">w_{21,11}</script> <strong>與</strong> <script type="math/tex">w_{22,11}</script> <strong>所得出的</strong> 。 </p>
-
-<p>將 <script type="math/tex">\delta_{11(in)}</script> 置換到<a href="#eq4">＜公式四＞</a>，得出這一層推導的最後結果：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{11,x} \leftarrow w_{11,x} - \eta  \delta_{11(in)}  x \\
-
-& w_{11,y} \leftarrow w_{11,y} - \eta  \delta_{11(in)}  y \\
-
-& w_{11,b} \leftarrow w_{11,b} - \eta  \delta_{11(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>同理， <script type="math/tex">w_{12,x},w_{12,y}, w_{12,b} </script> 的 <em>gradient descent</em> 的公式，也可用相同方法推導出來：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{12,x} \leftarrow w_{12,x} - \eta  \delta_{12(in)}  x \\
-
-& w_{12,y} \leftarrow w_{12,y} - \eta  \delta_{12(in)}  y \\
-
-& w_{12,b} \leftarrow w_{12,b} - \eta  \delta_{12(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<h2 id="backward-phase">Backward Phase</h2>
-
-<p><em>backward phase</em> 要做的即是 <em>backward propagation</em> ，也就是從 <em>output</em> 把 <script type="math/tex">\delta</script> 算出來，並更新權重 <script type="math/tex">w</script> ，再把 <script type="math/tex">\delta</script> 往回傳一層，再更新那層的權重 <script type="math/tex">w</script>，這樣一直傳下去直到 <em>input</em> 。</p>
-
-<p>首先，把 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 算出來：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& \delta_{21(in)} = n_{21(out)} - z_{1} \\
-
-& \delta_{22(in)} = n_{22(out)} - z_{2} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00090.png" alt="" /></p>
-
-<p>再來，用 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 更新以下權重的值：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{21,11} \leftarrow w_{21,11} - \eta  \delta_{21(in)}  n_{11(out)} \\
-
-& w_{21,12} \leftarrow w_{21,12} - \eta  \delta_{21(in)}  n_{12(out)} \\
-
-& w_{21,b} \leftarrow w_{21,b} - \eta  \delta_{21(in)} \\
-
-& w_{22,11} \leftarrow w_{22,11} - \eta  \delta_{22(in)}  n_{11(out)} \\
-
-& w_{22,12} \leftarrow w_{22,12} - \eta  \delta_{22(in)}  n_{12(out)} \\
-
-& w_{22,b} \leftarrow w_{22,b} - \eta  \delta_{22(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00091.png" alt="" /></p>
-
-<p>再來，把 <script type="math/tex">\delta_{21(in)}</script> 和 <script type="math/tex">\delta_{22(in)}</script> 乘上權重，算出 <script type="math/tex">\delta_{11(in)}</script> 和 <script type="math/tex">\delta_{12(in)}</script>的值：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-&\delta_{11(in)} = ( w_{21,11}  \delta_{21(in)} + w_{22,11}  \delta_{22(in)})  n_{11(out)}(1-n_{11(out)}) \\
-
-&\delta_{12(in)} = ( w_{21,12}  \delta_{21(in)} + w_{22,12}  \delta_{22(in)})  n_{12(out)}(1-n_{12(out)}) \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00092.png" alt="" /></p>
-
-<p>最後，用 <script type="math/tex">\delta_{11(in)}</script> 和 <script type="math/tex">\delta_{12(in)}</script> 更新以下權重的值：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{11,x} \leftarrow w_{11,x} - \eta  \delta_{11(in)}  x \\
-
-& w_{11,y} \leftarrow w_{11,y} - \eta  \delta_{11(in)}  y \\
-
-& w_{11,b} \leftarrow w_{11,b} - \eta  \delta_{11(in)} \\
-
-& w_{12,x} \leftarrow w_{12,x} - \eta  \delta_{12(in)}  x \\
-
-& w_{12,y} \leftarrow w_{12,y} - \eta  \delta_{12(in)}  y \\
-
-& w_{12,b} \leftarrow w_{12,b} - \eta  \delta_{12(in)} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00093.png" alt="" /></p>
-
-<p>更新完後，即結束了在資料 <script type="math/tex">x,y</script> 上的這一輪訓練。</p>
-
-<p>以下為整個過程的動畫版：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00094.gif" alt="" /></p>
-
-<h2 id="reference">Reference</h2>
-
-<p>本文參考 coursera 課程 Andrew Ng. Machine Learning</p>
-
-<p>https://www.coursera.org/course/ml</p>
 ]]></content>
   </entry>
   

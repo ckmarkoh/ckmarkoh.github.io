@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="今天來看看如何用python的Functional Programming tool來簡化程式碼 所謂的Functional Programming, 是指像是Lisp或Haskell這樣的程式語言 python所提供的Functional Programming tool &hellip;">
+  <meta name="description" content="用Functional Programming style來寫程式的時候 可以大幅減少行數和變數的數量 本文接續上一篇:/blog/2014/03/18/python-functional-programming-style-1 繼續探討這種Functional Programming &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,56 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/20/python-functional-programming-style-2/">Python Functional Programming Style 2</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-20T13:35:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>20</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>1:35 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>用Functional Programming style來寫程式的時候</p>
+
+<p>可以大幅減少行數和變數的數量</p>
+
+<p>本文接續上一篇:/blog/2014/03/18/python-functional-programming-style-1</p>
+
+<p>繼續探討這種Functional Programming style在python中的應用</p>
+
+<h2 id="operator">1. operator</h2>
+
+<p>首先,載入 <code>operator</code> 這個模組</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">operator</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>然後,來介紹到底要怎麼使用</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/20/python-functional-programming-style-2/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -610,80 +660,6 @@ man(Socrates)= true
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/28/python-nltk-tree/">NLTK Tree</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-02-28T16:36:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:36 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>今天我們來看看nltk.Tree要怎麼用</p>
-
-<p>先載入模組</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span> <span class="nn">nltk</span> <span class="kn">import</span> <span class="n">Tree</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<h2 id="build-syntax-tree">1.build syntax tree</h2>
-
-<p>舉個例子</p>
-
-<p>Gary plays baseball</p>
-
-<p>此句子的剖析樹(syntax tree)是這樣：</p>
-
-<p><img src="http://lh3.googleusercontent.com/-BoNaoH3Va-g/UyF3tY8MRiI/AAAAAAAAAXM/1-YLB7zww3k/w299-h238-no/nltk1.png" alt="nltk1.png" /></p>
-
-<p>用nltk.Tree來建構tree：</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">=</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;Gary&#39;</span><span class="p">]),</span>
-</span><span class="line"><span class="o">...</span>           <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VP&#39;</span><span class="p">,[</span><span class="n">Tree</span><span class="p">(</span><span class="s">&#39;VT&#39;</span><span class="p">,[</span><span class="s">&#39;plays&#39;</span><span class="p">]),</span>
-</span><span class="line"><span class="o">...</span>                     <span class="n">Tree</span><span class="p">(</span><span class="s">&#39;NP&#39;</span><span class="p">,[</span><span class="s">&#39;baseball&#39;</span><span class="p">])])])</span>
-</span><span class="line">
-</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>即可將剖析樹畫出來</p>
-
-<p>若沒安裝 python-tk,你也可以這樣把tree印出</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">tree</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
-</span><span class="line"><span class="s">&#39;(S (NP Gary) (VP (VT plays) (NP baseball)))&#39;</span>
-</span></code></pre></td></tr></table></div></figure>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/02/28/python-nltk-tree/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/7">&larr; Older</a>
@@ -698,11 +674,15 @@ man(Socrates)= true
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (13)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (5)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )</a>
@@ -718,10 +698,6 @@ man(Socrates)= true
     
       <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
       </li>
     
   </ul>

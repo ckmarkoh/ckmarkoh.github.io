@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 將類神經網路應用在自然語言處理領域的模型有Neural Probabilistic Language Model(NPLM)，但在實際應用時，運算瓶頸在於 output layer 的神經元個數，等同於總字彙量 。 每訓練一個字時，要讓 output layer &hellip;">
+  <meta name="description" content="Introduction 在做 Logistic Regression的時候，可以用 gradient descent 來做訓練，而類神經網路本身即是很多層的 Logistic Regression 所構成，也可以用同樣方法來做訓練。 但類神經網路在訓練過程時，需要分為兩個步驟，為： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,67 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/05/28/neural-network-backward-propagation/">Neural Networks Backward Propagation</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-05-28T07:47:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>7:47 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在做 <a href="/blog/2014/03/15/logisti-regression-model">Logistic Regression</a>的時候，可以用 <em>gradient descent</em> 來做訓練，而類神經網路本身即是很多層的 <em>Logistic Regression</em> 所構成，也可以用同樣方法來做訓練。</p>
+
+<p>但類神經網路在訓練過程時，需要分為兩個步驟，為： <em>Forward Phase</em> 與 <em>Backward Phase</em> 。 也就是要先從 <em>input</em> 把值傳到 <em>output</em>，再從 <em>output</em> 往回傳遞 <em>error</em> 到每一層的神經元，去更新層與層之間權重的參數。</p>
+
+<h2 id="forward-phase">Forward Phase</h2>
+
+<p>在 <em>Forward Phase</em> 時，先從 <em>input</em> 將值一層層傳遞到 <em>output</em>。</p>
+
+<p>對於一個簡單的神經元 <script type="math/tex">n</script> ，如下圖 <a name="pic1">＜圖一＞</a>：</p>
+
+<p><img src="/images/pic/pic_00086.png" alt="" /></p>
+
+<p>將一筆訓練資料 <script type="math/tex">x_{1},x_{2}</script> 和 <em>bias</em> <script type="math/tex">b</script> 輸入到神經元 <script type="math/tex">n</script> 到輸出的過程，分成兩步，分別為 <script type="math/tex">n_{in}</script>， <script type="math/tex">n_{out}</script> ，過程如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+& n_{in} = w_{1} x_{1}+w_{2}  x_{2}+w_{b} \\
+
+& n_{out} = \frac{1} {1+e^{-n_{in} } }
+
+\end{align}
+
+ %]]></script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/05/28/neural-network-backward-propagation/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -689,67 +750,6 @@ This is not an apple </p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/05/06/python-nltk-rule-based-chunking/">NLTK Rule-Based Chunking</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-05-06T14:46:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:46 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="chunking">Chunking</h2>
-
-<p>分析句子的成份, 當句子不符合文法時, 使用 <em>Context-Free Grammar</em> 去做 <em>Parsing</em> , 可能會得不出結果, 而某些應用, 需要的並不是完整的剖析樹, 而是把句子中某些成份給找出來</p>
-
-<p><em>Chunking</em> 的概念就是, 把句子中的單字分組, 每一組是由一到多個相鄰的單字所組成, 例如, 想要得出句子中有哪些名詞片語, 就可以把相鄰的定冠詞, 名詞修飾語, 以及名詞, 分成一組, 分組所得出的即為名詞片語</p>
-
-<p>舉個例子, 在以下的句子中, 想要找出名詞片語有哪些</p>
-
-<script type="math/tex; mode=display">
-
-\text{The little yellow dog barked at the cat}.
-
-</script>
-
-<p>首先, 對這個句子進行 <em>Part of speech Tagging</em></p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{array}{c}
-
-&\text{The} &\text{little} &\text{yellow} &\text{dog} &\text{barked} &\text{at} &\text{the} &\text{cat} \\
-
-&\text{DT} &\text{JJ} &\text{JJ} &\text{NN} &\text{VBD} &\text{IN} &\text{DT} &\text{NN} 
-
-\end{array}
-
- %]]></script>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/05/06/python-nltk-rule-based-chunking/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -764,11 +764,15 @@ This is not an apple </p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (13)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (5)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
+      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )</a>
@@ -784,10 +788,6 @@ This is not an apple </p>
     
       <li class="post">
         <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
       </li>
     
   </ul>
