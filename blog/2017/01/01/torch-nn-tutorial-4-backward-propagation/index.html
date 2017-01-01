@@ -134,9 +134,9 @@ y = wx+b
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
 &\text{5.} \mspace{40mu} \Delta w = 0 \\
 &   \mspace{60mu} \Delta b = 0 \\
-&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 &\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
 &   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
 \end{align}
@@ -392,16 +392,16 @@ J = \frac{4.3206 + 15.0009 + 32.1206}{3} = 17.147313377985
 </span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 1<span class="o">]</span>
 </span></code></pre></td></tr></table></div></figure>
 
-<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial y}</script> 的值。</p>
+<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial \bar{y}}</script> 的值。</p>
 
-<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) </script>
+<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) </script>
 
 <p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
 
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \frac{\partial J}{\partial y} = 2(\bar{y} - y)\\
+& \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y)\\
 & =
 \begin{bmatrix}
 2(0.9214 - 3) \\
@@ -443,17 +443,17 @@ J = \frac{4.3206 + 15.0009 + 32.1206}{3} = 17.147313377985
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 \end{align}
  %]]></script>
 
-<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 值代入，即可算出它：</p>
+<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 值代入，即可算出它：</p>
 
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \Delta w =  \frac{\partial J}{\partial y} \times x \\
+& \Delta w =  \frac{\partial J}{\partial \bar{y}} \times x \\
 &=
 \begin{bmatrix}
 -1.3857 \times 1\\
@@ -475,7 +475,7 @@ J = \frac{4.3206 + 15.0009 + 32.1206}{3} = 17.147313377985
 \Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
 </script>
 
-<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 中的每筆資料結果累積起來。</p>
+<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 中的每筆資料結果累積起來。</p>
 
 <script type="math/tex; mode=display">
 \Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461

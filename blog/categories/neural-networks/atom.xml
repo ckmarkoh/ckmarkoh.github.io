@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-01-01T15:20:07+08:00</updated>
+  <updated>2017-01-01T16:34:22+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -20,7 +20,9 @@
     <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation</id>
     <content type="html"><![CDATA[<h2 id="backward-propagation-in-nncriterion">Backward Propagation in nn.Criterion</h2>
 
-<p>本文講解 <code>nn.Criterion</code> 中，與 <code>backward</code> 相關的程式碼。</p>
+<p>本文接續 <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation (part 1)</a> ，講解 <code>nn.Criterion</code> 中，與 backward propagation 相關的程式碼。</p>
+
+<p>Criterion 的 <code>forward</code>  是負責計算 loss funciton <script type="math/tex">J</script> 的值，而 <code>backward</code> 則是計算 <script type="math/tex">\frac{\partial J}{\partial \bar{y}}</script> 的值。其中， <script type="math/tex">\bar{y}</script> 為模型預測出的結果。</p>
 
 <p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
 
@@ -133,7 +135,7 @@ end</p>
 \end{bmatrix}
 </script>
 
-<p>其中， <script type="math/tex">\bar{y}_{1}</script> 代表 <script type="math/tex">\bar{y}</script> 中的第一的元素，而前面乘上 <script type="math/tex">\frac{2}{3}</script> 是因為微分的結果要除以向量長度 3。</p>
+<p>其中， <script type="math/tex">\bar{y}_{1}</script> 代表 <script type="math/tex">\bar{y}</script> 中的第一的元素，而前面乘上 <script type="math/tex">\frac{2}{3}</script> 是因為 <code>sizeAverage</code> 為 <code>true</code> ，所以微分的結果要除以向量長度 3。</p>
 
 <p>以 <code>backward</code> 執行以上運算，程式如下：</p>
 
@@ -195,7 +197,7 @@ print(c1.gradInput)</p>
 \end{bmatrix}
 </script>
 
-<p>將 <code>sizeAverage</code> 設為 <code>false</code> 的方法，即是在建立 criterion 時，輸入 <code>false</code> ，方法如下：</p>
+<p>將 <code>sizeAverage</code> 設為 <code>false</code> 的方法，即是在建立 <code>nn.MSECriterion</code> 時，輸入 <code>false</code> ，方法如下：</p>
 
 <p>``` lua</p>
 
@@ -254,9 +256,9 @@ y = wx+b
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
 &\text{5.} \mspace{40mu} \Delta w = 0 \\
 &   \mspace{60mu} \Delta b = 0 \\
-&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 &\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
 &   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
 \end{align}
@@ -502,16 +504,16 @@ print(l1.gradBias)</p>
 
 <p>```</p>
 
-<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial y}</script> 的值。</p>
+<p>第六步，計算 <script type="math/tex">\frac{\partial J}{\partial \bar{y}}</script> 的值。</p>
 
-<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) </script>
+<script type="math/tex; mode=display"> \text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) </script>
 
 <p>將 <script type="math/tex">y,\bar{y}</script> 的數值帶入以上公式，得出：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \frac{\partial J}{\partial y} = 2(\bar{y} - y)\\
+& \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y)\\
 & =
 \begin{bmatrix}
 2(0.9214 - 3) \\
@@ -553,17 +555,17 @@ print(dj_dy</em>)</p>
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 \end{align}
  %]]&gt;</script>
 
-<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 值代入，即可算出它：</p>
+<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 值代入，即可算出它：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \Delta w =  \frac{\partial J}{\partial y} \times x \\
+& \Delta w =  \frac{\partial J}{\partial \bar{y}} \times x \\
 &=
 \begin{bmatrix}
 -1.3857 \times 1\\
@@ -585,7 +587,7 @@ print(dj_dy</em>)</p>
 \Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
 </script>
 
-<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial y}</script> 中的每筆資料結果累積起來。</p>
+<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 中的每筆資料結果累積起來。</p>
 
 <script type="math/tex; mode=display">
 \Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461

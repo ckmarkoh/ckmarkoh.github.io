@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Backward Propagation in nn.Criterion 本文講解 nn.Criterion 中，與 backward 相關的程式碼。 nn.Criterion 程式碼：https://github.com/torch/nn/blob/master/Criterion.lua &hellip;">
+  <meta name="description" content="Backward Propagation in nn.Criterion 本文接續 Torch NN Tutorial 4: Backward Propagation (part 1) ，講解 nn.Criterion 中，與 backward propagation 相關的程式碼。 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -116,7 +116,9 @@ MathJax.Hub.Config({
 
   <div class="entry-content"><h2 id="backward-propagation-in-nncriterion">Backward Propagation in nn.Criterion</h2>
 
-<p>本文講解 <code>nn.Criterion</code> 中，與 <code>backward</code> 相關的程式碼。</p>
+<p>本文接續 <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation (part 1)</a> ，講解 <code>nn.Criterion</code> 中，與 backward propagation 相關的程式碼。</p>
+
+<p>Criterion 的 <code>forward</code>  是負責計算 loss funciton <script type="math/tex">J</script> 的值，而 <code>backward</code> 則是計算 <script type="math/tex">\frac{\partial J}{\partial \bar{y}}</script> 的值。其中， <script type="math/tex">\bar{y}</script> 為模型預測出的結果。</p>
 
 <p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
 
@@ -193,9 +195,9 @@ y = wx+b
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
 &\text{5.} \mspace{40mu} \Delta w = 0 \\
 &   \mspace{60mu} \Delta b = 0 \\
-&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 &\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
 &   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
 \end{align}
