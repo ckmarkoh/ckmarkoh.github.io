@@ -10,9 +10,9 @@ categories: ['Neural Networks','Torch']
 
 此系列講解如何用 torch 實作 neural network 。
 
-本系列不講解如何安裝 torch ， lua 的基本語法，假設讀者都已具備這些基礎知識。
+本系列不講解如何安裝 torch 及 lua 的基本語法，假設讀者都已具備這些基礎知識。
 
-以 torch 實作 neural network 時，最常用的套件為 [nn](https://github.com/torch/nn)，而在 `nn` 中，建構 neural network 最基本的單位為 [nn.Module](https://github.com/torch/nn/blob/master/Module.lua) 。而所有建構 neural network 本身有關的 module ，都是從 `nn.Module` 所繼承而來。
+以 torch 實作 neural network 時，最常用的套件為 [nn](https://github.com/torch/nn)，而在 `nn` 中，建構 neural network 最基本的單位為 [nn.Module](https://github.com/torch/nn/blob/master/Module.lua) 。 `nn.Module` 是一個抽象類別，所有建構 neural network 本身有關的 module ，都是從 `nn.Module` 所繼承而來。
 
 
 舉個例子，如果要實作以下運算：
@@ -23,7 +23,8 @@ $$
 
 $$
 
-其中，假設 $$\textbf{x}$$ 為 2 維的 input ，而 $$\textbf{y}$$ 為 3 維的output， $$\textbf{W},\textbf{b}$$ 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。
+假設 $$\textbf{x}$$ 為 2 維的 input ，而 $$\textbf{y}$$ 為 3 維的output， $$\textbf{W},\textbf{b}$$ 分別為 weight 和 bias ，此兩參數皆以隨機值進行初始化。
+
 
 使用 torch 實作此運算的方法如下：
 
@@ -31,7 +32,9 @@ $$
 
 
 ```lua
+
 require 'nn'
+
 ```
 
 
@@ -39,18 +42,25 @@ require 'nn'
 
 
 ```lua
+
 l1 = nn.Linear(2,3)
+
 ```
 
 
-其中 [nn.Linear](https://github.com/torch/nn/blob/master/Linear.lua) 即是用來進行 $$\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} $$ 這類的線性運算所用的模組，它繼承了 `nn.Module` 。 而 2 和 3 分別代表了 $$\textbf{x}$$ 和 $$\textbf{y}$$ 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 
+<!--more-->
+
+
+其中， [nn.Linear](https://github.com/torch/nn/blob/master/Linear.lua) 即是用來進行 $$\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} $$ 這類的線性運算所用的模組，它繼承了 `nn.Module` 。 而 2 和 3 分別代表了 $$\textbf{x}$$ 和 $$\textbf{y}$$ 的維度。 當它被建構出來時， weight 和 bias 的值會以隨機值來初始化。 
 
 以上程式中，建立一個命名為 `l1` 的 module ，如果要取得它的 weight 和 bias ，可以用 `l1.weight` 和 `l1.bias` 取得，方法如下：
 
 
 ```lua
+
 print(l1.weight)
 print(l1.bias)
+
 ```
 
 
@@ -59,14 +69,14 @@ print(l1.bias)
 
 ```sh
 
--0.0817 -0.0129
--0.1369 -0.5361
- 0.0573  0.1407
+ 0.1453  0.5062
+ 0.0635  0.4911
+-0.1080  0.1747
 [torch.DoubleTensor of size 3x2]
 
--0.6550
- 0.2567
- 0.2491
+ 0.2063
+-0.1635
+-0.0883
 [torch.DoubleTensor of size 3]
 
 ```
@@ -74,7 +84,7 @@ print(l1.bias)
 
 其中， size 3x2 的 tensor 為 weight, size 3 的 tensor 為 bias。
 
-用此 module 可以執行運算，令 x 為一個二維向量 [0,1] ，輸入此 module ，進行 forward propagation ，也就是說，執行 $$\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} $$ 的運算， 並輸出結果為 $$\textbf{y}$$  ，實作如下：
+用此 module 可以執行運算，令 x 為一個二維向量 $$[0,1]$$ ，輸入此 module ，進行 forward propagation ，也就是說，執行 $$\textbf{y} = \textbf{W}\textbf{x} + \textbf{b} $$ 的運算， 並輸出結果為 $$\textbf{y}$$  ，實作如下：
 
 
 ```lua
@@ -90,51 +100,34 @@ print(y)
 
 
 ```sh
--0.6679
--0.2794
- 0.3899
+
+ 0.7125
+ 0.3276
+ 0.0865
 [torch.DoubleTensor of size 3]
 
 ```
-
-
-也可以從 `l1.output` 來直接取得 `l1` 之前進行運算的結果。
-
-
-```lua
-print(l1.output)
-```
-
-
-結果如下：
-
-
-```sh
--0.6679
--0.2794
- 0.3899
-[torch.DoubleTensor of size 3]
-```
-
 
 
 ## nn.Module & nn.Linear
 
-這邊要更進一步介紹 `nn.Module` 和 `nn.Linear` 的內容是什麼。由於 torch 的源碼相當簡潔易懂，可以直接看源碼來了解它的功能是什麼。
+這邊要更進一步介紹 `nn.Module` 和 `nn.Linear` 的內容是什麼。由於 torch 的程式碼相當簡潔易懂，可以直接看程式碼來了解它的功能是什麼。
 
-`nn.Module` 源碼： [https://github.com/torch/nn/blob/master/Module.lua](https://github.com/torch/nn/blob/master/Module.lua)
+`nn.Module` 程式碼： [https://github.com/torch/nn/blob/master/Module.lua](https://github.com/torch/nn/blob/master/Module.lua)
 
-`nn.Linear` 源碼： [https://github.com/torch/nn/blob/master/Linear.lua](https://github.com/torch/nn/blob/master/Linear.lua)
+`nn.Linear` 程式碼： [https://github.com/torch/nn/blob/master/Linear.lua](https://github.com/torch/nn/blob/master/Linear.lua)
 
 首先，介紹 `nn.Module` ，先看 `init()` 的部分：
 
 
-```lua
+```lua nn/Module.lua
+
 function Module:__init()
    self.gradInput = torch.Tensor()
    self.output = torch.Tensor()
    self._type = self.output:type()
 end
+
 ```
 
 
@@ -148,7 +141,7 @@ end
 在 `Module:forward` 的部分，是用來進行 forward propagation的，如下：
 
 
-```lua
+```lua nn/Module.lua
 
 function Module:updateOutput(input)
    return self.output
@@ -170,7 +163,7 @@ end
 再來看 `nn.Linear` 的程式碼，先看 `init()` 的部分：
 
 
-```lua
+```lua nn/Linear.lua
 
 local Linear, parent = torch.class('nn.Linear', 'nn.Module')
 
@@ -196,35 +189,42 @@ end
 
 如果要建立一個 Linear Module，則要給定 `inputSize` 和 `outputSize` ，也就是 $$\textbf{x}$$ 和 $$\textbf{y}$$ 的維度。
 
+
 假設  $$\textbf{x}$$ 是二維， $$\textbf{y}$$ 是三維，建立一個命名為 `l2` 的 Linear 模組：
 
 
 ```lua
+
 l2 = nn.Linear(2,3)
+
 ```
+
 
 
 用以下方法印出 l2 的 `weight` , `bias` 和 `output` ：
 
 
 ```lua
+
 print(l2.weight)
 print(l2.bias)
 print(l2.output)
+
 ```
 
 輸出結果如下：
 
 
 ```sh
- 0.0690  0.1313
- 0.3043  0.4869
- 0.1453  0.5062
+
+-0.2863  0.5541
+-0.6269  0.6557
+-0.3215 -0.1648
 [torch.DoubleTensor of size 3x2]
 
- 0.0635
- 0.4911
--0.1080
+-0.0316
+ 0.4126
+ 0.4415
 [torch.DoubleTensor of size 3]
 
 [torch.DoubleTensor with no dimension]
@@ -235,10 +235,39 @@ print(l2.output)
 其中，`weight` 和 `bias` 會被初始化隨機成 size 3x2 和 size 3 的 double tensor ，而最後一行顯示出 `output` 還是空的（with no dimension）。
 
 
-要讓 `output` 有值，就要進行 forward propagation 。而 `Linear:updateOutput` 則是實作了 `Module:updateOutput` 中， forward propagation 運算的實際內容，程式碼如下：
+如果想知道各個 variable 的 size ，還有個方式，就是直接用 print 的方式把它印出來，作法如下：
 
 
 ```lua
+
+print(l2)
+
+```
+
+
+執行結果如下：
+
+
+```sh
+
+nn.Linear(2 -> 3)
+{
+  gradBias : DoubleTensor - size: 3
+  weight : DoubleTensor - size: 3x2
+  _type : torch.DoubleTensor
+  output : DoubleTensor - empty
+  gradInput : DoubleTensor - empty
+  bias : DoubleTensor - size: 3
+  gradWeight : DoubleTensor - size: 3x2
+}
+
+```
+
+
+要讓 `output` 有值，就要進行 forward propagation 。而 `Linear:updateOutput` 則是實作了 `Module:updateOutput` 中， forward propagation 運算的實際內容，程式碼如下：
+
+
+```lua nn/Linear.lua
 
 function Linear:updateOutput(input)
    if input:dim() == 1 then
@@ -261,6 +290,7 @@ function Linear:updateOutput(input)
 
    return self.output
 end
+
 ```
 
 
@@ -279,11 +309,9 @@ $$
 $$
 \begin{align}
 &\begin{bmatrix}
-
- 0.0690 & 0.1313 \\
- 0.3043 & 0.4869 \\
- 0.1453 & 0.5062 \\
-
+-0.2863 & 0.5541 \\
+-0.6269 & 0.6557 \\
+-0.3215 & -0.1648 \\
 \end{bmatrix}
 \begin{bmatrix}
 0 \\
@@ -291,27 +319,27 @@ $$
 \end{bmatrix}
 + 
 \begin{bmatrix}
-0.0635 \\
-0.4911 \\
--0.1080 \\
+-0.0316 \\
+ 0.4126 \\
+ 0.4415 \\
 \end{bmatrix}
 =
 \begin{bmatrix}
-0.0690 \times 0 + 0.1313 \times 1 + 0.0635 \\
-0.3043 \times 0 + 0.4869 \times 1 + 0.4911\\
-0.1453 \times 0 + 0.5062 \times 1  -0.1080\\
+-0.2863 \times 0 + 0.5541 \times 1  -0.0316 \\
+-0.6269 \times 0 + 0.6557 \times 1 + 0.4126\\
+-0.3215 \times 0  -0.1648 \times 1 + 0.4415\\
 \end{bmatrix}\\
 &=
 \begin{bmatrix}
-0.1313 + 0.0635 \\
-0.4869 + 0.4911\\
-0.5062  -0.1080\\
+0.5541 -0.0316 \\
+0.6557 + 0.4126\\
+-0.1648 + 0.4415\\
 \end{bmatrix}
 =
 \begin{bmatrix}
- 0.1948 \\
- 0.9780  \\
- 0.3982\\
+  0.5225 \\
+  1.0683  \\
+  0.2766 \\
 \end{bmatrix}
 \end{align}
 
@@ -321,7 +349,9 @@ $$
 
 
 ```lua
+
 print(l2:forward(torch.Tensor{0,1}))
+
 ```
 
 
@@ -329,9 +359,10 @@ print(l2:forward(torch.Tensor{0,1}))
 
 
 ```sh
- 0.1948
- 0.9780
- 0.3982
+
+ 0.5225
+ 1.0683
+ 0.2766
 [torch.DoubleTensor of size 3]
 
 ```
@@ -341,7 +372,9 @@ print(l2:forward(torch.Tensor{0,1}))
 
 
 ```lua
+
 print(l2.output)
+
 ```
 
 
@@ -349,9 +382,10 @@ print(l2.output)
 
 
 ```sh
- 0.1948
- 0.9780
- 0.3982
+
+ 0.5225
+ 1.0683
+ 0.2766
 [torch.DoubleTensor of size 3]
 
 ```
@@ -364,12 +398,15 @@ print(l2.output)
 從公式上來看，輸入值 $$\textbf{X}$$ 是二維的矩陣，則進行以下矩陣運算：
 
 $$
-\textbf{X}\textbf{W}^{T} + \textbf{b}
+\textbf{X}\textbf{W}^{T} + \textbf{B}
 $$
 
 此時， $$\textbf{X}$$ 放前面，而 $$\textbf{W}$$ 進行轉置後放後面。
 
+而 $$\textbf{B}$$ 是將 $$\textbf{b}$$ 轉置以後，再複製其橫排所形成的矩陣，以便和前面的矩陣相乘結果來相加。
+
 例如當輸入資料有兩筆向量 $$[0, 1]$$ 和 $$[2, 1]$$ 時，則可以組成以下矩陣 (2x2) ：
+
 
 $$
 \begin{bmatrix}
@@ -390,45 +427,46 @@ $$
 2 &1 \\
 \end{bmatrix}
 \begin{bmatrix}
-0.0690 & 0.3043 & 0.1453 \\
-0.1313 & 0.4869 & 0.5062 \\
-\end{bmatrix}
+-0.2863 & -0.6269 & -0.3215 \\
+ 0.5541 & 0.6557 & -0.1648 \\
+ \end{bmatrix}
 + 
 \begin{bmatrix}
-0.0635 &0.4911 &-0.1080 
+-0.0316 & 0.4126 & 0.4415 \\
+-0.0316 & 0.4126 & 0.4415 
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
-0 \times 0.0690 + 1 \times 0.1313 
-& 0 \times 0.3043 + 1 \times 0.4869
-& 0 \times 0.1453 + 1 \times 0.5062 \\
+   -0.2863 \times 0 +  0.5541 \times 1
+&  -0.6269 \times 0 +  0.6557 \times 1
+&  -0.3215 \times 0   -0.1648 \times 1\\
 
- 2 \times 0.0690 + 1 \times 0.1313 
-& 2 \times 0.3043 + 1 \times 0.4869
-& 2 \times 0.1453 + 1 \times 0.5062 \\
+   -0.2863 \times 2 +  0.5541 \times 1
+&  -0.6269 \times 2 +  0.6557 \times 1
+&  -0.3215 \times 2   -0.1648 \times 1\\
 \end{bmatrix}\\
 &
 + 
 \begin{bmatrix}
-0.0635 &0.4911 &-0.1080 \\
-0.0635 &0.4911 &-0.1080
+-0.0316 & 0.4126 & 0.4415 \\
+-0.0316 & 0.4126 & 0.4415 
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
-0.1313 +0.0635
-& 0.4869 +0.4911
-& 0.5062 -0.1080 \\
-0.2694 + 0.0635
-& 1.0955 +0.4911
-& 0.7969 -0.1080 \\
+0.5541 -0.0316
+& 0.6557 +0.4126
+& -0.1648 +0.4415 \\
+-0.0186  -0.0316
+& -0.5981 +0.4126
+& -0.8079 +0.4415 \\
 \end{bmatrix}\\
 &
 =
 \begin{bmatrix}
- 0.1948 & 0.9780 & 0.3982 \\
- 0.3328 & 1.5866 & 0.6889 \\
+ 0.5225 & 1.0683  & 0.2766 \\
+-0.0502 & -0.1855 & -0.3664 \\
 \end{bmatrix}
 \end{align}\\
 
@@ -436,19 +474,19 @@ $$
 
 輸出結果為一個 2x3 的矩陣，每一個橫排為一個三維向量，代表著每一筆資料經過線性運算的結果。
 
-以上要注意的就是， $$\textbf{b}$$ 的橫排會被複製，以便和前面的矩陣相乘結果來相加。
-
 
 實作以上算式，呼叫 `l2:forward` ，輸入由 `{0,1}` 和 `{2,1}` 這兩筆資料組成的 batch， 並印出結果：
 
 
 {% raw %}
 ```lua
+
 input={
    {0,1},
    {2,1}
 }
 print(l2:forward(torch.Tensor(input)))
+
 ```
 {% endraw %}
 
@@ -457,9 +495,11 @@ print(l2:forward(torch.Tensor(input)))
 
 
 ```sh
- 0.1948  0.9780  0.3982
- 0.3328  1.5866  0.6889
+
+ 0.5225  1.0683  0.2766
+-0.0502 -0.1855 -0.3664
 [torch.DoubleTensor of size 2x3]
+
 ```
 
 
@@ -467,7 +507,9 @@ print(l2:forward(torch.Tensor(input)))
 
 
 ```lua
+
 print(l2.output)
+
 ```
 
 
@@ -475,10 +517,22 @@ print(l2.output)
 
 
 ```sh
- 0.1948  0.9780  0.3982
- 0.3328  1.5866  0.6889
+
+ 0.5225  1.0683  0.2766
+-0.0502 -0.1855 -0.3664
 [torch.DoubleTensor of size 2x3]
+
 ```
+
+
+
+
+
+## Materials
+
+本次教學的完整程式碼於此：
+
+[https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb](https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/1_nn_module_and_linear.ipynb)
 
 
 
