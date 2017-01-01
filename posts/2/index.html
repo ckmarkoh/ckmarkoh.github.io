@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 若某個有 個維度的 data 的產生，是跟某個有 個維度的 hidden variable 有關，在機率圖模型，表示成： 從這機率圖形，可得出 hidden variable 和 的聯合分佈機率： 若是給定 hidden variable 的值，則可產生 data ，如下 &hellip;">
+  <meta name="description" content="Introduction 對一個 Markov Chain 而言，不論起始狀態為多少，最後會達到一個穩定平衡的狀態。 舉個例子，以下為一 Markov Chain 則此 Markov Chain 達平衡狀態時， 的比率為，也就是說： 不管此 Markov Chain 的起始狀態如何， &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,101 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/07/pgm-metropolis-hasting/">Metropolis Hasting</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-07T17:21:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>7</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>5:21 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>對一個 <em>Markov Chain</em> 而言，不論起始狀態為多少，最後會達到一個穩定平衡的狀態。</p>
+
+<p>舉個例子，以下為一 <em>Markov Chain</em></p>
+
+<p><img src="/images/pic/pic_00172.png" alt="" /></p>
+
+<p>則此 <em>Markov Chain</em> 達平衡狀態時， <script type="math/tex">A,B</script> 的比率為<script type="math/tex"> 5:6 </script>，也就是說：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{align}
+
+&
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix}
+
+=
+
+\begin{bmatrix} 
+
+0.4 & 0.5 \\
+
+0.6 & 0.5 
+
+\end{bmatrix}
+
+\begin{bmatrix} 
+
+A \\
+
+B
+
+\end{bmatrix} \\
+
+& \Rightarrow
+
+\begin{cases}
+
+4A+5B = 10A \\
+
+6A+5B = 10B 
+
+\end{cases}\\
+
+& \Rightarrow 6A = 5B
+
+\end{align}
+
+ %]]></script>
+
+<p>不管此 <em>Markov Chain</em> 的起始狀態如何，最後達平衡狀態時， <script type="math/tex">A,B</script> 的比率一定為<script type="math/tex"> 5:6 </script>。因此，如果在這 <em>Markov Chain</em> 的  <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 任一一個點開始走，假設走的次數夠多的話，走到 <script type="math/tex">A</script> 和走到 <script type="math/tex">B</script> 的比例。會是 <script type="math/tex">5 : 6</script> 。因此，可利用 <em>Markov Chain</em> 最後會收斂到一穩定狀態的特性，來進行抽樣。</p>
+
+<p><em>Metropolis Sampler</em> 即是給定一機率分佈函數，從這機率函數建立 <em>Markov Chain</em> ，然後再用建立出來的 <em>Markov Chain</em> 來進行抽樣。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/07/pgm-metropolis-hasting/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -600,56 +695,6 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/">Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-05-23T15:33:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2015</span></span> <span class='time'>3:33 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>將類神經網路應用在自然語言處理領域的模型有<a href="/blog/2015/05/15/neural-network-neural-probabilistic-language-model">Neural Probabilistic Language Model(NPLM)</a>，但在實際應用時，運算瓶頸在於 <em>output layer</em> 的神經元個數，等同於總字彙量 <script type="math/tex">\mid V\mid </script> 。</p>
-
-<p>每訓練一個字時，要讓 <em>output layer</em> 在那個字所對應的神經元輸出值為 <script type="math/tex">1</script> ，而其他 <script type="math/tex">\mid V\mid -1</script> 個神經元的輸出為 <script type="math/tex">0</script> ， 這樣總共要計算 <script type="math/tex">\mid V\mid </script> 次，會使得訓練變得沒效率。</p>
-
-<p>若要減少於 <em>output layer</em> 的訓練時間，可以把 <em>output layer</em> 的字作分類階層，先判別輸出的字是屬於哪類，再判斷其子類別，最後再判斷是哪個字。 </p>
-
-<h2 id="hierarchical-softmax">Hierarchical Softmax</h2>
-
-<p>給定訓練資料為<script type="math/tex">X</script> ，輸出字的集合為 <script type="math/tex">Y</script> 。當輸入的字串為 <script type="math/tex">x</script> ，輸出的字為 <script type="math/tex">y</script> 時，訓練的演算法要將機率 <script type="math/tex">P (Y=y \mid  X=x) </script> 最佳化。</p>
-
-<p>如果 <script type="math/tex">Y</script> 有 <em>10000</em> 種字，若沒有分類階層，訓練時就要直接對 <script type="math/tex">P (Y = y \mid  X = x) </script> 做計算，即是對這 <em>10000</em>種字做計算，使 <script type="math/tex">y</script> 所對應的神經元輸出為 <em>1</em> ，其它 <em>9999</em> 個神經元輸出 <em>0</em> ，這樣要計算 <em>10000</em> 次，如下圖：</p>
-
-<p><img src="/images/pic/pic_00079.png" alt="" /></p>
-
-<p>若在訓練前，就事先把 <script type="math/tex">Y</script> 中的字彙分類好，以 <script type="math/tex">C(y)</script> 代表字 <script type="math/tex">y</script> 的類別，則可以改成用以下機率做最佳化：</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -664,14 +709,18 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (13)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (5)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+        <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
       </li>
     
       <li class="post">
@@ -684,10 +733,6 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
   </ul>

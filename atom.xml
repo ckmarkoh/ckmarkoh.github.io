@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-01-01T14:22:44+08:00</updated>
+  <updated>2017-01-01T15:20:07+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -14,7 +14,252 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)]]></title>
+    <title type="html"><![CDATA[Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/"/>
+    <updated>2017-01-01T15:17:57+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation</id>
+    <content type="html"><![CDATA[<h2 id="backward-propagation-in-nncriterion">Backward Propagation in nn.Criterion</h2>
+
+<p>本文講解 <code>nn.Criterion</code> 中，與 <code>backward</code> 相關的程式碼。</p>
+
+<p><code>nn.Criterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/Criterion.lua">https://github.com/torch/nn/blob/master/Criterion.lua</a></p>
+
+<p><code>backward</code> 的部分，如下：</p>
+
+<figure class="code"><figcaption><span>nn/Criterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span><span class="line">
+</span><span class="line"><span class="k">function</span> <span class="nf">Criterion</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p><code>nn,Criterion</code> 的 <code>backward</code> 只做一件事，也就是 <code>updateGradInput</code> ，而  <code>updateGradInput</code> 的運算內容則由繼承它的類別來實作。</p>
+
+<!--more-->
+
+<h2 id="backward-propagation-in-nnmsecriterion">Backward Propagation in nn.MSECriterion</h2>
+
+<p>本文舉 <code>nn.MSECriterion</code> 為例。</p>
+
+<p><code>nn.MSECriterion</code> 程式碼：<a href="https://github.com/torch/nn/blob/master/MSECriterion.lua">https://github.com/torch/nn/blob/master/MSECriterion.lua</a></p>
+
+<p><code>updateGradInput</code> 的部分，如下：</p>
+
+<figure class="code"><figcaption><span>nn/MSECriterion.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="k">function</span> <span class="nf">MSECriterion</span><span class="p">:</span><span class="n">updateGradInput</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+</span><span class="line">   <span class="n">input</span><span class="p">.</span><span class="n">THNN</span><span class="p">.</span><span class="n">MSECriterion_updateGradInput</span><span class="p">(</span>
+</span><span class="line">      <span class="n">input</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">target</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span><span class="p">:</span><span class="n">cdata</span><span class="p">(),</span>
+</span><span class="line">      <span class="n">self</span><span class="p">.</span><span class="n">sizeAverage</span>
+</span><span class="line">   <span class="p">)</span>
+</span><span class="line">   <span class="k">return</span> <span class="n">self</span><span class="p">.</span><span class="n">gradInput</span>
+</span><span class="line"><span class="k">end</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>此部分的運算由 C 來實作，運算完後，回傳結果 <code>gradInput</code> 。</p>
+
+<p>C 程式碼： <a href="https://github.com/torch/nn/blob/master/lib/THNN/generic/MSECriterion.c">https://github.com/torch/nn/blob/master/lib/THNN/generic/MSECriterion.c</a></p>
+
+<figure class="code"><figcaption><span>nn/lib/THNN/generic/MSECriterion.c</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+<span class="line-number">12</span>
+<span class="line-number">13</span>
+<span class="line-number">14</span>
+<span class="line-number">15</span>
+<span class="line-number">16</span>
+</pre></td><td class="code"><pre><code class="c"><span class="line"><span class="kt">void</span> <span class="nf">THNN_</span><span class="p">(</span><span class="n">MSECriterion_updateGradInput</span><span class="p">)(</span>
+</span><span class="line">          <span class="n">THNNState</span> <span class="o">*</span><span class="n">state</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">input</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">target</span><span class="p">,</span>
+</span><span class="line">          <span class="n">THTensor</span> <span class="o">*</span><span class="n">gradInput</span><span class="p">,</span>
+</span><span class="line">          <span class="kt">bool</span> <span class="n">sizeAverage</span><span class="p">)</span>
+</span><span class="line"><span class="p">{</span>
+</span><span class="line">  <span class="n">THNN_CHECK_NELEMENT</span><span class="p">(</span><span class="n">input</span><span class="p">,</span> <span class="n">target</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">real</span> <span class="n">norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">sizeAverage</span> <span class="o">?</span> <span class="mf">2.</span><span class="o">/</span><span class="p">((</span><span class="n">real</span><span class="p">)</span><span class="n">THTensor_</span><span class="p">(</span><span class="n">nElement</span><span class="p">)(</span><span class="n">input</span><span class="p">))</span> <span class="o">:</span> <span class="mf">2.</span><span class="p">);</span>
+</span><span class="line">
+</span><span class="line">  <span class="n">THTensor_</span><span class="p">(</span><span class="n">resizeAs</span><span class="p">)(</span><span class="n">gradInput</span><span class="p">,</span> <span class="n">input</span><span class="p">);</span>
+</span><span class="line">  <span class="n">TH_TENSOR_APPLY3</span><span class="p">(</span><span class="n">real</span><span class="p">,</span> <span class="n">gradInput</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">input</span><span class="p">,</span> <span class="n">real</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span>
+</span><span class="line">    <span class="o">*</span><span class="n">gradInput_data</span> <span class="o">=</span> <span class="n">norm</span> <span class="o">*</span> <span class="p">(</span><span class="o">*</span><span class="n">input_data</span> <span class="o">-</span> <span class="o">*</span><span class="n">target_data</span><span class="p">);</span>
+</span><span class="line">  <span class="p">);</span>
+</span><span class="line"><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>主要的運算是由第13行的 <code>TH_TENSOR_APPLY3</code> 來執行，這個 function 的意思是，執行某個 function 在三個 tensor 上。而要執行的 function 是 <code>*gradInput_data = norm * (*input_data - *target_data)</code> ，它需要 tensor ，分別是 <code>input_data</code> ， <code>target_data</code> 和 <code>gradInput_data</code> 。</p>
+
+<p>從數學公式上來看，公式如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+& \frac{\partial J}{\partial \bar{y} } = \frac{ \partial (\bar{y} -y)^2  }{\partial \bar{y}} \\
+& = 2(\bar{y} -y)
+\end{align}
+ %]]&gt;</script>
+
+<p>其中， <script type="math/tex"> \frac{\partial J}{\partial \bar{y} } </script> 為 <code>gradInput_data</code> ， <script type="math/tex">\bar{y}</script> 為 <code>input_data</code> ，而 <script type="math/tex">y</script> 為 <code>target_data</code> 。  <script type="math/tex">2</script> 為常數 <code>norm</code> 。</p>
+
+<p>如果 <script type="math/tex"> \bar{y} </script> 和 <script type="math/tex">y</script> 皆為向量，則 <script type="math/tex"> \frac{\partial J}{\partial \bar{y} } </script> 則是針對 <script type="math/tex"> \bar{y} </script> 中的每個元素來分別計算，如果 <code>sizeAverage</code> 為 true 的話，<code>norm</code> 還要除以向量的長度。舉以下例子，<script type="math/tex"> \bar{y} = [1,1,1], y=[1,2,3] </script>  則 ：</p>
+
+<script type="math/tex; mode=display">
+\frac{\partial J}{\partial \bar{y} } = 
+\begin{bmatrix}
+\frac{\partial J}{\partial \bar{y}_{1} } \\
+\frac{\partial J}{\partial \bar{y}_{2} } \\ 
+\frac{\partial J}{\partial \bar{y}_{3} } \\
+\end{bmatrix} 
+=
+\frac{2}{3}
+\begin{bmatrix}
+\bar{y}_{1} - y_{1} \\
+\bar{y}_{2} - y_{2} \\
+\bar{y}_{3} - y_{3} \\
+\end{bmatrix} 
+=
+\frac{2}{3}
+\begin{bmatrix}
+1 - 1 \\
+1 - 2 \\
+1 - 3 \\
+\end{bmatrix} 
+=
+\begin{bmatrix}
+0.0000 \\
+-0.6667 \\
+-1.3333 \\
+\end{bmatrix}
+</script>
+
+<p>其中， <script type="math/tex">\bar{y}_{1}</script> 代表 <script type="math/tex">\bar{y}</script> 中的第一的元素，而前面乘上 <script type="math/tex">\frac{2}{3}</script> 是因為微分的結果要除以向量長度 3。</p>
+
+<p>以 <code>backward</code> 執行以上運算，程式如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+<span class="line-number">5</span>
+<span class="line-number">6</span>
+<span class="line-number">7</span>
+<span class="line-number">8</span>
+<span class="line-number">9</span>
+<span class="line-number">10</span>
+<span class="line-number">11</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">y_</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span>
+</span><span class="line">    <span class="p">{</span><span class="mi">1</span><span class="p">},{</span><span class="mi">1</span><span class="p">},{</span><span class="mi">1</span><span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="n">Tensor</span><span class="p">{</span>
+</span><span class="line">    <span class="p">{</span><span class="mi">1</span><span class="p">},{</span><span class="mi">2</span><span class="p">},{</span><span class="mi">3</span><span class="p">}</span>
+</span><span class="line"><span class="p">}</span>
+</span><span class="line">
+</span><span class="line"><span class="n">c1</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">()</span>
+</span><span class="line"><span class="n">c1</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c1</span><span class="p">.</span><span class="n">gradInput</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0.0000
+</span><span class="line">-0.6667
+</span><span class="line">-1.3333
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>如果 <code>sizeAverage</code> 為 <code>false</code> 的話， 則不需再除以 <code>input</code> 的大小， <script type="math/tex"> \frac{\partial J}{\partial \bar{y} } </script> 的結果如下：</p>
+
+<script type="math/tex; mode=display">
+\frac{\partial J}{\partial \bar{y} } = 
+\begin{bmatrix}
+\frac{\partial J}{\partial \bar{y}_{1} } \\
+\frac{\partial J}{\partial \bar{y}_{2} } \\ 
+\frac{\partial J}{\partial \bar{y}_{3} } \\
+\end{bmatrix} 
+=
+2
+\begin{bmatrix}
+\bar{y}_{1} - y_{1} \\
+\bar{y}_{2} - y_{2} \\
+\bar{y}_{3} - y_{3} \\
+\end{bmatrix} 
+=
+2
+\begin{bmatrix}
+1 - 1 \\
+1 - 2 \\
+1 - 3 \\
+\end{bmatrix} 
+=
+\begin{bmatrix}
+0 \\
+-2 \\
+-4 \\
+\end{bmatrix}
+</script>
+
+<p>將 <code>sizeAverage</code> 設為 <code>false</code> 的方法，即是在建立 criterion 時，輸入 <code>false</code> ，方法如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+</pre></td><td class="code"><pre><code class="lua"><span class="line"><span class="n">c2</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="n">MSECriterion</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+</span><span class="line"><span class="n">c2</span><span class="p">:</span><span class="n">backward</span><span class="p">(</span><span class="n">y_</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+</span><span class="line"><span class="nb">print</span><span class="p">(</span><span class="n">c2</span><span class="p">.</span><span class="n">gradInput</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<p>以 <code>backward</code> 執行運算，結果如下：</p>
+
+<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
+<span class="line-number">2</span>
+<span class="line-number">3</span>
+<span class="line-number">4</span>
+</pre></td><td class="code"><pre><code class="sh"><span class="line"> 0
+</span><span class="line">-2
+</span><span class="line">-4
+</span><span class="line"><span class="o">[</span>torch.DoubleTensor of size 3x1<span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+<h2 id="materials">Materials</h2>
+
+<p>本次教學的完整程式碼於此：</p>
+
+<p><a href="https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/5_backward_propagation_part_2.ipynb">https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/5_backward_propagation_part_2.ipynb
+</a></p>
+
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )]]></title>
     <link href="http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/"/>
     <updated>2017-01-01T14:00:00+08:00</updated>
     <id>http://ckmarkoh.github.io/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation</id>
@@ -8217,110 +8462,6 @@ J =-( z_{1}\times log(n_{21(out)}) + (1-z_{1})\times log (1 -n_{21(out)} ) + z_{
 <p>本文參考 coursera 課程 Andrew Ng. Machine Learning</p>
 
 <p>https://www.coursera.org/course/ml</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Hierarchical Probabilistic Neural Network Language Model (Hierarchical Softmax)]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model/"/>
-    <updated>2015-05-23T15:33:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/05/23/-hierarchical-probabilistic-neural-networks-neural-network-language-model</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>將類神經網路應用在自然語言處理領域的模型有<a href="http://ckmarkoh.github.io/blog/2015/05/15/neural-network-neural-probabilistic-language-model">Neural Probabilistic Language Model(NPLM)</a>，但在實際應用時，運算瓶頸在於 <em>output layer</em> 的神經元個數，等同於總字彙量 <script type="math/tex">\mid V\mid </script> 。</p>
-
-<p>每訓練一個字時，要讓 <em>output layer</em> 在那個字所對應的神經元輸出值為 <script type="math/tex">1</script> ，而其他 <script type="math/tex">\mid V\mid -1</script> 個神經元的輸出為 <script type="math/tex">0</script> ， 這樣總共要計算 <script type="math/tex">\mid V\mid </script> 次，會使得訓練變得沒效率。</p>
-
-<p>若要減少於 <em>output layer</em> 的訓練時間，可以把 <em>output layer</em> 的字作分類階層，先判別輸出的字是屬於哪類，再判斷其子類別，最後再判斷是哪個字。 </p>
-
-<h2 id="hierarchical-softmax">Hierarchical Softmax</h2>
-
-<p>給定訓練資料為<script type="math/tex">X</script> ，輸出字的集合為 <script type="math/tex">Y</script> 。當輸入的字串為 <script type="math/tex">x</script> ，輸出的字為 <script type="math/tex">y</script> 時，訓練的演算法要將機率 <script type="math/tex">P (Y=y \mid  X=x) </script> 最佳化。</p>
-
-<p>如果 <script type="math/tex">Y</script> 有 <em>10000</em> 種字，若沒有分類階層，訓練時就要直接對 <script type="math/tex">P (Y = y \mid  X = x) </script> 做計算，即是對這 <em>10000</em>種字做計算，使 <script type="math/tex">y</script> 所對應的神經元輸出為 <em>1</em> ，其它 <em>9999</em> 個神經元輸出 <em>0</em> ，這樣要計算 <em>10000</em> 次，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00079.png" alt="" /></p>
-
-<p>若在訓練前，就事先把 <script type="math/tex">Y</script> 中的字彙分類好，以 <script type="math/tex">C(y)</script> 代表字 <script type="math/tex">y</script> 的類別，則可以改成用以下機率做最佳化：</p>
-
-<!--more-->
-
-<script type="math/tex; mode=display">
-
-P (Y = y | X = x) =
-
-P (Y = y | C = c(y), X) \times P (C = c(y) | X = x)
-
-
-</script>
-
-<p>根據以上公式，先判斷 <script type="math/tex">y</script> 是在哪類，要算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> 的值，再判斷 <script type="math/tex">y</script> 是 <script type="math/tex">c(y)</script> 中的哪個字，要算 <script type="math/tex">P (Y = y \mid  C = c(y), X) </script> 的值。</p>
-
-<p>若把它們分成 <em>100</em> 類，則每個類別有 <em>100</em> 種字。訓練時需要分成兩步來計算，第一步先計算 <script type="math/tex">P (C = c(y) \mid  X = x)</script> ，此時只要對 <em>100</em> 種分類做計算，使 <script type="math/tex">C(y)</script> 所對應的神經元輸出 <em>1</em> ，其它 <em>99</em> 個神經元輸出 <em>0</em> 。第二步是算 <script type="math/tex">P (Y = y \mid  C = c(y), X)</script>，即是讓 <script type="math/tex">C(y)</script> 底下對應到 <script type="math/tex">y</script> 的神經元輸出 <em>1</em> ，其它<em>99</em> 個神經元輸出 <em>0</em> ，這樣只需要計算 <em>200</em> 次即可，所做的計算只有原本的 <script type="math/tex">\frac{1}{50}</script> ，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00080.png" alt="" /></p>
-
-<p>更進一步地，可以將 <em>output layer</em> 分成更多層，也就是說，將它用成樹狀結構，每一個節點代表一次分類，這樣一層層分下去，直到葉子節點，可分出是哪個字彙。分越多層，訓練時要計算的次數就會越小，分到最細的情況下，就變成二元分類樹，這樣所需的計算總量只有原本的 <script type="math/tex">\frac{log_{2}\mid V\mid }{\mid V\mid }</script> 倍。</p>
-
-<p>根據這個二元分類樹，可以把 <script type="math/tex">Y</script> 中的每一個字，對應到一個由 <em>0</em> 和 <em>1</em> 所組成的二元字串 <script type="math/tex">(b_{1}(y), . . . b_{m}(y))</script> ，若字串中第一個數字為 <em>0</em> ，則表示這個字在第一層神經元所計算出的值為 <em>0</em>，以此類推。若要用這個二元分類樹計算 <script type="math/tex">P (Y = y \mid  X = x) </script> 可用以下公式來計算：</p>
-
-<script type="math/tex; mode=display">
-
-P( Y = y | X = x) =
-
-\prod_{j=1}^{m}P(b_{j}(y) | b_{j-1}(y),b_{j-2}(y),...,b_{1}(y), X=x)
-
-</script>
-
-<p>其中， <script type="math/tex">（b_{j−1}(y),b_{j−2}(y),...,b_{1}(y))</script> 為長度小於 <script type="math/tex">m</script> 的二元字串，即是在二元分類樹中不是葉子也不是根的節點。</p>
-
-<p>例如字串 <script type="math/tex">( b_{1}=0, b_{2}=1 )</script>即表示先從根節點往 <em>0</em> 的分支走到子節點，再從這個子節點走到 <em>1</em> 的分支的子節點，此子節點可用字串 <em>01</em> 來表示。若要計算以上公式的條件機率，方法為，先給這些子節點有它們自己的語意向量，再用 <em>NPLM</em> 把子節點的語意向量和 <script type="math/tex">x</script> 當成輸入值一起輸入 <em>NPLM</em> 來計算。</p>
-
-<p>例如，假設詞庫裡總共有 <em>8</em> 個字， 則 <script type="math/tex">m=3</script> ，若字彙 <script type="math/tex">y</script> 的二元字串值 <script type="math/tex">b_{1} = 1, b_{2} =0, b_{3}=0 </script> ，則它在二元分類樹的位置如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00081.png" alt="" /></p>
-
-<p>則 <script type="math/tex">P( Y = y \mid  X = x) </script> 為：</p>
-
-<script type="math/tex; mode=display">
-
-P(b_{1} = 1 | X=x) \times
-
-P(b_{2} = 0 | b_{1} = 1, X=x) \times 
-
-P(b_{3} = 0| b_{2} = 0, b_{1} = 1, X=x)
-
-</script>
-
-<p>訓練時，將訓練資料 <script type="math/tex">x</script> 輸入到 <em>NPLM</em> 的類神經網路中，並以二元分類樹的節點來代替它的 <em>output layer</em> 。</p>
-
-<p>首先，先從根節點的神經元開始訓練，這一步是要算 <script type="math/tex">P(b_{1} = 1 \mid  , X=x) </script> 。由於 <script type="math/tex">b_{1} = 1 </script>，所以要以根節點的神經元輸出為 <em>1</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00082.png" alt="" /></p>
-
-<p>再來，從根節點往左走，選 <em>1</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{2} = 0 \mid  b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1</script> 的條件機率，所以要用字串 <em>1</em> 所對應它的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{2} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00083.png" alt="" /></p>
-
-<p>然後，從剛剛那個神經元的節點開始，選 <em>0</em> 分支的子神經元來訓練，這一步是要算 <script type="math/tex">P(b_{3} = 0\mid  b_{2} = 0, b_{1} = 1, X=x) </script> 。因為這是基於 <script type="math/tex">b_{1} = 1 , b_{2} = 0 </script> 的條件機率，所以要先將字串 <em>10</em> 所對應的語意向量和 <script type="math/tex">x</script> 一起輸入到 <em>NPLM</em> 。另外，由於 <script type="math/tex">b_{3} = 0 </script>，要以輸出為 <em>0</em> 來調整 <em>NPLM</em> 模型的參數，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00084.png" alt="" /></p>
-
-<p>最後，選擇 <em>0</em> 的分支往下走，即可走到 <script type="math/tex">y</script> ，結束了針對 <script type="math/tex">x</script> 這筆資料的訓練過程。</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00085.png" alt="" /></p>
-
-<h2 id="hierarchical-clustering">Hierarchical Clustering</h2>
-
-<p>在訓練之前，要先把字彙的階層分類給建立好。要建立這個分類階層，有很多種方式，例如，使用 <em>WordNet</em> 所建立的上下位關係，來建立階層，或者可以用 <em>Hierarchical Clustering</em> ，像是<a href="http://ckmarkoh.github.io/blog/2014/10/25/natural-language-processing-brown-clustering">Brown Clustering</a>之類的，自動從訓練資料中建立分類階層。</p>
-
-<h2 id="conclusion">Conclusion</h2>
-
-<p>用 <em>Hierarchical Softmax</em> 來置換掉原本 <em>NPLM</em> 的 <em>output layer</em> ，可以使得原本要計算 <script type="math/tex">\mid V\mid </script> 次的訓練，縮減為 <script type="math/tex">log_{2}\mid V\mid </script> 次，大幅提升了訓練速度。因此， <em>Hierarchical Softmax</em> 被日後眾多種類神經網路相關的模型所採用，包括近年來很熱門的 <em>word2vec</em> 也是。</p>
-
-<h2 id="reference">Reference</h2>
-
-<p>Frederic Morin , Yoshua Bengio. Hierarchical probabilistic neural network language model. 2005</p>
 ]]></content>
   </entry>
   

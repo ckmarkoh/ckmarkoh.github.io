@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1.Introduction 這次來講一下機器學習(Machine Learning) 簡而言之,Machine Learning是一種讓機器根據已知的data,預測出未知的data情形如何 現在,來看看一種簡單的Machine Learning演算法 叫作Perceotron Algorithm &hellip;">
+  <meta name="description" content="今天來看看如何用python的Functional Programming tool來簡化程式碼 所謂的Functional Programming, 是指像是Lisp或Haskell這樣的程式語言 python所提供的Functional Programming tool &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,46 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/18/python-functional-programming-style-1/">Python Functional Programming Style 1</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-18T07:04:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>18</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:04 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>今天來看看如何用python的Functional Programming tool來簡化程式碼</p>
+
+<p>所謂的Functional Programming, 是指像是Lisp或Haskell這樣的程式語言</p>
+
+<p>python所提供的Functional Programming tool</p>
+
+<p>可以用Functional Programming這些語言的風格來寫python</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/18/python-functional-programming-style-1/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -644,69 +684,9 @@ man(Socrates)= true
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/02/16/python-list-comprehension/">Python List Comprehension</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-02-16T04:13:00+08:00'><span class='date'><span class='date-month'>Feb</span> <span class='date-day'>16</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>4:13 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>List comprehension(列表示推導)是一種可以讓程式碼更簡潔，增加可讀性與執行效率的方法。</p>
-
-<p>可以將很多行的for迴圈縮在短短一行之內，很方便！</p>
-
-<h2 id="section">1.</h2>
-
-<p>假如我們現在有一個list–l1</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l1</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">8</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">9</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>若我們想要建立一個新表單l2,是把l1中的每一個元素加上二,最先想到的寫法是：</p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[]</span>
-</span><span class="line"><span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">:</span>
-</span><span class="line">   <span class="n">l2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>知道怎麼用List comprehension的話，我們可以用列表示: </p>
-
-<figure class="code"><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="n">l2</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="o">+</span><span class="mi">2</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">l1</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>這樣看起來就簡潔多了！</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/02/16/python-list-comprehension/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
+    
+      <a class="prev" href="/posts/7">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
     
@@ -718,14 +698,18 @@ man(Socrates)= true
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (13)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (5)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+        <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
       </li>
     
       <li class="post">
@@ -738,10 +722,6 @@ man(Socrates)= true
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
   </ul>

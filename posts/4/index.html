@@ -9,9 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 在 ruby 裡面, 也有類似 functional programming style 的東西, 像是 map , reduce 之類的 但是這些不是像 python 那樣是屬於 build in function , 像這樣 1
-2
-&gt;&gt;&gt; map( &hellip;">
+  <meta name="description" content="1. Introduction 在自然語言處理中, Phase-Structured Grammar 這類的文法, 是把一個句子, 剖析成一個 完整的剖析樹 , 它的重點是句子中各個成份的階層關係, 例如 Context-Free Grammar 而所謂的 Dependenct Grammar &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -94,6 +92,56 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/03/python-nltk-dependency-grammar/">NLTK Dependency Grammar</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-05-03T15:00:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>3</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>3:00 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p>在自然語言處理中, <em>Phase-Structured Grammar</em> 這類的文法, 是把一個句子, 剖析成一個 <strong>完整的剖析樹</strong> , 它的重點是句子中各個成份的階層關係, 例如 <em>Context-Free Grammar</em></p>
+
+<p>而所謂的 <em>Dependenct Grammar</em> , 是著重在 <strong>字和字之間關係</strong> , 而非整個句子中各種成份階層關係, 例如 </p>
+
+<script type="math/tex; mode=display">
+
+\text{I shot an elephant in my pajamas.}
+
+</script>
+
+<p>用<em>Depedenct Grammar</em> 可以表示成這樣</p>
+
+<p><img src="/images/pic/pic_00067.png" alt="d0" /></p>
+
+<p>如上圖, 把詞語和詞語之間的關係, 用箭頭表示, 箭頭的起點為 <em>Head</em>, 終點為 <em>dependents</em> , 標示箭頭上的英文字代表 <em>Head</em> 和 <em>Dependent</em> 之間的 <em>relation</em></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/05/03/python-nltk-dependency-grammar/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -596,54 +644,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/">Viterbi Algorithm</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-06T18:21:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>6:21 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>本文接續先前提到的 <em>Hidden Markov Model</em></p>
-
-<p><a href="/blog/2014/04/03/natural-language-processing-hidden-markov-models">Natural Language Processing – Hidden Markov Model</a></p>
-
-<p>繼續探討 <em>part of speech tagging</em> 的演算法</p>
-
-<p>先前提到, 如果要在 <em>Hidden Markov Model</em> 找出一個機率最大的 <em>tagging sequence</em></p>
-
-<p>則必須把每一個序列都列出來, 看哪一個是機率最大的</p>
-
-<p>但如果 <em>Tag</em> 有 <script type="math/tex">N</script> 種, 那麼長度為 <script type="math/tex">T</script> 的序列, 就有 <script type="math/tex">N^{T}</script> 種可能的 <em>tagging sequence</em></p>
-
-<p>由此可知, 暴力列舉的演算法非常沒有效率</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/06/natural-language-processing-viterbi-algorithm/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -658,14 +658,18 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (12)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (4)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (13)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (5)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression)</a>
+        <a href="/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/">Torch NN Tutorial 5 : Backward Propagation ( Part 2 : nn.Criterion )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
       </li>
     
       <li class="post">
@@ -678,10 +682,6 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
     
       <li class="post">
         <a href="/blog/2016/12/19/torch-nn-tutorial-1-nn-module/">Torch NN Tutorial 1 : NN.Module & NN.Linear</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/08/29/neural-network-word2vec-part-3-implementation/">Word2vec (Part 3 : Implementation)</a>
       </li>
     
   </ul>
