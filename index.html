@@ -125,12 +125,12 @@ MathJax.Hub.Config({
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-&\text{1.} \mspace{20mu} \Delta \textbf{W} = 0 \\
-&   \mspace{40mu} \Delta \textbf{b} = 0 \\
-&\text{2.} \mspace{20mu} \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
-&   \mspace{40mu} \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
-&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
-&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+&\text{1.} \mspace{20mu} \Delta_\textbf{W} = 0 \\
+&   \mspace{40mu} \Delta_\textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
 \end{align}
  %]]></script>
 
@@ -267,13 +267,13 @@ y = wx+b
 &\text{2.} \mspace{20mu} \text{for i=0 ; i < max_epoch; i++} \\
 &\text{3.} \mspace{40mu} \bar{y} = wx+b \\
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
-&\text{5.} \mspace{40mu} \Delta w = 0 \\
-&   \mspace{60mu} \Delta b = 0 \\
+&\text{5.} \mspace{40mu} \Delta_w = 0 \\
+&   \mspace{60mu} \Delta_b = 0 \\
 &\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
-&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
-&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+&\text{7.} \mspace{40mu} \Delta_w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta_b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta_w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta_b \\
 \end{align}
  %]]></script>
 

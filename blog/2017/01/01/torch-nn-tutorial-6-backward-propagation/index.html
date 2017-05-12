@@ -122,12 +122,12 @@ MathJax.Hub.Config({
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-&\text{1.} \mspace{20mu} \Delta \textbf{W} = 0 \\
-&   \mspace{40mu} \Delta \textbf{b} = 0 \\
-&\text{2.} \mspace{20mu} \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
-&   \mspace{40mu} \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
-&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
-&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+&\text{1.} \mspace{20mu} \Delta_\textbf{W} = 0 \\
+&   \mspace{40mu} \Delta_\textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
 \end{align}
  %]]></script>
 
@@ -157,17 +157,17 @@ MathJax.Hub.Config({
 
 <h2 id="zerogradparameters">1.zeroGradParameters</h2>
 
-<p>此步驟是將 <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 歸零。</p>
+<p>此步驟是將 <script type="math/tex">\Delta_\textbf{W}</script> 和 <script type="math/tex">\Delta_\textbf{b}</script> 歸零。</p>
 
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \Delta \textbf{W} = 0 \\
-& \Delta \textbf{b} = 0 \\
+& \Delta_\textbf{W} = 0 \\
+& \Delta_\textbf{b} = 0 \\
 \end{align}
  %]]></script>
 
-<p>在程式中， <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+<p>在程式中， <script type="math/tex">\Delta_\textbf{W}</script> 和 <script type="math/tex">\Delta_\textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
 
 <figure class="code"><figcaption><span>nn/Module.lua</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
 <span class="line-number">2</span>
@@ -311,8 +311,8 @@ MathJax.Hub.Config({
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
-& \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+& \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+& \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
 \end{align}
  %]]></script>
 
@@ -498,7 +498,7 @@ w_{31} & w_{32} \\
 \end{bmatrix}\\
 
 &=
-W^{T}\frac{\partial J}{\partial \textbf{y}}
+\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}
 \end{align}\\
  %]]></script>
 
@@ -530,7 +530,7 @@ W^{T}\frac{\partial J}{\partial \textbf{y}}
 
 \begin{align}
 &\frac{\partial J}{\partial \textbf{x}} 
-=W^{T}\frac{\partial J}{\partial \textbf{y}}\\
+=\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}\\
 &=
 \begin{bmatrix}
  0.1453 & 0.0635 & -0.1080 \\ 
@@ -618,7 +618,7 @@ W^{T}\frac{\partial J}{\partial \textbf{y}}
 
 <script type="math/tex; mode=display">
 
- \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
 
 </script>
 
@@ -735,7 +735,7 @@ x_{1} &  x_{2} \\
 
 <script type="math/tex; mode=display">
 
- \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
 
 </script>
 
@@ -835,8 +835,8 @@ x_{1} &  x_{2} \\
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
-& \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+& \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
 \end{align}
  %]]></script>
 
@@ -901,7 +901,7 @@ x_{1} &  x_{2} \\
 <script type="math/tex; mode=display">% <![CDATA[
 
 \begin{align}
-& \textbf{W}  - \eta \Delta \textbf{W} \\
+& \textbf{W}  - \eta \Delta_\textbf{W} \\
 & = 
 \begin{bmatrix}
  0.1453 & 0.5062 \\
@@ -921,7 +921,7 @@ x_{1} &  x_{2} \\
 -0.3480 & -0.1253 \\
 \end{bmatrix} \\
 
-& \textbf{b}  - \eta \Delta \textbf{b} \\
+& \textbf{b}  - \eta \Delta_\textbf{b} \\
 & = 
 \begin{bmatrix}
  0.2063 \\

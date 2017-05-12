@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Neural Networks | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/neural-networks/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-01-01T19:54:03+08:00</updated>
+  <updated>2017-05-12T23:43:25+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -29,12 +29,12 @@
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-&\text{1.} \mspace{20mu} \Delta \textbf{W} = 0 \\
-&   \mspace{40mu} \Delta \textbf{b} = 0 \\
-&\text{2.} \mspace{20mu} \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
-&   \mspace{40mu} \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
-&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
-&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+&\text{1.} \mspace{20mu} \Delta_\textbf{W} = 0 \\
+&   \mspace{40mu} \Delta_\textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
 \end{align}
  %]]&gt;</script>
 
@@ -64,17 +64,17 @@
 
 <h2 id="zerogradparameters">1.zeroGradParameters</h2>
 
-<p>此步驟是將 <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 歸零。</p>
+<p>此步驟是將 <script type="math/tex">\Delta_\textbf{W}</script> 和 <script type="math/tex">\Delta_\textbf{b}</script> 歸零。</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \Delta \textbf{W} = 0 \\
-& \Delta \textbf{b} = 0 \\
+& \Delta_\textbf{W} = 0 \\
+& \Delta_\textbf{b} = 0 \\
 \end{align}
  %]]&gt;</script>
 
-<p>在程式中， <script type="math/tex">\Delta \textbf{W}</script> 和 <script type="math/tex">\Delta \textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
+<p>在程式中， <script type="math/tex">\Delta_\textbf{W}</script> 和 <script type="math/tex">\Delta_\textbf{b}</script> 的變數是 <code>gradWeight</code> 和 <code>gradBias</code> 。可用 <code>zeroGradParameters</code> 將它們歸零，程式碼如下：</p>
 
 <p>``` lua nn/Module.lua</p>
 
@@ -190,8 +190,8 @@ end</p>
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
-& \Delta \textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+& \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+& \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
 \end{align}
  %]]&gt;</script>
 
@@ -359,7 +359,7 @@ w_{31} & w_{32} \\
 \end{bmatrix}\\
 
 &=
-W^{T}\frac{\partial J}{\partial \textbf{y}}
+\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}
 \end{align}\\
  %]]&gt;</script>
 
@@ -391,7 +391,7 @@ W^{T}\frac{\partial J}{\partial \textbf{y}}
 
 \begin{align}
 &\frac{\partial J}{\partial \textbf{x}} 
-=W^{T}\frac{\partial J}{\partial \textbf{y}}\\
+=\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}\\
 &=
 \begin{bmatrix}
  0.1453 & 0.0635 & -0.1080 \\ 
@@ -467,7 +467,7 @@ end</p>
 
 <script type="math/tex; mode=display">
 
- \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
 
 </script>
 
@@ -584,7 +584,7 @@ x_{1} &  x_{2} \\
 
 <script type="math/tex; mode=display">
 
- \Delta \textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
 
 </script>
 
@@ -676,8 +676,8 @@ print(l1.gradBias)</p>
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta \textbf{W} \\ 
-& \textbf{b} \leftarrow \textbf{b} - \eta \Delta \textbf{b} \\
+& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+& \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
 \end{align}
  %]]&gt;</script>
 
@@ -737,7 +737,7 @@ end</p>
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \textbf{W}  - \eta \Delta \textbf{W} \\
+& \textbf{W}  - \eta \Delta_\textbf{W} \\
 & = 
 \begin{bmatrix}
  0.1453 & 0.5062 \\
@@ -757,7 +757,7 @@ end</p>
 -0.3480 & -0.1253 \\
 \end{bmatrix} \\
 
-& \textbf{b}  - \eta \Delta \textbf{b} \\
+& \textbf{b}  - \eta \Delta_\textbf{b} \\
 & = 
 \begin{bmatrix}
  0.2063 \\
@@ -1068,13 +1068,13 @@ y = wx+b
 &\text{2.} \mspace{20mu} \text{for i=0 ; i < max_epoch; i++} \\
 &\text{3.} \mspace{40mu} \bar{y} = wx+b \\
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
-&\text{5.} \mspace{40mu} \Delta w = 0 \\
-&   \mspace{60mu} \Delta b = 0 \\
+&\text{5.} \mspace{40mu} \Delta_w = 0 \\
+&   \mspace{60mu} \Delta_b = 0 \\
 &\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
-&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
-&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+&\text{7.} \mspace{40mu} \Delta_w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta_b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta_w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta_b \\
 \end{align}
  %]]&gt;</script>
 
@@ -1263,17 +1263,17 @@ print(j)</p>
 
 <p>再來，要進行 backward propagation。</p>
 
-<p>第五步，先將 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 歸零：</p>
+<p>第五步，先將 <script type="math/tex"> \Delta_w </script> 和 <script type="math/tex"> \Delta_b </script> 歸零：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-&\text{5.} \mspace{40mu} \Delta w = 0 \\
-&   \mspace{60mu} \Delta b = 0 \\
+&\text{5.} \mspace{40mu} \Delta_w = 0 \\
+&   \mspace{60mu} \Delta_b = 0 \\
 \end{align}
  %]]&gt;</script>
 
-<p><script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 在程式中所對應的值，是 <code>l1</code> 的 <code>gradWeight</code> 和 <code>gradBias</code> 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：</p>
+<p><script type="math/tex"> \Delta_w </script> 和 <script type="math/tex"> \Delta_b </script> 在程式中所對應的值，是 <code>l1</code> 的 <code>gradWeight</code> 和 <code>gradBias</code> 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：</p>
 
 <p>``` lua</p>
 
@@ -1364,22 +1364,22 @@ print(dj_dy</em>)</p>
 
 <p>```</p>
 
-<p>第七步，計算 <script type="math/tex"> \Delta w </script> 和 <script type="math/tex"> \Delta b </script> 的值：</p>
+<p>第七步，計算 <script type="math/tex"> \Delta_w </script> 和 <script type="math/tex"> \Delta_b </script> 的值：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
+&\text{7.} \mspace{40mu} \Delta_w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta_b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 \end{align}
  %]]&gt;</script>
 
-<p>先看 <script type="math/tex">\Delta w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 值代入，即可算出它：</p>
+<p>先看 <script type="math/tex">\Delta_w </script> 的數值，將 <script type="math/tex">x</script> 的值，以及先前算出的 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 值代入，即可算出它：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& \Delta w =  \frac{\partial J}{\partial \bar{y}} \times x \\
+& \Delta_w =  \frac{\partial J}{\partial \bar{y}} \times x \\
 &=
 \begin{bmatrix}
 -1.3857 \times 1\\
@@ -1395,19 +1395,19 @@ print(dj_dy</em>)</p>
 \end{align}
  %]]&gt;</script>
 
-<p>如果輸值為有多筆資料，則 <script type="math/tex">\Delta w</script> 的最終結果會將每筆的結果累加起來，如下：</p>
+<p>如果輸值為有多筆資料，則 <script type="math/tex">\Delta_w</script> 的最終結果會將每筆的結果累加起來，如下：</p>
 
 <script type="math/tex; mode=display">
-\Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
+\Delta_w = -1.3857 + -5.1640 + -11.3352 = -17.8849
 </script>
 
-<p>而 <script type="math/tex">\Delta b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 中的每筆資料結果累積起來。</p>
+<p>而 <script type="math/tex">\Delta_b</script> 的值是把 <script type="math/tex"> \frac{\partial J}{\partial \bar{y}}</script> 中的每筆資料結果累積起來。</p>
 
 <script type="math/tex; mode=display">
-\Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461
+\Delta_b = -1.3857 + -2.5820 + -3.7784 = -7.7461
 </script>
 
-<p>以程式來計算此兩值。呼叫 <code>l1</code> 的 <code>backward</code> ，輸入 <script type="math/tex">\frac{\partial J}{\partial \bar{y} }</script> 到 <code>backward</code> 後，它與  <script type="math/tex">\frac{\partial \bar{y}}{\partial w}</script> 和 <script type="math/tex">\frac{\partial \bar{y}}{\partial b}</script> 相乘後結果分別為 <script type="math/tex">\Delta w</script> 和 <script type="math/tex">\Delta b</script> ，此兩數分別儲存於 <code>gradWeight</code> 和 <code>gradBias</code> 。</p>
+<p>以程式來計算此兩值。呼叫 <code>l1</code> 的 <code>backward</code> ，輸入 <script type="math/tex">\frac{\partial J}{\partial \bar{y} }</script> 到 <code>backward</code> 後，它與  <script type="math/tex">\frac{\partial \bar{y}}{\partial w}</script> 和 <script type="math/tex">\frac{\partial \bar{y}}{\partial b}</script> 相乘後結果分別為 <script type="math/tex">\Delta_w</script> 和 <script type="math/tex">\Delta_b</script> ，此兩數分別儲存於 <code>gradWeight</code> 和 <code>gradBias</code> 。</p>
 
 <p>``` lua</p>
 
@@ -1435,8 +1435,8 @@ print(l1.gradBias)</p>
 
 
 \begin{align}
-&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
-&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta_w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta_b \\
 \end{align}
 
  %]]&gt;</script>
@@ -1446,9 +1446,9 @@ print(l1.gradBias)</p>
 <script type="math/tex; mode=display">% &lt;![CDATA[
 
 \begin{align}
-& w  - \eta \Delta w 
+& w  - \eta \Delta_w 
 = 0.2055 - 0.02 \times (- 17.8849) = 0.5632 \\
-& b - \eta \Delta b 
+& b - \eta \Delta_b 
 = 0.7159 - 0.02 \times (-7.7461) = 0.8708 \\
 \end{align}
  %]]&gt;</script>

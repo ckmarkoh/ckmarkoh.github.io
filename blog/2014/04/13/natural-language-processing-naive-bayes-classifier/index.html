@@ -201,11 +201,32 @@ P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
 
 <p>來分析一下以上公式的物理意義</p>
 
-<p>| 成份 | 物理意義   |
-|:——————–|:—————————————————————————-|
-\mid  <script type="math/tex">P(C )</script>           \mid  在所有的文章中,  類別 <script type="math/tex">C</script> 所占的比例, 若比例越高, 就表示文章越有可能屬於此類別 \mid 
-\mid  <script type="math/tex">P(W_{i}\mid C )</script> \mid  若某文章的類別是 <script type="math/tex">C</script> , 則此文章有關鍵字 <script type="math/tex">W_{i}</script> 的機率              \mid 
-\mid  <script type="math/tex">1- P(W_{i}\mid C )</script> \mid  若某文章的類別是 <script type="math/tex">C</script> , 則此文章沒有關鍵字 <script type="math/tex">W_{i}</script> 的機率         \mid </p>
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: left">成份</th>
+      <th style="text-align: left">物理意義</th>
+      <th> </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: left"><script type="math/tex">P(C )</script></td>
+      <td style="text-align: left">在所有的文章中,  類別 <script type="math/tex">C</script> 所占的比例, 若比例越高, 就表示文章越有可能屬於此類別</td>
+      <td> </td>
+    </tr>
+    <tr>
+      <td style="text-align: left">$$P(W_{i}</td>
+      <td style="text-align: left">C )$$</td>
+      <td>若某文章的類別是 <script type="math/tex">C</script> , 則此文章有關鍵字 <script type="math/tex">W_{i}</script> 的機率</td>
+    </tr>
+    <tr>
+      <td style="text-align: left">$$1- P(W_{i}</td>
+      <td style="text-align: left">C )$$</td>
+      <td>若某文章的類別是 <script type="math/tex">C</script> , 則此文章沒有關鍵字 <script type="math/tex">W_{i}</script> 的機率</td>
+    </tr>
+  </tbody>
+</table>
 
 <p>所以, 把以上三種全部乘起來, 得到文章和關鍵字的 <em>Joint Probablity</em> , 就可以用關鍵字來預測文章的類別</p>
 
