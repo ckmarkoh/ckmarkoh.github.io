@@ -9,8 +9,10 @@ categories: ['Neural Networks','Torch']
 
 ## Backward Propagation in nn.Criterion
 
-本文講解 `nn.Criterion` 中，與 `backward` 相關的程式碼。
 
+本文接續 [Torch NN Tutorial 4: Backward Propagation (part 1)](/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/) ，講解 `nn.Criterion` 中，與 backward propagation 相關的程式碼。
+
+Criterion 的 `forward`  是負責計算 loss funciton $$J$$ 的值，而 `backward` 則是計算 $$\frac{\partial J}{\partial \bar{y}}$$ 的值。其中， $$\bar{y}$$ 為模型預測出的結果。
 
 `nn.Criterion` 程式碼：[https://github.com/torch/nn/blob/master/Criterion.lua](https://github.com/torch/nn/blob/master/Criterion.lua)
 
@@ -30,7 +32,7 @@ end
 ```
 
 
-`nn,Criterion` 的 `backward` 只做一件事，也就是 `updateGradInput` ，而  `updateGradInput` 的運算內容則由繼承它的類別來實作。
+`nn.Criterion` 的 `backward` 只做一件事，也就是 `updateGradInput` ，而  `updateGradInput` 的運算內容則由繼承它的類別來實作。
 
 
 <!--more-->
@@ -137,7 +139,7 @@ $$
 $$
 
 
-其中， $$\bar{y}_{1}$$ 代表 $$\bar{y}$$ 中的第一的元素，而前面乘上 $$\frac{2}{3}$$ 是因為微分的結果要除以向量長度 3。
+其中， $$\bar{y}_{1}$$ 代表 $$\bar{y}$$ 中的第一的元素，而前面乘上 $$\frac{2}{3}$$ 是因為 `sizeAverage` 為 `true` ，所以微分的結果要除以向量長度 3。
 
 以 `backward` 執行以上運算，程式如下：
 
@@ -205,7 +207,7 @@ $$
 $$
 
 
-將 `sizeAverage` 設為 `false` 的方法，即是在建立 criterion 時，輸入 `false` ，方法如下：
+將 `sizeAverage` 設為 `false` 的方法，即是在建立 `nn.MSECriterion` 時，輸入 `false` ，方法如下：
 
 
 ``` lua

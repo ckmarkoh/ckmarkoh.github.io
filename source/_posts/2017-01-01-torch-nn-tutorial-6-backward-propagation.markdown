@@ -1,18 +1,33 @@
 ---
 layout: post
-title: "torch nn tutorial 6 backward propagation"
-date: 2017-01-01 14:36:08 +0800
+title: "Torch NN Tutorial 6 : Backward Propagation ( part 3 : nn.Module ) "
+date: 2017-01-01 18:36:08 +0800
 comments: true
-categories: 
-published: false 
+categories: ['Neural Networks','Torch']
 ---
 
 ## Backward Propagation in nn.Module
 
+本文接續 [Torch NN Tutorial 4: Backward Propagation (part 1)](/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/) ，與 [Torch NN Tutorial 5: Backward Propagation (part 2)](/blog/2017/01/01/torch-nn-tutorial-5-backward-propagation/) 講解 `nn.Module` 中， 與 backward propagation 有關的程式碼。
 
-此部分講解 `nn.Module` 中， 與 `backward` 有關的程式碼。
+`nn.Module` 程式碼：[https://github.com/torch/nn/blob/master/Module.lua](https://github.com/torch/nn/blob/master/Module.lua)
 
-此部分講解以下三個 function ：
+與 backward propagation 有關的，主要有以下三個運算 ：
+
+
+$$
+\begin{align}
+&\text{1.} \mspace{20mu} \Delta_\textbf{W} = 0 \\
+&   \mspace{40mu} \Delta_\textbf{b} = 0 \\
+&\text{2.} \mspace{20mu} \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+&   \mspace{40mu} \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
+&\text{3.} \mspace{20mu} \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+&   \mspace{40mu} \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
+\end{align}
+$$
+
+而這三個運算，分別對應到以下三個 function ：
+
 
 1. zeroGradParameters
 
@@ -20,13 +35,30 @@ published: false
 
 3. updateParameters
 
+本文將詳細講解這三個 function 的程式碼內容。
 
-`nn.Module` 程式碼：[https://github.com/torch/nn/blob/master/Module.lua](https://github.com/torch/nn/blob/master/Module.lua)
+註：
+
+1.本文的 $$\textbf{y}$$ 同前兩篇文（Torch NN Tutorial 4~5）中的 $$\bar{y}$$ 。
+
+2.本文中的 $$\textbf{W}$$ 為矩陣，而 $$\textbf{x}$$ ，$$\textbf{y}$$ 為向量。
+
+<!--more-->
 
 
-### 1.zeroGradParameters
+## 1.zeroGradParameters
 
-前文已提到，在計算 `nn.Module` 的 `backward` 之前，要先用 `zeroGradParameters` 將參數歸零，歸零的程式碼如下：
+此步驟是將 $$\Delta_\textbf{W}$$ 和 $$\Delta_\textbf{b}$$ 歸零。
+
+$$
+\begin{align}
+& \Delta_\textbf{W} = 0 \\
+& \Delta_\textbf{b} = 0 \\
+\end{align}
+$$
+
+
+在程式中， $$\Delta_\textbf{W}$$ 和 $$\Delta_\textbf{b}$$ 的變數是 `gradWeight` 和 `gradBias` 。可用 `zeroGradParameters` 將它們歸零，程式碼如下：
 
 
 ``` lua nn/Module.lua
@@ -44,7 +76,8 @@ end
 
 
 在第五行中，可看到 `gradParams[i]:zero()` ，即是將所有的 `gradParams` ，包含 `gradWeight` 及 `gradBias` 歸零。
-由於 `nn.Module` 本身沒有 `gradWeight` 和 `gradBias` 這兩個 variable ，所以要透過 `self:parameters()` 來取得。
+
+由於 `nn.Module` 本身沒有 `gradWeight` 和 `gradBias` ，如果要取得它們，就要透過 `self:parameters()` 來取得。
 `parameters` 的程式碼如下：
 
 
@@ -65,18 +98,16 @@ end
 ```
 
 
-如果繼承 `nn.Module` 的類別有實作 `weight` ，則回傳 `gradWeight` ，以此類推。
+從第二行開始，可看到，如果繼承 `nn.Module` 的類別有實作 `weight` ，則回傳 `weight` 和 `gradWeight` ，以此類推。
 
-至於為何要歸零？ 因為在建立 Module 的時候， `gradWeight` 和 `gradBias` 並沒有被設為什麼值，它有可能是任意數，或者，`gradWeight` 和 `gradBias` 還保留著上一次運算的值。
-
-舉個例子，建立一個 `nn.Linear` ，命名為 `l2` ， input 有二維， output 有三維，一開始什麼都沒做，就直接印出  `gradWeight` 和 `gradBias` ，程式如下：
+至於歸零的作用，因為在建立 Module 的時候， `gradWeight` 和 `gradBias` 並沒有被設為什麼值，它有可能是任意數。舉個例子，建立一個 `nn.Linear` ，命名為 `l1` ， input size 為 2， output size 為 3，一開始什麼都沒做，就直接印出  `gradWeight` 和 `gradBias` ，程式如下：
 
 
 ``` lua
 
-l2 = nn.Linear(2,3)
-print(l2.gradWeight)
-print(l2.gradBias)
+l1 = nn.Linear(2,3)
+print(l1.gradWeight)
+print(l1.gradBias)
 
 ```
 
@@ -86,14 +117,14 @@ print(l2.gradBias)
 
 ``` sh
 
--0.0000e+00 -0.0000e+00
-5.2308e-143  1.2596e-71
- 2.4420e+25  5.8979e-62
+-1.2882e-231 -1.2882e-231
+ 2.1403e+161  3.9845e+252
+  7.7075e-43   4.5713e-71
 [torch.DoubleTensor of size 3x2]
 
- 0
- 0
- 0
+-1.2882e-231
+-1.2882e-231
+  1.1659e-28
 [torch.DoubleTensor of size 3]
 
 ```
@@ -104,9 +135,9 @@ print(l2.gradBias)
 
 ``` lua
 
-l2:zeroGradParameters()
-print(l2.gradWeight)
-print(l2.gradBias)
+l1:zeroGradParameters()
+print(l1.gradWeight)
+print(l1.gradBias)
 
 ```
 
@@ -117,20 +148,20 @@ print(l2.gradBias)
 
 ``` sh
 
- 0  0
- 0  0
- 0  0
+  0  0
+  0  0
+  0  0
 [torch.DoubleTensor of size 3x2]
 
- 0
- 0
- 0
+  0
+  0
+  0
 [torch.DoubleTensor of size 3]
 
 ```
 
 
-### 2.backward
+## 2.backward
 
 再來看到 `backward` 的部分， `backward` 個功能由兩個 `function` 來執行，分別是 `updateGradInput` 及 `accGradParameters` 。
 
@@ -155,21 +186,28 @@ $$
 $$ 
 
 
-則 backward propagation 需要計算以下三項：
+`accGradParameters` 是負責計算以下兩項，也就是 `gradWeight` 和 `gradBias` 的值。
 
 
 $$
 \begin{align}
-& \frac{\partial J}{\partial \textbf{W}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{W}}  \\  
-& \frac{\partial J}{\partial \textbf{b}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{b}} \\
-& \frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}} \\
+& \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  \\ 
+& \Delta_\textbf{b} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  \\
 \end{align}
+$$ 
+
+
+除了以上兩項以外，如果 input 前面還有其他 layer 的話，就需計算 $$ \frac{\partial J}{\partial \textbf{x}}$$ ，並將此值往前傳遞。
+
+
+`updateGradInput` 是負責計算 $$\frac{\partial J}{\partial \textbf{x}}$$ 的值，也就是 `gradInput` 的值，如下：
+
+
 $$
 
+\frac{\partial J}{\partial \textbf{x}} = \frac{\partial J}{\partial \textbf{y}}\frac{\partial \textbf{y}}{\partial \textbf{x}}
 
-`updateGradInput` 是負責計算 $$\frac{\partial J}{\partial \textbf{x}}$$ 的值，也就是 `gradInput` 的值。
-
-`accGradParameters` 是負責計算 $$\frac{\partial J}{\partial \textbf{W}}$$ 和 $$\frac{\partial J}{\partial \textbf{b}}$$ 的值，也就是 `gradWeight` 和 `gradBias` 的值。
+$$
 
 
 在 `nn.Module` 中，這兩個 function 皆沒實作，需由繼承 `nn.Module` 的類別來實作。
@@ -192,7 +230,9 @@ end
 `nn.Linear` 程式碼：[https://github.com/torch/nn/blob/master/Linear.lua](https://github.com/torch/nn/blob/master/Linear.lua)
 
 
-先看 `updateGraadInput` 的程式碼：
+### updateGradInput
+
+先看 `updateGradInput` 的程式碼：
 
 
 ``` lua nn/Linear.lua
@@ -220,10 +260,9 @@ end
 
 
 
-此處可分為兩部分來看，在 [Torch NN Tutorial 1 : NN.Module & NN.Linear](/blog/2016/12/19/torch-nn-tutorial-1-nn-module/) 曾講到，當 `input:dim() == 1` 時，則是一次輸入一筆資料
+此處可分為兩部分來看，在 [Torch NN Tutorial 1 : NN.Module & NN.Linear](/blog/2016/12/19/torch-nn-tutorial-1-nn-module/) 曾講到，當 `input:dim() == 1` 時，是一次輸入一筆資料。
 
-假設 `loss function` 為 J ，則此時 `gradInput` 的算法如下：
-
+計算 `gradInput` 公式如下：
 
 $$
 
@@ -231,10 +270,10 @@ $$
 
 $$
 
-而 $$\frac{\partial J}{\partial \textbf{y}}$$ 是由 loss function 的 `updateGradInput` 算出的值所傳遞過來的，此值輸入 `gradOutput` 。
+公式中的 $$\frac{\partial J}{\partial \textbf{y}}$$ ，在程式中是 loss function 的 `gradInput` ，並從 `updateGradInput` 的參數 `gradOutput` 輸入。
 
 
-假設 `output` 有三維， `input` 有二維，則在 forward propagation 時，$$\textbf{y}$$ 是由以下公式算出：
+假設 output size 為 3， input size 為 2，則在 forward propagation 時，$$\textbf{y}$$ 是由以下公式算出：
 
 
 $$
@@ -278,8 +317,8 @@ $$
 $$
 
 \begin{align}
-& \frac{\partial \textbf{y}}{\partial \textbf{x}}
-= 
+& \frac{\partial \textbf{y}}{\partial \textbf{x}} 
+ = 
 \begin{bmatrix}
 \frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
 \frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
@@ -306,12 +345,23 @@ $$
 
 $$
 \begin{align}
-&\frac{\partial J}{\partial \textbf{x}} =
-\begin{bmatrix}
+&\frac{\partial J}{\partial \textbf{x}} 
+=\begin{bmatrix}
 \frac{\partial J}{\partial x_{1}} \\
 \frac{\partial J}{\partial x_{2}}
-\end{bmatrix}
-=
+\end{bmatrix} \\
+&=\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{1}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{1}} 
+\\
+\frac{\partial J}{\partial y_{1}}\frac{\partial y_{1}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{2}}\frac{\partial y_{2}}{\partial x_{2}} +
+\frac{\partial J}{\partial y_{3}}\frac{\partial y_{3}}{\partial x_{2}} 
+\\
+\end{bmatrix} \\
+
+&=
 \begin{bmatrix}
 \frac{\partial y_{1}}{\partial x_{1}} & \frac{\partial y_{1}}{\partial x_{2}} \\
 \frac{\partial y_{2}}{\partial x_{1}} & \frac{\partial y_{2}}{\partial x_{2}} \\
@@ -321,25 +371,26 @@ $$
 \frac{\partial J}{\partial y_{1}} \\
 \frac{\partial J}{\partial y_{2}} \\ 
 \frac{\partial J}{\partial y_{3}} \\
-\end{bmatrix}
+\end{bmatrix}\\
 
 &=
-W^{T}\frac{\partial J}{\partial \textbf{y}}
-\end{align}
+\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}
+\end{align}\\
 $$
   
-從以上結果得知，要先將 `weight` 轉置，再和 $$\frac{\partial J}{\partial \textbf{y}}$$ 做 矩陣-向量 乘積。
+從以上結果得知，要先將 `weight` 轉置，再和 `gradOutput` 做 矩陣-向量 乘積。如同程式碼中所寫 `self.gradInput:addmv(0, 1, self.weight:t(), gradOutput)`
 
 
 如果 $$W$$ 和 $$\frac{\partial J}{\partial \textbf{y}}$$ 的值分別如下：
+
 
 $$
 \begin{align}
 & \textbf{W} =
 \begin{bmatrix}
- 0.0635  & 0.4911 \\
--0.1080  & 0.1747 \\
-  0.2063 & -0.1635 \\
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
 \end{bmatrix} \\
 & \frac{\partial J}{\partial \textbf{y}} = 
 \begin{bmatrix}
@@ -353,38 +404,42 @@ $$
 則， $$\frac{\partial J}{\partial \textbf{x}}$$ 的值為：
 
 $$
-W^{T}\frac{\partial J}{\partial \textbf{y}}
-=
+\begin{align}
+&\frac{\partial J}{\partial \textbf{x}} 
+=\textbf{W}^{T}\frac{\partial J}{\partial \textbf{y}}\\
+&=
 \begin{bmatrix}
- 0.0635 &-0.1080 & 0.2063 \\
- 0.4911 & 0.1747 &-0.1635 \\
-\end{bmatrix}
+ 0.1453 & 0.0635 & -0.1080 \\ 
+ 0.5062 & 0.4911 & 0.1747 \\
+ \end{bmatrix}
 \begin{bmatrix}
 1 \\
 2 \\
 3 \\ 
-\end{bmatrix}
-=
+\end{bmatrix}\\
+&=
 \begin{bmatrix}
- 0.0635 \times 1 &-0.1080 \times 2 & 0.2063 \times 3 \\
- 0.4911 \times 1 & 0.1747 \times 2 &-0.1635 \times 3 \\
-\end{bmatrix}
-=
+ 0.1453 \times 1 & 0.0635 \times 2  & -0.1080 \times 3  \\ 
+ 0.5062 \times 1 & 0.4911 \times 2  & 0.1747 \times 3  \\
+\end{bmatrix} \\
+&=
 \begin{bmatrix}
- 0.4665 \\
- 0.3501 \\
-\end{bmatrix}
+-0.0516 \\
+ 2.0126 \\
+\end{bmatrix}\\
+\end{align}
 $$
 
 
-此部分，程式實作如下：
+執行 `updateGradInput`  ，程式碼如下：
 
 
 ``` lua
 
 dj_dy = torch.Tensor{1,2,3}
-x = torch.Tensor{1,1}
-print( l2:updateGradInput( x,dj_dy ))
+x = torch.Tensor{4,5}
+l1:updateGradInput( x,dj_dy )
+print(l1.gradInput)
 
 ```
 
@@ -394,23 +449,25 @@ print( l2:updateGradInput( x,dj_dy ))
 
 ``` sh
 
- 0.4665
- 0.3501
+-0.0516
+ 2.0126
 [torch.DoubleTensor of size 2]
 
 ```
 
+
 以上程式碼，輸入 `x` 只是為了滿足 `input:dim() == 1` 的條件， 而 `x` 的數值是不會影響結果的。
 
 
-至於 `input:dim() == 2` 的情況，推導方式同上，在此不做詳細推倒。
-
+至於 `input:dim() == 2` 的情況，推導方式同上，在此不詳細推導。
 
 
 再來看 `accGradParameters` 的程式碼：
 
+### accGradParameters
 
-``` nn/Linear.lua
+
+``` lua nn/Linear.lua
 
 function Linear:accGradParameters(input, gradOutput, scale)
    scale = scale or 1
@@ -428,3 +485,384 @@ function Linear:accGradParameters(input, gradOutput, scale)
 end
 
 ```
+
+先看到 `input:dim() == 1` 的情形，計算 `gradWeight` 的公式如下：
+
+
+$$
+
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{W}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{W}}  
+
+$$
+
+公式中的 $$\frac{\partial J}{\partial \textbf{y}}$$ ，在程式中是 loss function 的 `gradInput` ，並從 `updateGradInput` 的參數 `gradOutput` 輸入。
+
+
+
+假設 output size 為 3， input size 為 2，則 $$ \frac{\partial \textbf{y}}{\partial \textbf{W}} $$  的結果如下，
+
+
+$$
+
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial w_{11}} & \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial y_{2}}{\partial w_{21}} & \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial y_{3}}{\partial w_{31}} & \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{11}} & \frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial w_{12}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{21}} & \frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial w_{22}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{31}} & \frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+x_{1} & x_{2} \\
+\end{bmatrix}\\
+\end{align}
+$$
+
+
+因此， $$ \frac{\partial J}{\partial \textbf{W}} $$ 的值為：
+
+$$
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{11}} &
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial w_{12}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{21}} &
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial w_{22}} \\
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{31}} &
+\frac{\partial J}{\partial y_{3}} \frac{\partial y_{3}}{\partial w_{32}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} x_{1} &
+\frac{\partial J}{\partial y_{1}} x_{2} \\
+\frac{\partial J}{\partial y_{2}} x_{1} &
+\frac{\partial J}{\partial y_{2}} x_{2} \\
+\frac{\partial J}{\partial y_{3}} x_{1} &
+\frac{\partial J}{\partial y_{3}} x_{2} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix}
+\begin{bmatrix}
+x_{1} &  x_{2} \\
+\end{bmatrix}\\
+&= \frac{\partial J}{\partial \textbf{y}} \textbf{x}^{T}
+\end{align}
+$$
+
+
+如果 $$\frac{\partial J}{\partial \textbf{y}}$$ 的值同前例， $$\textbf{x}$$ 的值如下：
+
+
+$$
+\textbf{x} =
+\begin{bmatrix}
+4 \\
+5 \\
+\end{bmatrix} 
+$$
+
+
+則， $$\frac{\partial J}{\partial \textbf{W}}$$ 的值為：
+
+
+$$
+
+\begin{align}
+& \frac{\partial J}{\partial \textbf{W}} 
+= \frac{\partial J}{\partial \textbf{y}}\textbf{x}^{T}\\
+& = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}
+\begin{bmatrix}
+4 & 5 
+\end{bmatrix}\\ 
+&=
+\begin{bmatrix}
+1 \times 4 & 1 \times 5 \\
+2 \times 4 & 2 \times 5 \\
+3 \times 4 & 3 \times 5 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+\end{align}
+$$
+
+計算 `gradBias` 的公式如下：
+
+
+$$
+
+ \Delta_\textbf{W} =  \frac{\partial J}{\partial \textbf{b}} =  \frac{\partial J}{\partial \textbf{y}}  \frac{\partial \textbf{y}}{\partial \textbf{b}}  
+
+$$
+
+
+而 $$ \frac{\partial \textbf{y}}{\partial \textbf{b}} $$  這項的結果如下，
+
+
+$$
+\begin{align}
+& \frac{\partial \textbf{y}}{\partial \textbf{b}} 
+= 
+\begin{bmatrix}
+\frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial y_{2}}{\partial b_{2}} \\
+\frac{\partial y_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{w_{11}x_{1}+w_{12}x_{2}+b_{1}}{\partial b_{1}} \\
+\frac{w_{21}x_{1}+w_{22}x_{2}+b_{2}}{\partial b_{2}} \\
+\frac{w_{31}x_{1}+w_{32}x_{2}+b_{3}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+1 \\
+1 \\
+1 \\
+\end{bmatrix}\\
+\end{align}
+$$
+
+因此， $$ \frac{\partial J}{\partial \textbf{b}} $$ 的值為：
+
+$$
+\begin{align}
+& \frac{\partial J}{\partial \textbf{b}} 
+ = 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{1}} \\
+\frac{\partial J}{\partial y_{1}} \frac{\partial y_{1}}{\partial b_{2}} \\
+\frac{\partial J}{\partial y_{2}} \frac{\partial y_{2}}{\partial b_{3}} \\
+\end{bmatrix} \\
+&= 
+\begin{bmatrix}
+\frac{\partial J}{\partial y_{1}} \\
+\frac{\partial J}{\partial y_{2}} \\
+\frac{\partial J}{\partial y_{3}} \\
+\end{bmatrix} \\
+&= \frac{\partial J}{\partial \textbf{y}} \\
+\end{align}
+$$
+
+因此， $$ \frac{\partial J}{\partial \textbf{b}} $$ 的值，和 $$\frac{\partial J}{\partial \textbf{y}}$$ 的值相同。
+
+
+執行 `accGradParameters`  ，程式碼如下：
+
+
+``` lua
+
+dj_dy = torch.Tensor{1,2,3}
+x = torch.Tensor{4,5}
+print( l1:accGradParameters( x,dj_dy ))
+print(l1.gradWeight)
+print(l1.gradBias)
+
+```
+
+結果如下：
+
+
+``` sh
+
+  4   5
+  8  10
+ 12  15
+[torch.DoubleTensor of size 3x2]
+
+ 1
+ 2
+ 3
+[torch.DoubleTensor of size 3]
+
+```
+
+至於 `input:dim() == 2` 的情況，推導方式同上，在此不詳細推導。
+
+
+## 3.updateParameters
+
+此函數在 `nn.Module` 中即有實作其內容，它所進行的運算相當簡單，就是更新 $$\textbf{W}$$ 和 $$\textbf{b}$$ ：
+
+$$
+\begin{align}
+& \textbf{W} \leftarrow \textbf{W}  - \eta \Delta_\textbf{W} \\ 
+& \textbf{b} \leftarrow \textbf{b} - \eta \Delta_\textbf{b} \\
+\end{align}
+$$
+
+
+程式碼如下：
+
+
+``` lua  nn/Module.lua
+
+function Module:updateParameters(learningRate)
+   local params, gradParams = self:parameters()
+   if params then
+      for i=1,#params do
+         params[i]:add(-learningRate, gradParams[i])
+      end
+   end
+end
+
+```
+
+其中，公式中的 $$\eta$$ 即為程式碼中的 `learningRate` ，而程式中的第五行，則是負責將 `weight` 和 `bias` 更新。 其中， `weight` 和 `bias` 由第二行的 `parameters` 函數所取得，回傳到 `param` 中，而 `gradWeight` 和 `gradBias` 也用同樣方式取得，回傳到 `gradParams` 中。
+
+假設 $$\eta = 0.02$$ ，$$\textbf{W} , \textbf{b} , \frac{\partial J}{\partial \textbf{W}} ,  \frac{\partial J}{\partial \textbf{b}}$$ 的值分別如下：
+
+
+$$
+
+\begin{align}
+&\textbf{W}=
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} \\
+&\textbf{b}=
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} \\
+& \frac{\partial J}{\partial \textbf{W}} = 
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& \frac{\partial J}{\partial \textbf{b}} = 
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+\end{align}
+
+$$
+
+更新 $$\textbf{W}$$ 和 $$\textbf{b}$$ ：
+
+$$
+\begin{align}
+& \textbf{W}  - \eta \Delta_\textbf{W} \\
+& = 
+\begin{bmatrix}
+ 0.1453 & 0.5062 \\
+ 0.0635 & 0.4911 \\
+-0.1080 & 0.1747 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+4 & 5 \\
+8 & 10 \\
+12 & 15 \\ 
+\end{bmatrix}\\
+& = 
+\begin{bmatrix}
+ 0.0653 & 0.4062 \\
+-0.0965 & 0.2911 \\
+-0.3480 & -0.1253 \\
+\end{bmatrix} \\
+
+& \textbf{b}  - \eta \Delta_\textbf{b} \\
+& = 
+\begin{bmatrix}
+ 0.2063 \\
+-0.1635 \\
+-0.0883 \\
+\end{bmatrix} -
+0.02
+\begin{bmatrix}
+1 \\
+2 \\
+3 \\ 
+\end{bmatrix}\\
+&=
+\begin{bmatrix}
+ 0.1863 \\
+-0.2035 \\ 
+-0.1483 \\
+\end{bmatrix} 
+\end{align}
+$$
+
+
+印出 `l1` 的 `weight` 和 `bias` ，執行 `updateParameters` ，比較執行前後的 `weight` 和 `bias` 差異，程式如下：
+
+
+``` lua
+
+print(l1.weight)
+print(l1.bias)
+l1:updateParameters(0.02)
+print(l1.weight)
+print(l1.bias)
+
+```
+
+
+結果如下：
+
+
+``` sh
+
+ 0.1453  0.5062
+ 0.0635  0.4911
+-0.1080  0.1747
+[torch.DoubleTensor of size 3x2]
+
+ 0.2063
+-0.1635
+-0.0883
+[torch.DoubleTensor of size 3]
+
+ 0.0653  0.4062
+-0.0965  0.2911
+-0.3480 -0.1253
+[torch.DoubleTensor of size 3x2]
+
+ 0.1863
+-0.2035
+-0.1483
+[torch.DoubleTensor of size 3]
+
+```
+
+
+## Materials
+
+本次教學的完整程式碼於此：
+
+[https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb
+](https://github.com/ckmarkoh/torch_nn_tutorials/blob/master/6_backward_propagation_part_3.ipynb
+)
+
+
+

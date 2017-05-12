@@ -30,13 +30,13 @@ $$
 &\text{2.} \mspace{20mu} \text{for i=0 ; i < max_epoch; i++} \\
 &\text{3.} \mspace{40mu} \bar{y} = wx+b \\
 &\text{4.} \mspace{40mu} J = (\bar{y} - y )^2 \\
-&\text{5.} \mspace{40mu} \Delta w = 0 \\
-&   \mspace{60mu} \Delta b = 0 \\
-&\text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) \\
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
-&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
-&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+&\text{5.} \mspace{40mu} \Delta_w = 0 \\
+&   \mspace{60mu} \Delta_b = 0 \\
+&\text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) \\
+&\text{7.} \mspace{40mu} \Delta_w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta_b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta_w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta_b \\
 \end{align}
 $$
 
@@ -262,17 +262,17 @@ loss 值 `j` 如下：
 再來，要進行 backward propagation。
 
 
-第五步，先將 $$ \Delta w $$ 和 $$ \Delta b $$ 歸零：
+第五步，先將 $$ \Delta_w $$ 和 $$ \Delta_b $$ 歸零：
 
 $$
 \begin{align}
-&\text{5.} \mspace{40mu} \Delta w = 0 \\
-&   \mspace{60mu} \Delta b = 0 \\
+&\text{5.} \mspace{40mu} \Delta_w = 0 \\
+&   \mspace{60mu} \Delta_b = 0 \\
 \end{align}
 $$
 
 
-$$ \Delta w $$ 和 $$ \Delta b $$ 在程式中所對應的值，是 `l1` 的 `gradWeight` 和 `gradBias` 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：
+$$ \Delta_w $$ 和 $$ \Delta_b $$ 在程式中所對應的值，是 `l1` 的 `gradWeight` 和 `gradBias` 。在還沒歸零之前，這兩變數可能是任意值，印出這兩數的值，程式如下：
 
 
 
@@ -326,10 +326,10 @@ print(l1.gradBias)
 ```
 
 
-第六步，計算 $$\frac{\partial J}{\partial y}$$ 的值。
+第六步，計算 $$\frac{\partial J}{\partial \bar{y}}$$ 的值。
 
 
-$$ \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) $$
+$$ \text{6.} \mspace{40mu} \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y) $$
 
 
 將 $$y,\bar{y}$$ 的數值帶入以上公式，得出：
@@ -337,7 +337,7 @@ $$ \text{6.} \mspace{40mu} \frac{\partial J}{\partial y} = 2(\bar{y} - y) $$
 
 $$
 \begin{align}
-& \frac{\partial J}{\partial y} = 2(\bar{y} - y)\\
+& \frac{\partial J}{\partial \bar{y}} = 2(\bar{y} - y)\\
 & =
 \begin{bmatrix}
 2(0.9214 - 3) \\
@@ -378,23 +378,23 @@ print(dj_dy_)
 ```
 
 
-第七步，計算 $$ \Delta w $$ 和 $$ \Delta b $$ 的值：
+第七步，計算 $$ \Delta_w $$ 和 $$ \Delta_b $$ 的值：
 
 
 $$
 \begin{align}
-&\text{7.} \mspace{40mu} \Delta w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial y} \times x  \\ 
-&   \mspace{60mu} \Delta b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial y}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial y} \times 1 \\
+&\text{7.} \mspace{40mu} \Delta_w =  \frac{\partial J}{\partial w} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial w} =  \frac{\partial J}{\partial \bar{y}} \times x  \\ 
+&   \mspace{60mu} \Delta_b =  \frac{\partial J}{\partial b} =  \frac{\partial J}{\partial \bar{y}}  \frac{\partial y}{\partial b}  = \frac{\partial J}{\partial \bar{y}} \times 1 \\
 \end{align}
 $$
 
 
-先看 $$\Delta w $$ 的數值，將 $$x$$ 的值，以及先前算出的 $$ \frac{\partial J}{\partial y}$$ 值代入，即可算出它：
+先看 $$\Delta_w $$ 的數值，將 $$x$$ 的值，以及先前算出的 $$ \frac{\partial J}{\partial \bar{y}}$$ 值代入，即可算出它：
 
 
 $$
 \begin{align}
-& \Delta w =  \frac{\partial J}{\partial y} \times x \\
+& \Delta_w =  \frac{\partial J}{\partial \bar{y}} \times x \\
 &=
 \begin{bmatrix}
 -1.3857 \times 1\\
@@ -411,23 +411,23 @@ $$
 $$
 
 
-如果輸值為有多筆資料，則 $$\Delta w$$ 的最終結果會將每筆的結果累加起來，如下：
+如果輸值為有多筆資料，則 $$\Delta_w$$ 的最終結果會將每筆的結果累加起來，如下：
 
 
 $$
-\Delta w = -1.3857 + -5.1640 + -11.3352 = -17.8849
+\Delta_w = -1.3857 + -5.1640 + -11.3352 = -17.8849
 $$
 
 
-而 $$\Delta b$$ 的值是把 $$ \frac{\partial J}{\partial y}$$ 中的每筆資料結果累積起來。
+而 $$\Delta_b$$ 的值是把 $$ \frac{\partial J}{\partial \bar{y}}$$ 中的每筆資料結果累積起來。
 
 $$
-\Delta b = -1.3857 + -2.5820 + -3.7784 = -7.7461
+\Delta_b = -1.3857 + -2.5820 + -3.7784 = -7.7461
 $$
 
 
 
-以程式來計算此兩值。呼叫 `l1` 的 `backward` ，輸入 $$\frac{\partial J}{\partial \bar{y} }$$ 到 `backward` 後，它與  $$\frac{\partial \bar{y}}{\partial w}$$ 和 $$\frac{\partial \bar{y}}{\partial b}$$ 相乘後結果分別為 $$\Delta w$$ 和 $$\Delta b$$ ，此兩數分別儲存於 `gradWeight` 和 `gradBias` 。
+以程式來計算此兩值。呼叫 `l1` 的 `backward` ，輸入 $$\frac{\partial J}{\partial \bar{y} }$$ 到 `backward` 後，它與  $$\frac{\partial \bar{y}}{\partial w}$$ 和 $$\frac{\partial \bar{y}}{\partial b}$$ 相乘後結果分別為 $$\Delta_w$$ 和 $$\Delta_b$$ ，此兩數分別儲存於 `gradWeight` 和 `gradBias` 。
 
 
 ``` lua
@@ -459,8 +459,8 @@ print(l1.gradBias)
 $$
 
 \begin{align}
-&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta w \\ 
-&   \mspace{60mu} b \leftarrow b - \eta \Delta b \\
+&\text{8.} \mspace{40mu} w \leftarrow w  - \eta \Delta_w \\ 
+&   \mspace{60mu} b \leftarrow b - \eta \Delta_b \\
 \end{align}
 
 $$
@@ -471,9 +471,9 @@ $$
 
 $$
 \begin{align}
-& w  - \eta \Delta w 
+& w  - \eta \Delta_w 
 = 0.2055 - 0.02 \times (- 17.8849) = 0.5632 \\
-& b - \eta \Delta b 
+& b - \eta \Delta_b 
 = 0.7159 - 0.02 \times (-7.7461) = 0.8708 \\
 \end{align}
 $$
