@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Linear Programming | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/linear-programming/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-05-31T01:09:05+08:00</updated>
+  <updated>2017-05-31T01:14:17+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -186,19 +186,15 @@ a_{m1} &a_{m2} &\cdots &a_{mn} \\
 
 <p>例如 Inequalitn Constraint：</p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-&x_1 + x_2  \leq 2 \\
- %]]&gt;</script>
+<script type="math/tex; mode=display">
+x_1 + x_2  \leq 2 
+</script>
 
 <p>可以將它加上 Slack Variable <script type="math/tex">x_3</script> 。它可以補足原本不等式少於2的部分，使之等於2。如下：</p>
 
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-\begin{align}
-&\Rightarrow  x_1 + x_2 + x_3  = 2 , \mspace{20mu} x_3 \geq 0 \\
-\end{align}
- %]]&gt;</script>
+<script type="math/tex; mode=display">
+\Rightarrow  x_1 + x_2 + x_3  = 2 , \mspace{20mu} x_3 \geq 0 
+</script>
 
 <p>同理，另一個 Constraints 也可以加上另一個 Slack Variable ，<script type="math/tex">x_4</script> 。</p>
 
