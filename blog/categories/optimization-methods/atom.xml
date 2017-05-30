@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Optimization Methods | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/optimization-methods/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-05-31T01:24:08+08:00</updated>
+  <updated>2017-05-31T01:34:10+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -92,7 +92,7 @@ P = \{(x_1,x_2) \mid x_1+x_2 \leq 2 , x_1+2x_2 \leq 3, x_1,x_2 \geq 0\}
 
 <h2 id="standard-form-of-linear-programming">Standard Form of Linear Programming</h2>
 
-<p>在解 Linear Programming 的問題時，把公式列出來後，會先把問題轉成 Standard Form，以便求解。
+<p>在解 Linear Programming 的問題時，會先把問題轉成 Standard Form，使得不同的 Linear Programming 問題能有一致性，以便之後能用相同的演算法來求解。
 Linear Programming 的 Standard Form 如下<a name="eq2">（公式二）</a>：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
@@ -171,9 +171,7 @@ a_{m1} &a_{m2} &\cdots &a_{mn} \\
 <p>我們可以把前例<a href="#eq1">（公式一）</a>轉換成<a href="#eq2">（公式二）</a> 的 standard form 。</p>
 
 <p>首先，為了滿足條件 1.， 「目標是將 Objective Function 最小化。」
-必須將 Objective Function 改為 Minimize：</p>
-
-<p>這部分很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
+必須將 Objective Function 改為 Minimize。這步驟很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
 
 <script type="math/tex; mode=display">% &lt;![CDATA[
 

@@ -185,7 +185,7 @@ P = \{(x_1,x_2) \mid x_1+x_2 \leq 2 , x_1+2x_2 \leq 3, x_1,x_2 \geq 0\}
 
 <h2 id="standard-form-of-linear-programming">Standard Form of Linear Programming</h2>
 
-<p>在解 Linear Programming 的問題時，把公式列出來後，會先把問題轉成 Standard Form，以便求解。
+<p>在解 Linear Programming 的問題時，會先把問題轉成 Standard Form，使得不同的 Linear Programming 問題能有一致性，以便之後能用相同的演算法來求解。
 Linear Programming 的 Standard Form 如下<a name="eq2">（公式二）</a>：</p>
 
 <script type="math/tex; mode=display">% <![CDATA[
@@ -264,9 +264,7 @@ a_{m1} &a_{m2} &\cdots &a_{mn} \\
 <p>我們可以把前例<a href="#eq1">（公式一）</a>轉換成<a href="#eq2">（公式二）</a> 的 standard form 。</p>
 
 <p>首先，為了滿足條件 1.， 「目標是將 Objective Function 最小化。」
-必須將 Objective Function 改為 Minimize：</p>
-
-<p>這部分很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
+必須將 Objective Function 改為 Minimize。這步驟很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
 
 <script type="math/tex; mode=display">% <![CDATA[
 
@@ -399,6 +397,8 @@ x_4 \\
         <a class="basic-alignment left" href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/" title="Previous Post: Torch NN Tutorial 6 : Backward Propagation ( part 3 : nn.Module ) ">&laquo; Torch NN Tutorial 6 : Backward Propagation ( part 3 : nn.Module ) </a>
       
       
+        <a class="basic-alignment right" href="/blog/2017/05/31/linear-programming-fundamental-theorem/" title="Next Post: Linear Programming Fundamental Theorem">Linear Programming Fundamental Theorem &raquo;</a>
+      
     </p>
   </footer>
 </article>
@@ -422,6 +422,10 @@ x_4 \\
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/05/31/linear-programming-fundamental-theorem/">Linear Programming Fundamental Theorem</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
       </li>
     
@@ -435,10 +439,6 @@ x_4 \\
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 在數位電路裡面，如果一個電路沒有 latch 或 flip flop 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 combinational circuit 。 對於類神經網路而言， &hellip;">
+  <meta name="description" content="Introduction Recurrent Neural Network 在進行 Gradient Descent 的時候，會遇到所謂的 Vanishing Gradient Problem ，也就是說，在後面時間點的所算出的修正量，要回傳去修正較前面時間的參數值，此修正量會隨著時間傳遞而衰減 &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,6 +92,54 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
+  
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/10/26/neural-network-neural-turing-machine/">Neural Turing Machine</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-10-26T16:25:00+08:00'><span class='date'><span class='date-month'>Oct</span> <span class='date-day'>26</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>4:25 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p><em>Recurrent Neural Network</em> 在進行 <em>Gradient Descent</em> 的時候，會遇到所謂的 <em>Vanishing Gradient Problem</em> ，也就是說，在後面時間點的所算出的修正量，要回傳去修正較前面時間的參數值，此修正量會隨著時間傳遞而衰減。</p>
+
+<p>為了改善此問題，可以用類神經網路模擬記憶體的構造，把前面神經元所算出的值，儲存起來。例如： <em>Long Short-term Memory (LSTM)</em> 即是模擬記憶體讀寫的構造，將某個時間點算出的值給儲存起來，等需要用它的時候再讀出來。</p>
+
+<p>除了模擬單一記憶體的儲存與讀寫功能之外，也可以用類神經網路的構造來模擬 <em>Turing Machine</em> ，也就是說，有個 <em>Controller</em> ，可以更精確地控制，要將什麼值寫入哪一個記憶體區塊，或讀取哪一個記憶體區塊的值，這種類神經網路模型，稱為 <em>Neural Turing Machine</em> 。</p>
+
+<p>如果可以模擬 <em>Turing Machine</em> ，即表示可以學會電腦能做的事。也就是說，這種機器學習模型可以學會電腦程式的邏輯控制與運算。</p>
+
+<h2 id="neural-turing-machine">Neural Turing Machine</h2>
+
+<p><em>Neural Turing Machine</em> 的架構如下：</p>
+
+<p><img src="/images/pic/pic_00100.jpeg" alt="Neural Turing Machine" /></p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/10/26/neural-network-neural-turing-machine/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
   
   
     <article>
@@ -602,131 +650,6 @@ This is not an apple </p>
 
     </article>
   
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/08/23/r-createdatapartition/">R Data Splitting</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-08-23T06:46:00+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>6:46 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在做機器學習演算法時，常常需要把資料分成 <em>training set</em> 和 <em>validation set</em> 這兩個資料組。</p>
-
-<p>但是，要如何切割，才可以讓具有不同 <em>label</em> 的資料，在這兩個資料組中，平均分佈？</p>
-
-<p>用統計語言 <em>R</em> 處理 <em>iris</em> 資料組為例。<em>iris</em> 的資料如下：</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>index</th>
-      <th>Sepal.Length</th>
-      <th>Sepal.Width</th>
-      <th>Petal.Length</th>
-      <th>Petal.Width</th>
-      <th>Species</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>5.1</td>
-      <td>3.5</td>
-      <td>1.4</td>
-      <td>0.2</td>
-      <td>setosa</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>4.9</td>
-      <td>3.0</td>
-      <td>1.4</td>
-      <td>0.2</td>
-      <td>setosa</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-    <tr>
-      <td>51</td>
-      <td>7.0</td>
-      <td>3.2</td>
-      <td>4.7</td>
-      <td>1.4</td>
-      <td>versicolor</td>
-    </tr>
-    <tr>
-      <td>52</td>
-      <td>6.4</td>
-      <td>3.2</td>
-      <td>4.5</td>
-      <td>1.5</td>
-      <td>versicolor</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-    <tr>
-      <td>101</td>
-      <td>6.3</td>
-      <td>3.3</td>
-      <td>6.0</td>
-      <td>2.5</td>
-      <td>virginica</td>
-    </tr>
-    <tr>
-      <td>102</td>
-      <td>5.8</td>
-      <td>2.7</td>
-      <td>5.1</td>
-      <td>1.9</td>
-      <td>virginica</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-  </tbody>
-</table>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/08/23/r-createdatapartition/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
-  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -748,6 +671,10 @@ This is not an apple </p>
   <ul id="recent_posts">
     
       <li class="post">
+        <a href="/blog/2017/05/31/linear-programming-fundamental-theorem/">Linear Programming Fundamental Theorem</a>
+      </li>
+    
+      <li class="post">
         <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
       </li>
     
@@ -761,10 +688,6 @@ This is not an apple </p>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
-      </li>
-    
-      <li class="post">
-        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
       </li>
     
   </ul>
