@@ -208,6 +208,7 @@ $$
 
 
 ```python simple_rnn.py
+
 from math import e                                                                                    
 from random import random
 
@@ -258,8 +259,8 @@ def rnn(x):
 
 ```
 
->>> import smallrnn
->>> smallrnn.rnn([0,0,1,0,0,1,0,0,1])
+>>> from simple_rnn import *
+>>> rnn([0,0,1,0,0,1,0,0,1])
 0 0
 0 0.203697155215
 1 0.93315712478
