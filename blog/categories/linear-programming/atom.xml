@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Linear Programming | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/linear-programming/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-05-31T01:14:17+08:00</updated>
+  <updated>2017-05-31T01:24:08+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -52,7 +52,8 @@ P = \{(x_1,x_2) \mid x_1+x_2 \leq 2 , x_1+2x_2 \leq 3, x_1,x_2 \geq 0\}
 
 </script>
 
-<p>而此問題的最佳解為 <script type="math/tex">(x_1,x_2)=(1,1)</script> ，因為將 <script type="math/tex">(x_1,x_2)</script> 代入 Objective Function 可得最大值：</p>
+<p>而從 Feasible Domain 中，可以使 Objective Function 得到最大值的 <script type="math/tex">(x_1,x_2)</script> 為最佳解。 
+此問題的最佳解為 <script type="math/tex">(x_1,x_2)=(1,1)</script> ，因為它使 Objective Function 得最大值：</p>
 
 <script type="math/tex; mode=display">
 2x_1+3x_2 = 2\times 1 + 3\times 1 = 5
@@ -190,7 +191,7 @@ a_{m1} &a_{m2} &\cdots &a_{mn} \\
 x_1 + x_2  \leq 2 
 </script>
 
-<p>可以將它加上 Slack Variable <script type="math/tex">x_3</script> 。它可以補足原本不等式少於2的部分，使之等於2。如下：</p>
+<p>可以將它加上 Slack Variable ，<script type="math/tex">x_3</script> 。它可以補足原本不等式少於2的部分，使之等於2。如下：</p>
 
 <script type="math/tex; mode=display">
 \Rightarrow  x_1 + x_2 + x_3  = 2 , \mspace{20mu} x_3 \geq 0 
