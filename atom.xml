@@ -4,7 +4,7 @@
   <title><![CDATA[Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-05-12T23:47:33+08:00</updated>
+  <updated>2017-05-31T01:09:05+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,264 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Linear Programming 1: Standard Form of Linear Programming]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/05/30/optimization-linear-programming-standard-form/"/>
+    <updated>2017-05-30T09:05:30+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/05/30/optimization-linear-programming-standard-form</id>
+    <content type="html"><![CDATA[<h2 id="what-is-linear-programming">What is Linear Programming?</h2>
+
+<p>Linear Programming 是一種最佳化問題，在此最佳化問題中。Objective Function 和Constraints 都是線性的。</p>
+
+<p>舉個例子，以下為一個 Linear Programming 的問題<a name="eq1">（公式一）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{20mu}\text{maximize: }  2x_1+3x_2  \\
+&\text{Constraints} \\
+&\mspace{20mu} x_1 + x_2  \leq 2 \\
+&\mspace{20mu} x_1 + 2x_2 \leq 3 \\
+&\mspace{20mu} x_1 , x_2  \geq 0  \\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>將 Constraints 畫在平面上，得出下圖：</p>
+
+<p><img src="http://ckmarkoh.github.io/images/new/linearprog1.png" alt="" /></p>
+
+<!--more-->
+
+<p>其中，淺藍色區域 <script type="math/tex">\mathbf{P}</script> 是 <script type="math/tex">(x_1,x_2)</script> 滿足 Constraints 的範圍，稱為 Feasible Domain。</p>
+
+<script type="math/tex; mode=display">
+
+P = \{(x_1,x_2) \mid x_1+x_2 \leq 2 , x_1+2x_2 \leq 3, x_1,x_2 \geq 0\}
+
+</script>
+
+<p>而此問題的最佳解為 <script type="math/tex">(x_1,x_2)=(1,1)</script> ，因為將 <script type="math/tex">(x_1,x_2)</script> 代入 Objective Function 可得最大值：</p>
+
+<script type="math/tex; mode=display">
+2x_1+3x_2 = 2\times 1 + 3\times 1 = 5
+</script>
+
+<p>Linear Programming 的解法主要有兩種：分別是Simplex Method 和 Interior Point Method。本文先不講解這兩種方法，而會在後續文章講解。</p>
+
+<h2 id="formulate-a-linear-programming-problem">Formulate A Linear Programming Problem</h2>
+
+<p>在現實生活的應用中，有許多問題是可以用 Linear Programming 來解，本段舉例，如何將有限的資源下將利潤最大化的問題，寫成 Linear Programming 的形式，例如：</p>
+
+<p>某工廠生產兩種產品X和Y ，這兩種產品都需要用到兩種原料 A和B，生產1公噸X需要1公噸的A和1公噸的B，生產1公噸Y需要1公噸的A和2公噸的B。工廠存有原料A有2公噸，B有3公噸。而1公噸X可賣2百萬元，1公噸Y可賣3百萬元。 以工廠的現有的資源，要生產多少X和Y怎樣才能獲得最大利潤?</p>
+
+<p>設工廠要生產 <script type="math/tex">x_1</script> 公噸的 X ， <script type="math/tex">y_1</script> 公噸的 Y ，才能獲得最大利潤。</p>
+
+<p>目標是要將利潤最大化，由於而1公噸X可賣2百萬元，1公噸Y可賣3百萬元，所以 Objective Function 如下（省略百萬元）：</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+\text{maximize: }  2x_1+3x_2  \\
+\end{align}
+</script>
+
+<p>但是 X 和 Y 的產量受限於目前工廠僅存的原料量， <script type="math/tex">x_1 + x_2</script> 為原料A的用量，不可多餘2公噸，以此類推，<script type="math/tex">x_1 + 2x_2</script> 為原料 B的用量，不可多餘3公噸。又由於產量不可能為負，因此 <script type="math/tex">x_1,x_2</script> 都不能為負， 所以 Constraints 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mspace{40mu} x_1 + x_2  \leq 2 \\
+&\mspace{40mu} x_1 + 2x_2 \leq 3 \\
+&\mspace{40mu} x_1 , x_2  \geq 0  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>結合以上的 Objective Function 和 Constraints，即為<a href="#eq1">（公式一）</a>的 Linear Programming 問題。</p>
+
+<h2 id="standard-form-of-linear-programming">Standard Form of Linear Programming</h2>
+
+<p>在解 Linear Programming 的問題時，把公式列出來後，會先把問題轉成 Standard Form，以便求解。
+Linear Programming 的 Standard Form 如下<a name="eq2">（公式二）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\text{1.Objective Function} \\
+&\mspace{20mu}\text{minimize: } z = c_1x_1+c_2x_2+...+c_nx_n \\
+&\text{2.Equality Constraints} \\
+&\mspace{20mu} a_{11}x_1 + a_{12}x_2 +...+a_{1n}x_n = b_1 \\
+&\mspace{20mu} a_{21}x_1 + a_{22}x_2 +...+a_{2n}x_n = b_2 \\
+&\mspace{20mu} \vdots \\
+&\mspace{20mu} a_{m1}x_1 + a_{m2}x_2 +...+a_{mn}x_n = b_m \\
+&\text{3.Non-Negative Variables} \\
+&\mspace{20mu} x_1 , x_2,...,x_n  \geq 0  \\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，$n$ 為 Variables 的個數， $m$ 為 Constraints 的個數。通常 <script type="math/tex">n >  m</script> ，這樣才需要從 Feasible Domain 中挑選出最佳解，不然 Feasible Domain 可能會只有一個點 ， 或者根本無解。</p>
+
+<p>而 Standard Form 須滿足以下三個條件：</p>
+
+<ol>
+  <li>目標是將 Objective Function 最小化，而非最大化。</li>
+  <li>Constraints 皆為 Equality Constraints ，沒有 Inequality Constraints。</li>
+  <li>Variables 都必須是非負實數。</li>
+</ol>
+
+<p>為了以矩陣運算來加速，也可以把<a href="#eq2">（公式二）</a> 的 Standard Form 寫成矩陣的形式<a name="eq3">（公式三）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mathbf{c} = \begin{bmatrix}
+c_1 \\
+c_2 \\
+\vdots \\
+c_n \\
+\end{bmatrix}
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+\vdots \\
+x_n \\
+\end{bmatrix}
+\mathbf{b} = \begin{bmatrix}
+b_1 \\
+b_2 \\
+\vdots \\
+b_m \\
+\end{bmatrix} \\
+&\mathbf{A} = \begin{bmatrix}
+a_{11} &a_{12} &\cdots &a_{1n} \\
+a_{21} &a_{22} &\cdots &a_{2n} \\
+\vdots &\vdots &\vdots &\vdots \\
+a_{m1} &a_{m2} &\cdots &a_{mn} \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{40mu} \text{minimize: } z =\mathbf{c}^T\mathbf{x}  \\
+&\text{Equality Constraints} \\
+&\mspace{40mu} \mathbf{A}\mathbf{x} = \mathbf{b} \\
+&\text{Non-Negative Variables} \\
+&\mspace{40mu} \mathbf{x}\geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<h2 id="converting-into-standard-form">Converting into Standard Form</h2>
+
+<p>我們可以把前例<a href="#eq1">（公式一）</a>轉換成<a href="#eq2">（公式二）</a> 的 standard form 。</p>
+
+<p>首先，為了滿足條件 1.， 「目標是將 Objective Function 最小化。」
+必須將 Objective Function 改為 Minimize：</p>
+
+<p>這部分很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{maximize: }  2x_1+3x_2  \\
+&\Rightarrow \text{minimize: }  -2x_1-3x_2  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>下一步，為了滿足條件 2.，「 Constraints 皆為 Equality Constraints 」，則須將 Inequality Constraints 轉換成 Equality Constraints 。 這可以藉由加上 Slack Variable 來達成。</p>
+
+<p>例如 Inequalitn Constraint：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+&x_1 + x_2  \leq 2 \\
+ %]]&gt;</script>
+
+<p>可以將它加上 Slack Variable <script type="math/tex">x_3</script> 。它可以補足原本不等式少於2的部分，使之等於2。如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\Rightarrow  x_1 + x_2 + x_3  = 2 , \mspace{20mu} x_3 \geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>同理，另一個 Constraints 也可以加上另一個 Slack Variable ，<script type="math/tex">x_4</script> 。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&x_1 + 2x_2 \leq 3 \\
+&\Rightarrow  x_1 + 2x_2 + x_4  = 3 , \mspace{20mu} x_4 \geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>經過這些轉換後，<a href="#eq1">（公式一）</a> 變成 Standard Form ，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{20mu}\text{minimize: } -2x_1-3x_2  \\
+&\text{Constraints} \\
+&\mspace{20mu} x_1 + x_2 + x_3 =  2 \\
+&\mspace{20mu} x_1 + 2x_2 + x_4 = 3 \\
+&\mspace{20mu} x_1 , x_2 , x_3 , x_4 \geq 0  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>可以再將它寫成矩陣形式：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mathbf{c} = \begin{bmatrix}
+-2 \\
+-3 \\
+0 \\
+0 \\
+\end{bmatrix}
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3 \\
+x_4 \\
+\end{bmatrix}
+\mathbf{b} = \begin{bmatrix}
+2 \\
+3 \\
+\end{bmatrix} \\
+&\mathbf{A} = \begin{bmatrix}
+1 &1 &1 &0 \\
+1 &2 &0 &1 \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{minimize: } z =\mathbf{c}^T\mathbf{x}  \\
+&\text{subject to: } \mathbf{A}\mathbf{x} = \mathbf{b} \\
+&\mathbf{x}\geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>至於如何得出 Linear Programming 的最佳解？會在後續文章講解。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考交通大學開放式課程：線性規劃</p>
+
+<p>http://ocw.nctu.edu.tw/course_detail.php?bgid=3&amp;gid=0&amp;nid=245#.WS2AasklFYc</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )]]></title>
@@ -8380,289 +8638,6 @@ w(i) \leftarrow \frac{w(i)^{\gamma}}{\sum_{j}w(j)^{\gamma}}
 <h2 id="reference">Reference</h2>
 
 <p><a href="http://arxiv.org/abs/1410.5401">Alex Graves, Greg Wayne, Ivo Danihelka. Neural Turing Machines. 2014</a></p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Recurrent Neural Network]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network/"/>
-    <updated>2015-06-06T09:32:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/06/06/neural-network-recurrent-neural-network</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>在數位電路裡面，如果一個電路沒有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 <em>combinational circuit</em> 。</p>
-
-<p>對於類神經網路而言，如果它的值只是從輸入端一層層地依序傳到輸出端，不會再把值從輸出端傳回輸入端，這種神經元就相當於 <em>combinational circuit</em> ，也就是說它的輸出值只取決於目前時刻的輸入值，這樣的類神經網路稱為 <em>feedforward neural network</em> 。</p>
-
-<p>如果一個電路有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值就跟上個時間點的輸入值有關，這種的電路它稱為 <em>sequential circuit</em> 。</p>
-
-<p>所謂的 <em>Recurrent Neural Network</em> ，是一種把輸出端再接回輸入端的類神經網路，這樣可以把上個時間點的輸出值再傳回來，記錄在神經元中，達成和 <em>latch</em> 類似的效果，使得下個時間點的輸出值，跟上個時間點有關，也就是說，這樣的神經網路是有 <em>記憶</em> 的。</p>
-
-<h2 id="recurrent-neural-network">Recurrent Neural Network</h2>
-
-<p>由一個簡單神經元所構成的 <em>Recurrent Neural Network</em> ，構造如下：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00095.png" alt="" /></p>
-
-<p>這個神經元在 <script type="math/tex">t</script> 時間，訓練資料的輸入值為 <script type="math/tex">x_{t}</script> ，訓練資料的答案為 <script type="math/tex">y_{t}</script> ，神經元 <script type="math/tex">n</script> 的輸出值 <script type="math/tex">n_{out,t}</script> ，可用以下公式表示：</p>
-
-<!--more-->
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& n_{in,t} = w_{c}x_{t}+ w_{p}n_{out,t-1} + w_{b} \\
-
-& n_{out,t} = \frac{1}{1+e^{-n_{in,t}}} \\
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<p>其中， <script type="math/tex">n_{in,t}</script> 為輸入神經元 <script type="math/tex">n</script> 的值， <script type="math/tex">w_{c}</script> 是給目前的時間(current)時，輸入值 <script type="math/tex">x_{t}</script> 的權重， <script type="math/tex">w_{p}</script> 是給上個時間點(previous)時，輸出值 <script type="math/tex">n_{out,t-1}</script> 的權重，而 <script type="math/tex">w_{b}</script> 為 <em>bias</em> 。從上圖可看出，紫色的線將神經網路的輸出端 <script type="math/tex">n_{out}</script> 連回輸入端 <script type="math/tex">n_{in}</script> ，使得於時間 <script type="math/tex">t</script> 的輸出值跟上個時間點 <script type="math/tex">t-1</script> 的輸出值有關。</p>
-
-<p>可以把這個神經元從時間點 <script type="math/tex">0</script> 到時間點 <script type="math/tex">t</script> 的運算，展開成下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00096.png" alt="" /></p>
-
-<p>從上圖，最左邊開始，依序將 <script type="math/tex">x_{0},x_{1},...,x_{t}</script> 輸入神經元 <script type="math/tex">n</script> ，而依序得出的值為 <script type="math/tex">n_{out,0},n_{out,1},...,n_{out,t}</script> 。神經元 <script type="math/tex">n</script> 在時間點 <script type="math/tex">t-1</script> 的輸出值 <script type="math/tex">n_{out,t-1}</script> ，會接到時間點 <script type="math/tex">t</script> 時的輸入值 <script type="math/tex">n_{in,t}</script> 。 </p>
-
-<h2 id="training-recurrent-neural-network">Training Recurrent Neural Network</h2>
-
-<p>訓練 <em>recurrent neural network</em> 的方法，和訓練 <em>feedforward neural network</em> 的方法一樣，都可以用 <em>back propagation</em> 。但是在 <em>recurrent neural network</em> 中，要依據時間順序，將值從最後一個時間點，回傳到第一個時間點。</p>
-
-<p>在時間點 <script type="math/tex">t</script> 時的 <em>cost function</em> 為：</p>
-
-<script type="math/tex; mode=display">
-
-J=−y_{t}log(n_{out,t})−(1−y_{t})log(1−n_{out,t})
-
-</script>
-
-<p>計算 <em>recurrent neural network</em> 的 <em>back propagation</em> 要分為兩部分來算，先算好時間點位於 <script type="math/tex">t</script> 的偏微分 <script type="math/tex">\dfrac{\partial J}{ \partial n_{in} } </script> 值，再依序往前算出時間點 <script type="math/tex">t</script> 之前的偏微分值，如下：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\dfrac{\partial J}{ \partial n_{in,s} } = 
-
-\begin{cases} 
-
-(\dfrac{\partial J}{ \partial n_{out,s} } )
-
-(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } ) & \text{if } s = t \\
-
-(\dfrac{\partial J}{ \partial n_{in,s+1} } )
-
-(\dfrac{ \partial n_{in,s+1}}{\partial n_{out,s} } )
-
-(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )
-
-  & \text{otherwise}
-
-\end{cases}
-
- %]]&gt;</script>
-
-<p>其中， <script type="math/tex">s</script> 為 <script type="math/tex">0</script> 到 <script type="math/tex">t</script> 中的其中一個時間點。用 <a href="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程</a> 所提到的推導方法，可推導出 <script type="math/tex"> (\dfrac{\partial J}{ \partial n_{out,s} } )(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )</script> 、 <script type="math/tex">(\dfrac{ \partial n_{in,s+1}}{\partial n_{out,s} } )</script> 與 <script type="math/tex">(\dfrac{ \partial n_{out,s}}{\partial n_{in,s} } )</script> 的值，並令 <script type="math/tex"> \delta_{in,s} = \dfrac{\partial J}{ \partial n_{in,s} } </script> 代入以上公式，得出：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-\delta_{in,s}  = 
-
-\begin{cases} 
-
-n_{out,s} - y_{s}  & \text{if } s = t \\
-
-\delta_{in,s+1} w_{p} n_{out,s} (1-n_{out,s})  & \text{otherwise}
-
-\end{cases}
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>此公是可分為兩部分，當 <script type="math/tex">s = t</script> 時，與  <script type="math/tex">s\neq t</script> 時。計算 <script type="math/tex">\delta_{s}</script> 的方式不同。</p>
-
-<p>在 <script type="math/tex">s = t</script> 時， <script type="math/tex">\delta_{s}</script> 的傳遞過程就如同 <em>feedforward neural network</em> ，如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00097.png" alt="" /></p>
-
-<p>若 <script type="math/tex">s\neq t</script> 時， 要算 <script type="math/tex">\delta_{in,s}</script> 之前，要先從 <script type="math/tex">s+1</script> 時間點將 <script type="math/tex">\delta_{in,s+1}</script> 傳遞過來，傳遞過程如下圖：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00098.png" alt="" /></p>
-
-<p>因為需要把 <script type="math/tex">\delta</script> 從後面的時間點往前面傳，故這個過程又稱為 <em>back propagation through time</em> 。</p>
-
-<p>於時間點 <script type="math/tex">s</script> 計算完 <script type="math/tex">\delta</script> 後，用以下公式將 <script type="math/tex">s</script> 時間點算出的偏微分值，更新到神經元的權重：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{c} \leftarrow w_{c} - 
-
-\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{c}} \\ 
-
-& w_{b} \leftarrow w_{b} - 
-
-\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{b}} \\
-
-& w_{p} \leftarrow w_{p} - 
-
-\eta \dfrac{\partial J}{ \partial n_{in,s} } \dfrac{\partial n_{in,s}}{\partial w_{p}}  \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>用 <a href="http://ckmarkoh.github.io/blog/2015/05/28/neural-network-backward-propagation">Backward Propagation 詳細推導過程</a> ，求出 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{c}}</script> 、 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{b}} </script> 和 <script type="math/tex">\dfrac{\partial n_{in,s}}{\partial w_{p}}</script> 的值，並換成用 <script type="math/tex">\delta_{in,s}</script> 代替 <script type="math/tex">\dfrac{\partial J}{ \partial n_{in,s} } </script> 代入以上公式，得出：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{align}
-
-& w_{c} \leftarrow w_{c} - \eta \delta_{in,s} x_{s} \\ 
-
-& w_{b} \leftarrow w_{b} - \eta \delta_{in,s} \\
-
-& w_{p} \leftarrow w_{p} - \eta \delta_{in,s} n_{out,s-1} \\
-
-\end{align}
-
- %]]&gt;</script>
-
-<p>此過程如下圖所示：</p>
-
-<p><img src="http://ckmarkoh.github.io/images/pic/pic_00099.png" alt="" /></p>
-
-<h2 id="implementation">Implementation</h2>
-
-<p>再來是實作的部分，以下是個簡單的應用，用 <em>Recurrent Neural Network</em> 來預測一個字串序列中，下一個可能出現的字是什麼。例如，給定以下字串：</p>
-
-<figure class="code"><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-</pre></td><td class="code"><pre><code class=""><span class="line">001001001
-</span></code></pre></td></tr></table></div></figure>
-
-<p>根據這個字串的特徵，如果連續出現了兩個 <em>0</em> ，可以預測下個出現的為 <em>1</em> ，若前面兩個字為 <em>10</em> 則可預測下個出現的自為 <em>0</em> ，以此類推。</p>
-
-<p>以下為實作部分：</p>
-
-<figure class="code"><figcaption><span>simple_rnn.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-<span class="line-number">12</span>
-<span class="line-number">13</span>
-<span class="line-number">14</span>
-<span class="line-number">15</span>
-<span class="line-number">16</span>
-<span class="line-number">17</span>
-<span class="line-number">18</span>
-<span class="line-number">19</span>
-<span class="line-number">20</span>
-<span class="line-number">21</span>
-<span class="line-number">22</span>
-<span class="line-number">23</span>
-<span class="line-number">24</span>
-<span class="line-number">25</span>
-<span class="line-number">26</span>
-<span class="line-number">27</span>
-<span class="line-number">28</span>
-<span class="line-number">29</span>
-<span class="line-number">30</span>
-<span class="line-number">31</span>
-<span class="line-number">32</span>
-<span class="line-number">33</span>
-<span class="line-number">34</span>
-<span class="line-number">35</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">e</span>
-</span><span class="line"><span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">random</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-</span><span class="line">    <span class="k">return</span> <span class="mi">1</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">e</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">x</span><span class="p">))</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">my_rand</span><span class="p">():</span>
-</span><span class="line">    <span class="k">return</span> <span class="n">random</span><span class="p">()</span><span class="o">-</span><span class="mf">0.5</span>
-</span><span class="line">
-</span><span class="line"><span class="k">def</span> <span class="nf">rnn</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-</span><span class="line">    <span class="n">r</span> <span class="o">=</span> <span class="mf">0.05</span>
-</span><span class="line">    <span class="n">w_p</span><span class="p">,</span> <span class="n">w_c</span><span class="p">,</span> <span class="n">w_b</span> <span class="o">=</span> <span class="n">my_rand</span><span class="p">(),</span><span class="n">my_rand</span><span class="p">(),</span><span class="n">my_rand</span><span class="p">()</span>
-</span><span class="line">    <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span class="line">    <span class="n">n_in</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">l</span>
-</span><span class="line">    <span class="n">n_out</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">l</span>
-</span><span class="line">    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
-</span><span class="line">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-</span><span class="line">            <span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_b</span>
-</span><span class="line">            <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-</span><span class="line">        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-</span><span class="line">            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
-</span><span class="line">                <span class="n">k</span> <span class="o">=</span>  <span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="n">j</span><span class="p">)</span>
-</span><span class="line">                <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-</span><span class="line">                    <span class="n">d_c</span> <span class="o">=</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span>
-</span><span class="line">                <span class="k">else</span><span class="p">:</span>
-</span><span class="line">                    <span class="n">d_c</span> <span class="o">=</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span> <span class="o">*</span> <span class="n">d_c</span>
-</span><span class="line">                <span class="n">w_c</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span> <span class="o">*</span> <span class="n">x</span> <span class="p">[</span><span class="n">k</span><span class="p">]</span>
-</span><span class="line">                <span class="n">w_b</span> <span class="o">=</span> <span class="n">w_b</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span>
-</span><span class="line">                <span class="n">w_p</span> <span class="o">=</span> <span class="n">w_p</span> <span class="o">-</span> <span class="n">r</span> <span class="o">*</span> <span class="n">d_c</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-</span><span class="line">
-</span><span class="line">    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">l</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-</span><span class="line">        <span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">w_c</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_p</span> <span class="o">*</span> <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">w_b</span>
-</span><span class="line">        <span class="n">n_out</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">sigmoid</span><span class="p">(</span><span class="n">n_in</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
-</span><span class="line">    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">n_out</span><span class="p">):</span>
-</span><span class="line">        <span class="k">print</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">w</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>其中， <code>x</code> 為輸入的序列， <code>n_out</code> 為神經元預測的結果。進行這個演算法之前，首先，先給權重 <code>w_p, w_c, w_b</code> 的初始值用介於 <em>-0.5~0.5</em> 之間的隨機值。再來是進行訓練過程，用 <em>for loop</em> 進行了 <em>10000</em> 次的訓練，在每次的訓練過程中，先進行 <em>forward propagation</em> 依時間順序，算出每個時間點的 <code>n_out</code> 。再來是用 <em>back propagation through time</em> 來更新 <code>w_p, w_c, w_b</code> 的值。訓練完後，進行一次 <em>forward propogation</em> 用訓練過程得出的權重來預測序列的下一個字，並將預測結果印出。</p>
-
-<p>到 <em>interactive mode</em> 執行以下程式，輸入序列 <em>001001001</em> 。</p>
-
-<figure class="code"><figcaption><span>simple_rnn.py</span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class="line-number">1</span>
-<span class="line-number">2</span>
-<span class="line-number">3</span>
-<span class="line-number">4</span>
-<span class="line-number">5</span>
-<span class="line-number">6</span>
-<span class="line-number">7</span>
-<span class="line-number">8</span>
-<span class="line-number">9</span>
-<span class="line-number">10</span>
-<span class="line-number">11</span>
-</pre></td><td class="code"><pre><code class="python"><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="nn">smallrnn</span>
-</span><span class="line"><span class="o">&gt;&gt;&gt;</span> <span class="n">smallrnn</span><span class="o">.</span><span class="n">rnn</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-</span><span class="line"><span class="mi">0</span> <span class="mi">0</span>
-</span><span class="line"><span class="mi">0</span> <span class="mf">0.203697155215</span>
-</span><span class="line"><span class="mi">1</span> <span class="mf">0.93315712478</span>
-</span><span class="line"><span class="mi">0</span> <span class="mf">0.00354811782422</span>
-</span><span class="line"><span class="mi">0</span> <span class="mf">0.215230877663</span>
-</span><span class="line"><span class="mi">1</span> <span class="mf">0.945971073339</span>
-</span><span class="line"><span class="mi">0</span> <span class="mf">0.00455854449755</span>
-</span><span class="line"><span class="mi">0</span> <span class="mf">0.218600850027</span>
-</span><span class="line"><span class="mi">1</span> <span class="mf">0.949254861129</span>
-</span></code></pre></td></tr></table></div></figure>
-
-<p>左側為輸入序列，右側為預測的結果，可以發現 <em>recurrent neural network</em> 可以預測出下個字可能會是 <em>0</em> 還是 <em>1</em> 。當左側為 <em>1</em> 時，右側的數字會接近於 <em>1</em> 。</p>
-
-<h2 id="further-reading">Further Reading</h2>
-
-<p>關於 <em>recurrent neural network</em> 可參考 coursera 課程 Geoffrey Hinton. Neural Networks for Machine Learning</p>
-
-<p>https://www.coursera.org/course/neuralnets</p>
-
 ]]></content>
   </entry>
   

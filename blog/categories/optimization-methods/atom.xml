@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Optimization Methods | Mark Chang's Blog]]></title>
   <link href="http://ckmarkoh.github.io/blog/categories/optimization-methods/atom.xml" rel="self"/>
   <link href="http://ckmarkoh.github.io/"/>
-  <updated>2017-05-12T23:47:33+08:00</updated>
+  <updated>2017-05-31T01:09:05+08:00</updated>
   <id>http://ckmarkoh.github.io/</id>
   <author>
     <name><![CDATA[Mark Chang]]></name>
@@ -12,6 +12,264 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Linear Programming 1: Standard Form of Linear Programming]]></title>
+    <link href="http://ckmarkoh.github.io/blog/2017/05/30/optimization-linear-programming-standard-form/"/>
+    <updated>2017-05-30T09:05:30+08:00</updated>
+    <id>http://ckmarkoh.github.io/blog/2017/05/30/optimization-linear-programming-standard-form</id>
+    <content type="html"><![CDATA[<h2 id="what-is-linear-programming">What is Linear Programming?</h2>
+
+<p>Linear Programming 是一種最佳化問題，在此最佳化問題中。Objective Function 和Constraints 都是線性的。</p>
+
+<p>舉個例子，以下為一個 Linear Programming 的問題<a name="eq1">（公式一）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{20mu}\text{maximize: }  2x_1+3x_2  \\
+&\text{Constraints} \\
+&\mspace{20mu} x_1 + x_2  \leq 2 \\
+&\mspace{20mu} x_1 + 2x_2 \leq 3 \\
+&\mspace{20mu} x_1 , x_2  \geq 0  \\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>將 Constraints 畫在平面上，得出下圖：</p>
+
+<p><img src="/images/new/linearprog1.png" alt="" /></p>
+
+<!--more-->
+
+<p>其中，淺藍色區域 <script type="math/tex">\mathbf{P}</script> 是 <script type="math/tex">(x_1,x_2)</script> 滿足 Constraints 的範圍，稱為 Feasible Domain。</p>
+
+<script type="math/tex; mode=display">
+
+P = \{(x_1,x_2) \mid x_1+x_2 \leq 2 , x_1+2x_2 \leq 3, x_1,x_2 \geq 0\}
+
+</script>
+
+<p>而此問題的最佳解為 <script type="math/tex">(x_1,x_2)=(1,1)</script> ，因為將 <script type="math/tex">(x_1,x_2)</script> 代入 Objective Function 可得最大值：</p>
+
+<script type="math/tex; mode=display">
+2x_1+3x_2 = 2\times 1 + 3\times 1 = 5
+</script>
+
+<p>Linear Programming 的解法主要有兩種：分別是Simplex Method 和 Interior Point Method。本文先不講解這兩種方法，而會在後續文章講解。</p>
+
+<h2 id="formulate-a-linear-programming-problem">Formulate A Linear Programming Problem</h2>
+
+<p>在現實生活的應用中，有許多問題是可以用 Linear Programming 來解，本段舉例，如何將有限的資源下將利潤最大化的問題，寫成 Linear Programming 的形式，例如：</p>
+
+<p>某工廠生產兩種產品X和Y ，這兩種產品都需要用到兩種原料 A和B，生產1公噸X需要1公噸的A和1公噸的B，生產1公噸Y需要1公噸的A和2公噸的B。工廠存有原料A有2公噸，B有3公噸。而1公噸X可賣2百萬元，1公噸Y可賣3百萬元。 以工廠的現有的資源，要生產多少X和Y怎樣才能獲得最大利潤?</p>
+
+<p>設工廠要生產 <script type="math/tex">x_1</script> 公噸的 X ， <script type="math/tex">y_1</script> 公噸的 Y ，才能獲得最大利潤。</p>
+
+<p>目標是要將利潤最大化，由於而1公噸X可賣2百萬元，1公噸Y可賣3百萬元，所以 Objective Function 如下（省略百萬元）：</p>
+
+<script type="math/tex; mode=display">
+\begin{align}
+\text{maximize: }  2x_1+3x_2  \\
+\end{align}
+</script>
+
+<p>但是 X 和 Y 的產量受限於目前工廠僅存的原料量， <script type="math/tex">x_1 + x_2</script> 為原料A的用量，不可多餘2公噸，以此類推，<script type="math/tex">x_1 + 2x_2</script> 為原料 B的用量，不可多餘3公噸。又由於產量不可能為負，因此 <script type="math/tex">x_1,x_2</script> 都不能為負， 所以 Constraints 如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mspace{40mu} x_1 + x_2  \leq 2 \\
+&\mspace{40mu} x_1 + 2x_2 \leq 3 \\
+&\mspace{40mu} x_1 , x_2  \geq 0  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>結合以上的 Objective Function 和 Constraints，即為<a href="#eq1">（公式一）</a>的 Linear Programming 問題。</p>
+
+<h2 id="standard-form-of-linear-programming">Standard Form of Linear Programming</h2>
+
+<p>在解 Linear Programming 的問題時，把公式列出來後，會先把問題轉成 Standard Form，以便求解。
+Linear Programming 的 Standard Form 如下<a name="eq2">（公式二）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+
+\begin{align}
+&\text{1.Objective Function} \\
+&\mspace{20mu}\text{minimize: } z = c_1x_1+c_2x_2+...+c_nx_n \\
+&\text{2.Equality Constraints} \\
+&\mspace{20mu} a_{11}x_1 + a_{12}x_2 +...+a_{1n}x_n = b_1 \\
+&\mspace{20mu} a_{21}x_1 + a_{22}x_2 +...+a_{2n}x_n = b_2 \\
+&\mspace{20mu} \vdots \\
+&\mspace{20mu} a_{m1}x_1 + a_{m2}x_2 +...+a_{mn}x_n = b_m \\
+&\text{3.Non-Negative Variables} \\
+&\mspace{20mu} x_1 , x_2,...,x_n  \geq 0  \\
+\end{align}
+
+ %]]&gt;</script>
+
+<p>其中，$n$ 為 Variables 的個數， $m$ 為 Constraints 的個數。通常 <script type="math/tex">n >  m</script> ，這樣才需要從 Feasible Domain 中挑選出最佳解，不然 Feasible Domain 可能會只有一個點 ， 或者根本無解。</p>
+
+<p>而 Standard Form 須滿足以下三個條件：</p>
+
+<ol>
+  <li>目標是將 Objective Function 最小化，而非最大化。</li>
+  <li>Constraints 皆為 Equality Constraints ，沒有 Inequality Constraints。</li>
+  <li>Variables 都必須是非負實數。</li>
+</ol>
+
+<p>為了以矩陣運算來加速，也可以把<a href="#eq2">（公式二）</a> 的 Standard Form 寫成矩陣的形式<a name="eq3">（公式三）</a>：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mathbf{c} = \begin{bmatrix}
+c_1 \\
+c_2 \\
+\vdots \\
+c_n \\
+\end{bmatrix}
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+\vdots \\
+x_n \\
+\end{bmatrix}
+\mathbf{b} = \begin{bmatrix}
+b_1 \\
+b_2 \\
+\vdots \\
+b_m \\
+\end{bmatrix} \\
+&\mathbf{A} = \begin{bmatrix}
+a_{11} &a_{12} &\cdots &a_{1n} \\
+a_{21} &a_{22} &\cdots &a_{2n} \\
+\vdots &\vdots &\vdots &\vdots \\
+a_{m1} &a_{m2} &\cdots &a_{mn} \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{40mu} \text{minimize: } z =\mathbf{c}^T\mathbf{x}  \\
+&\text{Equality Constraints} \\
+&\mspace{40mu} \mathbf{A}\mathbf{x} = \mathbf{b} \\
+&\text{Non-Negative Variables} \\
+&\mspace{40mu} \mathbf{x}\geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<h2 id="converting-into-standard-form">Converting into Standard Form</h2>
+
+<p>我們可以把前例<a href="#eq1">（公式一）</a>轉換成<a href="#eq2">（公式二）</a> 的 standard form 。</p>
+
+<p>首先，為了滿足條件 1.， 「目標是將 Objective Function 最小化。」
+必須將 Objective Function 改為 Minimize：</p>
+
+<p>這部分很簡單，把原本的 Objective Function 乘上負號就可以了：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{maximize: }  2x_1+3x_2  \\
+&\Rightarrow \text{minimize: }  -2x_1-3x_2  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>下一步，為了滿足條件 2.，「 Constraints 皆為 Equality Constraints 」，則須將 Inequality Constraints 轉換成 Equality Constraints 。 這可以藉由加上 Slack Variable 來達成。</p>
+
+<p>例如 Inequalitn Constraint：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+&x_1 + x_2  \leq 2 \\
+ %]]&gt;</script>
+
+<p>可以將它加上 Slack Variable <script type="math/tex">x_3</script> 。它可以補足原本不等式少於2的部分，使之等於2。如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\Rightarrow  x_1 + x_2 + x_3  = 2 , \mspace{20mu} x_3 \geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>同理，另一個 Constraints 也可以加上另一個 Slack Variable ，<script type="math/tex">x_4</script> 。</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&x_1 + 2x_2 \leq 3 \\
+&\Rightarrow  x_1 + 2x_2 + x_4  = 3 , \mspace{20mu} x_4 \geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>經過這些轉換後，<a href="#eq1">（公式一）</a> 變成 Standard Form ，如下：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{Objective Function} \\
+&\mspace{20mu}\text{minimize: } -2x_1-3x_2  \\
+&\text{Constraints} \\
+&\mspace{20mu} x_1 + x_2 + x_3 =  2 \\
+&\mspace{20mu} x_1 + 2x_2 + x_4 = 3 \\
+&\mspace{20mu} x_1 , x_2 , x_3 , x_4 \geq 0  \\
+\end{align}
+ %]]&gt;</script>
+
+<p>可以再將它寫成矩陣形式：</p>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\mathbf{c} = \begin{bmatrix}
+-2 \\
+-3 \\
+0 \\
+0 \\
+\end{bmatrix}
+\mathbf{x} = \begin{bmatrix}
+x_1 \\
+x_2 \\
+x_3 \\
+x_4 \\
+\end{bmatrix}
+\mathbf{b} = \begin{bmatrix}
+2 \\
+3 \\
+\end{bmatrix} \\
+&\mathbf{A} = \begin{bmatrix}
+1 &1 &1 &0 \\
+1 &2 &0 &1 \\
+\end{bmatrix} \\
+\end{align}
+ %]]&gt;</script>
+
+<script type="math/tex; mode=display">% &lt;![CDATA[
+
+\begin{align}
+&\text{minimize: } z =\mathbf{c}^T\mathbf{x}  \\
+&\text{subject to: } \mathbf{A}\mathbf{x} = \mathbf{b} \\
+&\mathbf{x}\geq 0 \\
+\end{align}
+ %]]&gt;</script>
+
+<p>至於如何得出 Linear Programming 的最佳解？會在後續文章講解。</p>
+
+<h2 id="reference">Reference</h2>
+
+<p>本文參考交通大學開放式課程：線性規劃</p>
+
+<p>http://ocw.nctu.edu.tw/course_detail.php?bgid=3&amp;gid=0&amp;nid=245#.WS2AasklFYc</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[AdaDelta]]></title>
@@ -1942,266 +2200,6 @@ import numpy as np</p>
 <h4 id="visualizing-optimization-algos">Visualizing Optimization Algos</h4>
 
 <p>http://imgur.com/a/Hqolp</p>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Duality & KKT Conditions in Convex Optimization]]></title>
-    <link href="http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions/"/>
-    <updated>2015-11-05T13:18:00+08:00</updated>
-    <id>http://ckmarkoh.github.io/blog/2015/11/05/convex-optimization-duality-and-kkt-conditions</id>
-    <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
-
-<p>在解「 <strong>有條件的最佳化問題</strong> 」時，有時需要把原本的問題轉換成對偶問題(Dual Problem)後，會比較好解。</p>
-
-<p>如果對偶問題有最佳解，原本問題也有最佳解，且這兩個最佳解相同，則必須要滿足 <em>Karush-Kuhn-Tucker (KKT) Conditions</em>：</p>
-
-<ol>
-  <li>
-    <p>Primal Feasibility </p>
-  </li>
-  <li>
-    <p>Dual Feasibility</p>
-  </li>
-  <li>
-    <p>Complementary Slackness</p>
-  </li>
-  <li>
-    <p>Stationarity</p>
-  </li>
-</ol>
-
-<p>至於這四項到底是什麼？講起來有點複雜。本文會先從對偶問題的概念開始介紹，再來講解這四個條件。</p>
-
-<h2 id="the-lagrange-dual-function">The Lagrange dual function</h2>
-
-<p>首先，講解一下什麼是對偶問題。</p>
-
-<p>通常，有條件的最佳化問題，可寫成 <a name="eq1">＜公式一＞</a> ：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& \textbf{minimize} & f_{0}(x) & \\
-
-& \textbf{subject to } & f_{i}(x) \leq 0 ,& i=1, ... ,m \\
-
-& & h_{j}(x) = 0 , &j=1, ... ,p \\
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<!--more-->
-
-<p>其中, <script type="math/tex">f_{0}(x)</script> 是目標函數，而 <script type="math/tex"> f_{i}(x) \leq 0</script> 為不等式的條件限制， <script type="math/tex">h_{j}(x) = 0</script> 為等式的條件限制。也就是說，最佳化的目標是要求出 <script type="math/tex">x</script> 讓 <script type="math/tex">f_{0}(x)</script> 得出最小值，而這個 <script type="math/tex">x</script> ，必須滿足 <script type="math/tex"> f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0</script> 所限定的條件。若滿足這兩項條件，則表示這個最佳化問題有解，即為滿足 <strong>primal feasibility</strong> 。</p>
-
-<p>此最佳化問題可以轉換成對偶問題，如下：</p>
-
-<script type="math/tex; mode=display">
-
-L(x, \lambda, \nu) = f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x)
-
-</script>
-
-<p>其中，我們把 <script type="math/tex">L(x, \lambda, \nu)</script> 稱為 <em>Lagrangian</em> ，<script type="math/tex"> \lambda_{i} </script> 和 <script type="math/tex">\nu_{j}</script> 稱為 <em>Lagrange multiplier</em> 。</p>
-
-<p>所謂的對偶函數( <em>Lagrange dual function</em> )，即是在給定了 <em>Lagrange multiplier</em> 之下，改變 <script type="math/tex">x</script> 來得出 <em>Lagrangian</em> 最小值，如下：</p>
-
-<script type="math/tex; mode=display">
-
-g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) )
-
-</script>
-
-<p>其中， <script type="math/tex">g(\lambda, \nu) </script> 為對偶函數，而 <script type="math/tex">\inf_{x}</script> 即是在改變 <script type="math/tex">x</script> 的情況下，找出最小值。</p>
-
-<h2 id="lower-bounds-on-optimal-value">Lower bounds on optimal value</h2>
-
-<p>接著來證明，對偶函數可當作原本問題的 <em>Lower Bound</em> 。設原本問題<a href="#eq1">公式一</a>的最佳解為 <script type="math/tex">p^{\star}</script> ，則在所有 <script type="math/tex"> \lambda_{i} \geq 0 </script> （記作 <script type="math/tex">\lambda \succeq 0 </script> ）和  <script type="math/tex">\nu_{j}</script> 為任意數的情況下，會滿足以下條件：</p>
-
-<script type="math/tex; mode=display">
-
-g(\lambda, \nu) \leq p^{\star}
-
-</script>
-
-<p>此性質不難證明，對於所有滿足 <script type="math/tex"> f_{i}(\tilde{x}) \leq 0</script> 和 <script type="math/tex">h_{j}(\tilde{x}) = 0</script> 這兩個條件的 <script type="math/tex">\tilde{x}</script> ，必滿足：</p>
-
-<script type="math/tex; mode=display">
-
-\sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \leq 0
-
-</script>
-
-<p>則：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& g(\lambda, \nu) = \inf_{x}( L(x, \lambda, \nu) ) = \inf_{x}( f_{0}(x) + \sum_{i=1}^{m} \lambda_{i} f_{i}(x) + \sum_{j=1}^{p} \nu_{j} h_{j}(x) ) \\
-
-& \leq L(\tilde{x}, \lambda, \nu) =  f_{0}(\tilde{x}) + \sum_{i=1}^{m} \lambda_{i} f_{i}(\tilde{x}) + \sum_{j=1}^{p} \nu_{j} h_{j}(\tilde{x}) \\
-
-&\leq  f_{0}(\tilde{x})
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<p>設原本問題<a href="#eq1">公式一</a>最佳解時的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，由於 <script type="math/tex">x^{\star}</script> 必須滿足 滿足 <script type="math/tex"> f_{i}(x^{\star}) \leq 0</script> 和 <script type="math/tex">h_{j}(x^{\star}) = 0</script> 這兩個條件，又因 <script type="math/tex">\lambda \succeq 0 </script> ，故 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 成立。</p>
-
-<p>舉個例子，下圖中，黑色的實線為目標函數 <script type="math/tex">f_{0}(x)</script> ，此最佳化問題有一個不等式條件限制 <script type="math/tex">f_{1}(x)</script> ，用綠色虛線表示，而滿足於  <script type="math/tex">f_{1}(x) \leq 0 </script> 的 <script type="math/tex">x</script> 範圍落在 <script type="math/tex">[-0.46~0.46]</script> 之間，範圍用兩條鉛直的紅色虛線表示。 紫色的圓圈為最佳解的點 <script type="math/tex">x^{\star} = -0.46, p^{\star} = 1.54</script> 。此最佳化問題沒有等式條件，故沒有 <script type="math/tex">h_{j}</script> 及  <script type="math/tex">\nu_{j}</script> 。則此問題的 <em>Lagrangian</em> 為 <script type="math/tex">L(x, \lambda)</script> 。藍色的點為 <script type="math/tex">\lambda = 0.1, 0.2, ... , 1.0 </script> 所畫出來的 <em>Lagrangian</em> 圖形。 </p>
-
-<p><img src="/images/pic/pic_00114.png" alt="" /></p>
-
-<p>在上圖中，兩條紅色虛線之間的範圍內，即 <script type="math/tex">x</script> 滿足不等式的條件限制 <script type="math/tex">f_{1}(x) \leq 0</script> ，此時藍色的虛線皆位於黑色線的下方，滿足 <script type="math/tex">L(x, \lambda) \leq f_{0}(x)</script> 。 </p>
-
-<p>下圖畫出改變不同 <script type="math/tex">\lambda</script> 值時，對偶函數 <script type="math/tex"> g(\lambda) = \inf_{x}( L(x, \lambda) ) </script> 的值，其中，黑色的實線為 <script type="math/tex"> g(\lambda) </script> ，紫色的虛線為 <script type="math/tex">p^{\star}</script> 的值（<script type="math/tex">p^{\star} = 1.54</script> ）。</p>
-
-<p><img src="/images/pic/pic_00115.png" alt="" /></p>
-
-<p>根據此圖，黑色的線恆在紫色的虛線下方，滿足 <script type="math/tex">g(\lambda) \leq p^{\star}</script> 。</p>
-
-<h2 id="the-lagrange-dual-problem">The Lagrange dual problem</h2>
-
-<p>所謂的對偶問題（Lagrange dual problem）即是把原本的問題轉成對偶函數之後，來解最佳化問題。</p>
-
-<p>從前面結論可得知，對偶函數若滿足 <script type="math/tex">\lambda \succeq 0 </script> （也就是所有的 <script type="math/tex">\lambda_{i}</script> 都滿足 <script type="math/tex">\lambda_{i} \geq 0</script> ）的條件，則必足 <script type="math/tex">g(\lambda, \nu) \leq p^{\star}</script> 。如果想找出最接近 <script type="math/tex">p^{\star}</script> 的對偶函數解，則可藉由改變 <script type="math/tex">\lambda, \nu</script> ，來找出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值。此對偶問題如下 <a name="eq2">＜公式二＞</a>：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& \textbf{maximize} & g(\lambda, \nu) & \\
-
-& \textbf{subject to } & \lambda \succeq 0 \\
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<p>如果可以找出一組解，滿足 <script type="math/tex">\lambda \succeq 0 </script> ，可得出 <script type="math/tex">g(\lambda, \nu) </script> 的最大值 <script type="math/tex">d^{\star}</script> ，則此問題滿足 <strong>dual feasibility</strong>。</p>
-
-<p>根據對偶問題的解 <script type="math/tex">d^{\star}</script> 和原本問題的解 <script type="math/tex">p^{\star}</script> 的關係，可將對偶性質分為 <em>weak duality</em> 和  <em>strong duality</em> 兩類：</p>
-
-<h4 id="weak-duality">Weak duality</h4>
-
-<p>若對偶問題的解，小於或等於原本問題的解，即滿足 <em>weak duality</em> ：</p>
-
-<script type="math/tex; mode=display">
-
-d^{\star} \leq p^{\star} 
-
-</script>
-
-<p>根據前面段落 <em>Lower bounds on optimal value</em> 所推導的結論， <em>Weak duality</em> 必定成立。</p>
-
-<h4 id="strong-duality">Strong duality</h4>
-
-<p>若對偶問題的解，等於原本問題的解，即滿足 <em>strong duality</em> ：</p>
-
-<script type="math/tex; mode=display">
-
-d^{\star} = p^{\star} 
-
-</script>
-
-<p>這個條件不一定會成立，如果要成立的話，原本問題<a href="#eq1">公式一</a>的中的 <script type="math/tex">f_{0}(x)</script> 和 <script type="math/tex">f_{i}(x)</script> 要是凸函數，但即使滿足此條件，仍須滿足其他條件才能使 <em>strong duality</em> 成立，這講起來比較複雜，在此先不提。</p>
-
-<h2 id="complementary-slackness">Complementary Slackness</h2>
-
-<p>設原本問題最佳解的 <script type="math/tex">x</script> 為 <script type="math/tex">x^{\star}</script> ，對偶問題最佳解的 <script type="math/tex">(\lambda, \nu)</script> 為 <script type="math/tex">(\lambda^{\star}, \nu^{\star}) </script> ，根據對偶函數 <script type="math/tex">g(\lambda^{\star}, \nu^{\star})</script> 的定義，和前面段落 <em>Lower bounds on optimal value</em> 所推導出的結論，可得出：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& g(\lambda^{\star}, \nu^{\star}) = \inf_{x}( L(x, \lambda^{\star}, \nu^{\star}) ) \\
-
-& \leq f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star})  \\
-
-& \leq f_{0}(x^{\star}) 
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<p>若對偶問題滿足 <em>strong duality</em> ：</p>
-
-<script type="math/tex; mode=display">
-
-g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  
-
-</script>
-
-<p>則須滿足：</p>
-
-<script type="math/tex; mode=display">% &lt;![CDATA[
-
-
-\begin{aligned}
-
-& \sum_{i=1}^{m} \lambda_{i}^{\star} f_{i}(x^{\star})  = 0 \mspace{40mu} \text{(a)} \\
-
-& \sum_{j=1}^{p} \nu_{j}^{\star} h_{j}(x^{\star}) = 0 \mspace{40mu} \text{(b)}
-
-\end{aligned}
-
- %]]&gt;</script>
-
-<p>由於 <script type="math/tex">h_{j}(x^{\star}) = 0 </script> 為原本問題的等式條件限制，故 <strong>(b)</strong> 必會成立，若 <strong>(a)</strong> 要成立的話，須滿足：</p>
-
-<script type="math/tex; mode=display">
-
-\lambda_{i}^{\star} f_{i}(x^{\star})  = 0  \mspace{20mu} \textbf{for } i=1,2,...m
-
-</script>
-
-<p>也就是說，<script type="math/tex">f_{i}(x^{\star}) </script> 和  <script type="math/tex">\lambda_{i}^{\star}</script> 的其中一項必須為零，不可以兩項都不為零。這種情形稱為 <strong>complementary slackness</strong> ，也就是林軒田教授在<a href="https://www.coursera.org/course/ntumltwo">機器學習技法</a>課程中所提到的：</p>
-
-<blockquote>
-  <p>哈利波特和佛地魔，其中一個必須死掉。</p>
-</blockquote>
-
-<h2 id="karush-kuhn-tucker-kkt-conditions">Karush-Kuhn-Tucker (KKT) conditions</h2>
-
-<p><em>KKT conditions</em> 即為下四個條件：</p>
-
-<ol>
-  <li>
-    <p>Primal Feasibility：即滿足原本問題<a href="#eq1">公式一</a>的限制條件 <script type="math/tex">f_{i}(x) \leq 0</script> 和 <script type="math/tex">h_{j}(x) = 0 </script>  ，使原本問題有解。</p>
-  </li>
-  <li>
-    <p>Dual Feasibility：即滿足對偶問題<a href="#eq2">公式二</a>的限制條件： <script type="math/tex"> \lambda \succeq 0 </script> ，使對偶問題有解。</p>
-  </li>
-  <li>
-    <p>Complementary Slackness：即滿足 <em>strong duality</em> ：<script type="math/tex"> g(\lambda^{\star}, \nu^{\star}) =  f_{0}(x^{\star})  </script> ，使原本問題和對偶問題有相同解。</p>
-  </li>
-  <li>
-    <p>Stationarity（gradient of Lagrangian with respect to x vanishes）：</p>
-  </li>
-</ol>
-
-<script type="math/tex; mode=display">
-
-\nabla f_{0}(x^{\star}) + \sum_{i=1}^{m} \lambda_{i} \nabla f_{i}(x^{\star}) + \sum_{j=1}^{p} \nu_{j} \nabla h_{j}(x^{\star}) = 0
-
-</script>
-
-<p>第四項雖然前面沒提到，但很容易理解，也就是說，在得出最佳解 <script type="math/tex">x^{\star}</script> 的時候， <em>Lagrangian</em> 對於 <script type="math/tex">x^{\star}</script> 的 <em>gradient</em> 要等於 0 。</p>
-
-<h2 id="reference">Reference</h2>
-
-<p>本文參考至以下教科書，本文中的圖片也取自於以下教科書：</p>
-
-<p>Stephen Boyd &amp; Lieven Vandenberghe. Convex Optimization. Chapter 5 Duality.</p>
 ]]></content>
   </entry>
   
