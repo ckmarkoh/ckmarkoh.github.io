@@ -9,7 +9,9 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="今天來談到URL parse(URL剖析) 在製作web crawler(爬網頁程式)的時候 常常會需要用到URL剖析 1.URL的組成架構 URL的組成架構如下： [scheme]:/[net_loc]/[path];[params]?[query]#[fragment] 舉個例子 http &hellip;">
+  <meta name="description" content="今天我們來談談如何用python nltk做中文的的自然語言處理 nltk有內建的中文treebank,是中研院的sinica treebank 是免費的中文treebank 至於要如何使用呢？ 首先 先載入模組 1
+2
+&gt;&gt;&gt; from nltk.corpus import &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,68 +94,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/03/11/python-standard-library-urlparse/">Python Urlparse</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-03-11T02:56:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>11</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>2:56 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>今天來談到URL parse(URL剖析)</p>
-
-<p>在製作web crawler(爬網頁程式)的時候</p>
-
-<p>常常會需要用到URL剖析</p>
-
-<h2 id="url">1.URL的組成架構</h2>
-
-<p>URL的組成架構如下：</p>
-
-<p><strong>[scheme]:/[net_loc]/[path];[params]?[query]#[fragment]</strong></p>
-
-<p>舉個例子</p>
-
-<p><strong>http://www.espn.com:80/basketball/nba/index.html;lang=engl?team=dallas#Roster</strong></p>
-
-<p>則此URL的架構為：</p>
-
-<p>[scheme]      http</p>
-
-<p>[net_loc]     www.espn.com:80</p>
-
-<p>[path]        /basketball/nba/index.html</p>
-
-<p>[params]      lang=engl</p>
-
-<p>[query]       team=dallas</p>
-
-<p>[fragment]    Roster</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/03/11/python-standard-library-urlparse/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -360,10 +300,6 @@ MathJax.Hub.Config({
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/05/31/linear-programming-fundamental-theorem/">Linear Programming Fundamental Theorem</a>
-      </li>
-    
-      <li class="post">
         <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
       </li>
     
@@ -377,6 +313,10 @@ MathJax.Hub.Config({
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="在做機器學習演算法時，常常需要把資料分成 training set 和 validation set 這兩個資料組。 但是，要如何切割，才可以讓具有不同 label 的資料，在這兩個資料組中，平均分佈？ 用統計語言 R 處理 iris 資料組為例。iris 的資料如下： index Sepal. &hellip;">
+  <meta name="description" content="1. Introduction 在 python 程式中想要印出東西, 通常會用 print , 要 print 東西的時機很多, 例如, Debug 時要 print , 有 Error 時也要 print , 正常執行情況下也可能要 print 一些資訊 但是當程式寫好後, 原本用 print &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,131 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/08/23/r-createdatapartition/">R Data Splitting</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-08-23T06:46:00+08:00'><span class='date'><span class='date-month'>Aug</span> <span class='date-day'>23</span><span class='date-suffix'>rd</span>, <span class='date-year'>2014</span></span> <span class='time'>6:46 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>在做機器學習演算法時，常常需要把資料分成 <em>training set</em> 和 <em>validation set</em> 這兩個資料組。</p>
-
-<p>但是，要如何切割，才可以讓具有不同 <em>label</em> 的資料，在這兩個資料組中，平均分佈？</p>
-
-<p>用統計語言 <em>R</em> 處理 <em>iris</em> 資料組為例。<em>iris</em> 的資料如下：</p>
-
-<table>
-  <thead>
-    <tr>
-      <th>index</th>
-      <th>Sepal.Length</th>
-      <th>Sepal.Width</th>
-      <th>Petal.Length</th>
-      <th>Petal.Width</th>
-      <th>Species</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>1</td>
-      <td>5.1</td>
-      <td>3.5</td>
-      <td>1.4</td>
-      <td>0.2</td>
-      <td>setosa</td>
-    </tr>
-    <tr>
-      <td>2</td>
-      <td>4.9</td>
-      <td>3.0</td>
-      <td>1.4</td>
-      <td>0.2</td>
-      <td>setosa</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-    <tr>
-      <td>51</td>
-      <td>7.0</td>
-      <td>3.2</td>
-      <td>4.7</td>
-      <td>1.4</td>
-      <td>versicolor</td>
-    </tr>
-    <tr>
-      <td>52</td>
-      <td>6.4</td>
-      <td>3.2</td>
-      <td>4.5</td>
-      <td>1.5</td>
-      <td>versicolor</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-    <tr>
-      <td>101</td>
-      <td>6.3</td>
-      <td>3.3</td>
-      <td>6.0</td>
-      <td>2.5</td>
-      <td>virginica</td>
-    </tr>
-    <tr>
-      <td>102</td>
-      <td>5.8</td>
-      <td>2.7</td>
-      <td>5.1</td>
-      <td>1.9</td>
-      <td>virginica</td>
-    </tr>
-    <tr>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>…</td>
-      <td>……</td>
-    </tr>
-  </tbody>
-</table>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/08/23/r-createdatapartition/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -739,6 +614,55 @@ pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/04/14/natural-language-processing-tf-idf/">TF-IDF</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-04-14T10:12:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:12 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
+
+<p>所謂的 <em>TF-IDF</em> , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法</p>
+
+<p>例如, 有一篇新聞, 是 <em>nltk</em> 的 <em>Reuters Corpus</em> 中的文章, 這篇文章被歸類在 <em>grain</em> , <em>ship</em> 這兩種類別下, 文章的內容如下：</p>
+
+<blockquote>
+  <p>GRAIN SHIPS LOADING AT PORTLAND 
+There were three grain ships loading and two ships were waiting to load at Portland , according to the Portland Merchants Exchange .</p>
+</blockquote>
+
+<p>假設不知道什麼是 <em>TF-IDF</em>, 先用人工判別法試看看, 這篇新聞的關鍵字, 應該是 <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的字, 而不會是 <em>to</em> , <em>at</em> 這種常常出現的字</p>
+
+<p>為什麼呢？因為 <em>to</em> 或 <em>at</em> 雖然在這篇文章中出現較多次, 但其他文章中也常有這些字, 所謂的關鍵的字, 應該是在這篇文章中出現較多次, 且在其他文章中比較少出現的字</p>
+
+<p>所以,如果要在一篇文章中, 尋找這樣的關鍵字, 要考慮以下兩個要素:</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/04/14/natural-language-processing-tf-idf/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/5">&larr; Older</a>
@@ -760,10 +684,6 @@ pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/05/31/linear-programming-fundamental-theorem/">Linear Programming Fundamental Theorem</a>
-      </li>
-    
-      <li class="post">
         <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
       </li>
     
@@ -777,6 +697,10 @@ pmi(x,y)=log \frac{P(x,y)}{P(x) \times P(y)}
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1.Introduction 所謂的 TF-IDF , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法 例如, 有一篇新聞, 是 nltk 的 Reuters Corpus 中的文章, 這篇文章被歸類在 grain , ship 這兩種類別下, 文章的內容如下： GRAIN SHIPS &hellip;">
+  <meta name="description" content="1.Introduction 在自然語言處理的應用, 常常有分類的問題, 例如把某篇新聞分到哪一類 處理分類問題, 有種簡單的方法, 就是看這篇文章有哪些關鍵字, 根據這些關鍵字的出現與否, 用 Naive Bayes Classifier 做分類 要講 Naive Bayes &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,55 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/14/natural-language-processing-tf-idf/">TF-IDF</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-14T10:12:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>14</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>10:12 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>所謂的 <em>TF-IDF</em> , 是用來找出一篇文章中, 足以代表這篇文章的關鍵字的方法</p>
-
-<p>例如, 有一篇新聞, 是 <em>nltk</em> 的 <em>Reuters Corpus</em> 中的文章, 這篇文章被歸類在 <em>grain</em> , <em>ship</em> 這兩種類別下, 文章的內容如下：</p>
-
-<blockquote>
-  <p>GRAIN SHIPS LOADING AT PORTLAND 
-There were three grain ships loading and two ships were waiting to load at Portland , according to the Portland Merchants Exchange .</p>
-</blockquote>
-
-<p>假設不知道什麼是 <em>TF-IDF</em>, 先用人工判別法試看看, 這篇新聞的關鍵字, 應該是 <em>Portland</em> , <em>ship</em> , <em>grain</em> 之類的字, 而不會是 <em>to</em> , <em>at</em> 這種常常出現的字</p>
-
-<p>為什麼呢？因為 <em>to</em> 或 <em>at</em> 雖然在這篇文章中出現較多次, 但其他文章中也常有這些字, 所謂的關鍵的字, 應該是在這篇文章中出現較多次, 且在其他文章中比較少出現的字</p>
-
-<p>所以,如果要在一篇文章中, 尋找這樣的關鍵字, 要考慮以下兩個要素:</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/14/natural-language-processing-tf-idf/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -671,6 +622,58 @@ M2=p1 \wedge p2 \wedge p3 \wedge p4
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing/">Ngram Smoothing / Interpolation</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-28T11:57:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>28</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>11:57 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>以下為我對於 <em>Ngram Smoothing</em> 這個章節的公式所做的筆記</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p><em>Ngram Smoothing</em> 是用於出現在 <em>Training Corpus</em> 中沒有的 <em>Ngram</em>,</p>
+
+<p>它的機率會是0</p>
+
+<p>本文以 <em>Bigram</em> 為例, <em>Bigram</em> 的機率如下:</p>
+
+<script type="math/tex; mode=display">
+
+P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
+
+</script>
+
+<p>如果 <script type="math/tex">C(w_{n-1},w_{n})=0</script> , 則 <script type="math/tex">P(w_{n}\mid w_{n-1} )= 0</script></p>
+
+<p>為了避免probability為0, 我們要做 Ngram Smoothing</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/28/equations-for-nlp-ngram-smoothing/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/6">&larr; Older</a>
@@ -692,10 +695,6 @@ M2=p1 \wedge p2 \wedge p3 \wedge p4
   <ul id="recent_posts">
     
       <li class="post">
-        <a href="/blog/2017/05/31/linear-programming-fundamental-theorem/">Linear Programming Fundamental Theorem</a>
-      </li>
-    
-      <li class="post">
         <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
       </li>
     
@@ -709,6 +708,10 @@ M2=p1 \wedge p2 \wedge p3 \wedge p4
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-4-backward-propagation/">Torch NN Tutorial 4: Backward Propagation ( Part 1 : Overview & Linear Regression )</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
       </li>
     
   </ul>
