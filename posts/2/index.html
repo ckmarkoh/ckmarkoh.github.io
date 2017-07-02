@@ -9,14 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子： The dog run.
-A cat run.
-A dog sleep.
-The cat sleep.
-A dog bark.
-The cat meows.
-The bird fly.
-A bird &hellip;">
+  <meta name="description" content="Introduction Gibbs Sampling 是一種類似於 Metropolis Hasting 的抽樣方式，也是根據機率分佈來建立 Markov Chain ，並在 Markov Chain 上行走，抽樣出機率分佈。 設一 Markov Chain ， 有 a 和 b 兩個 state &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -99,76 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2016-07-10T14:06:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:06 pm</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
-
-<blockquote>
-  <p>The dog run.
-A cat run.
-A dog sleep.
-The cat sleep.
-A dog bark.
-The cat meows.
-The bird fly.
-A bird sleep.</p>
-</blockquote>
-
-<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
-
-<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{array}{c|c c c c c c c c c }
-
-     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
-
- dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
-
- cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
-
- bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
-
-\end{array}
-
- %]]></script>
-
-<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2016/07/10/nlp-vector-space-semantics/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -767,6 +690,56 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2015/06/06/neural-network-recurrent-neural-network/">Recurrent Neural Network</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2015-06-06T09:32:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>9:32 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>在數位電路裡面，如果一個電路沒有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 <em>combinational circuit</em> 。</p>
+
+<p>對於類神經網路而言，如果它的值只是從輸入端一層層地依序傳到輸出端，不會再把值從輸出端傳回輸入端，這種神經元就相當於 <em>combinational circuit</em> ，也就是說它的輸出值只取決於目前時刻的輸入值，這樣的類神經網路稱為 <em>feedforward neural network</em> 。</p>
+
+<p>如果一個電路有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值就跟上個時間點的輸入值有關，這種的電路它稱為 <em>sequential circuit</em> 。</p>
+
+<p>所謂的 <em>Recurrent Neural Network</em> ，是一種把輸出端再接回輸入端的類神經網路，這樣可以把上個時間點的輸出值再傳回來，記錄在神經元中，達成和 <em>latch</em> 類似的效果，使得下個時間點的輸出值，跟上個時間點有關，也就是說，這樣的神經網路是有 <em>記憶</em> 的。</p>
+
+<h2 id="recurrent-neural-network">Recurrent Neural Network</h2>
+
+<p>由一個簡單神經元所構成的 <em>Recurrent Neural Network</em> ，構造如下：</p>
+
+<p><img src="/images/pic/pic_00095.png" alt="" /></p>
+
+<p>這個神經元在 <script type="math/tex">t</script> 時間，訓練資料的輸入值為 <script type="math/tex">x_{t}</script> ，訓練資料的答案為 <script type="math/tex">y_{t}</script> ，神經元 <script type="math/tex">n</script> 的輸出值 <script type="math/tex">n_{out,t}</script> ，可用以下公式表示：</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2015/06/06/neural-network-recurrent-neural-network/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/3">&larr; Older</a>
@@ -781,15 +754,11 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/linear-programming/'>linear programming (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (6)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
-      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
@@ -805,6 +774,10 @@ p(\textbf{z}|\textbf{x}) = \frac{p(\textbf{x} , \textbf{z})}{p(\textbf{x})}  =\f
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
   </ul>

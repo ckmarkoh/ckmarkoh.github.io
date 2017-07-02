@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="1.Introduction 在自然語言處理的應用, 常常有分類的問題, 例如把某篇新聞分到哪一類 處理分類問題, 有種簡單的方法, 就是看這篇文章有哪些關鍵字, 根據這些關鍵字的出現與否, 用 Naive Bayes Classifier 做分類 要講 Naive Bayes &hellip;">
+  <meta name="description" content="1.Overfitting 所謂 Overfitting 指的就是過度訓練, 意思就是說機器學習所學到的 Hypothesis 過度貼近 Training Data , 而導致和 Testing Data 的時候, Error 變得更大 假設有一筆資料如下圖, 藍色的為 Training Data &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,69 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/">Naive Bayes Classifier</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2014-04-13T07:04:00+08:00'><span class='date'><span class='date-month'>Apr</span> <span class='date-day'>13</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:04 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">1.Introduction</h2>
-
-<p>在自然語言處理的應用, 常常有分類的問題, 例如把某篇新聞分到哪一類</p>
-
-<p>處理分類問題, 有種簡單的方法, 就是看這篇文章有哪些關鍵字, 根據這些關鍵字的出現與否, 用 <em>Naive Bayes Classifier</em> 做分類</p>
-
-<p>要講 <em>Naive Bayes Classifier</em> 之前, 首先, 要知道 <em>Bayes rule</em> 是什麼, <em>Bayes rule</em> 很簡單, 如下</p>
-
-<script type="math/tex; mode=display">
-
-P(A,B)=P(A\mid B) \times P(B) = P(B\mid A) \times P(A)
-
-</script>
-
-<p>這個公式, 高中數學應該都有教過 , 如果 <script type="math/tex">A</script> 和 <script type="math/tex">B</script> 為 <em>Independence</em> , 則</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-
-&P(A\mid B) = P(A) \\
-
-&P(A,B)=P(A\mid B) \times P(B) = P(A) \times P(B)
-
-\end{align}
-
- %]]></script>
-
-<p>所謂的 <em>Naive Bayes Classifier</em>  ,  其實就是應用 <em>Bayes rule</em>  來處理分類問題</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2014/04/13/natural-language-processing-naive-bayes-classifier/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -674,6 +611,74 @@ P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/03/21/python-nltk-logic-3/">NLTK Logic 3 : Discourse Representation Theory</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-03-21T03:58:00+08:00'><span class='date'><span class='date-month'>Mar</span> <span class='date-day'>21</span><span class='date-suffix'>st</span>, <span class='date-year'>2014</span></span> <span class='time'>3:58 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p><em>Discourse</em> 的意思是對話</p>
+
+<p>在對話中,常常會用到 <strong>代名詞</strong> ,像是 <em>he</em>, <em>she</em> 或 <em>it</em>.</p>
+
+<p>我們把這種代名詞叫做 <em>anaphoric pronouns</em></p>
+
+<p>因為要從前面的句子去判斷,這些代名詞代表什麼</p>
+
+<p>比如有個句子 <em>A woman walks. She smokes.</em></p>
+
+<p>在下一句的 <em>She</em> 是指前一句提到的 <em>A woman</em></p>
+
+<p>那要怎麼讓電腦去判斷, <strong>代名詞</strong> 到底代表前面提到的什麼？</p>
+
+<p>這就要用到 <em>Discourse Representation Theory (DRT)</em> 來處理了</p>
+
+<p>例如 <em>A woman walks</em> 這句話,用 <em>DRT</em> 可以表示成這樣：</p>
+
+<script type="math/tex; mode=display">
+
+    \begin{array}{|c|}
+
+    \hline x  \\ \hline
+
+    	woman(x) \\
+
+      walk(x) \\
+
+    \hline
+
+		\end{array}
+
+</script>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/03/21/python-nltk-logic-3/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/6">&larr; Older</a>
@@ -688,15 +693,11 @@ P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/linear-programming/'>linear programming (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (6)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
-      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
@@ -712,6 +713,10 @@ P(w_{n}\mid w_{n-1} )=  \frac{C(w_{n-1},w_{n})}{C(w_{n-1})}
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
   </ul>

@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="Introduction 在數位電路裡面，如果一個電路沒有 latch 或 flip flop 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 combinational circuit 。 對於類神經網路而言， &hellip;">
+  <meta name="description" content="Introduction 在做 Logistic Regression的時候，可以用 gradient descent 來做訓練，而類神經網路本身即是很多層的 Logistic Regression 所構成，也可以用同樣方法來做訓練。 但類神經網路在訓練過程時，需要分為兩個步驟，為： &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,56 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2015/06/06/neural-network-recurrent-neural-network/">Recurrent Neural Network</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2015-06-06T09:32:00+08:00'><span class='date'><span class='date-month'>Jun</span> <span class='date-day'>6</span><span class='date-suffix'>th</span>, <span class='date-year'>2015</span></span> <span class='time'>9:32 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-
-<p>在數位電路裡面，如果一個電路沒有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值只會取決於目前的輸入值，和上個時間點的輸入值是無關的，這種的電路叫作 <em>combinational circuit</em> 。</p>
-
-<p>對於類神經網路而言，如果它的值只是從輸入端一層層地依序傳到輸出端，不會再把值從輸出端傳回輸入端，這種神經元就相當於 <em>combinational circuit</em> ，也就是說它的輸出值只取決於目前時刻的輸入值，這樣的類神經網路稱為 <em>feedforward neural network</em> 。</p>
-
-<p>如果一個電路有 <em>latch</em> 或 <em>flip flop</em> 這類的元件，它的輸出值就跟上個時間點的輸入值有關，這種的電路它稱為 <em>sequential circuit</em> 。</p>
-
-<p>所謂的 <em>Recurrent Neural Network</em> ，是一種把輸出端再接回輸入端的類神經網路，這樣可以把上個時間點的輸出值再傳回來，記錄在神經元中，達成和 <em>latch</em> 類似的效果，使得下個時間點的輸出值，跟上個時間點有關，也就是說，這樣的神經網路是有 <em>記憶</em> 的。</p>
-
-<h2 id="recurrent-neural-network">Recurrent Neural Network</h2>
-
-<p>由一個簡單神經元所構成的 <em>Recurrent Neural Network</em> ，構造如下：</p>
-
-<p><img src="/images/pic/pic_00095.png" alt="" /></p>
-
-<p>這個神經元在 <script type="math/tex">t</script> 時間，訓練資料的輸入值為 <script type="math/tex">x_{t}</script> ，訓練資料的答案為 <script type="math/tex">y_{t}</script> ，神經元 <script type="math/tex">n</script> 的輸出值 <script type="math/tex">n_{out,t}</script> ，可用以下公式表示：</p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2015/06/06/neural-network-recurrent-neural-network/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -727,6 +677,79 @@ This is not an apple </p>
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2014/05/08/python-standard-library-logging/">Python Logging</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2014-05-08T07:44:00+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>8</span><span class='date-suffix'>th</span>, <span class='date-year'>2014</span></span> <span class='time'>7:44 am</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">1. Introduction</h2>
+
+<p>在 <em>python</em> 程式中想要印出東西, 通常會用 <em>print</em> , 要 <em>print</em> 東西的時機很多, 例如, <em>Debug</em> 時要 <em>print</em> , 有 <em>Error</em> 時也要 <em>print</em> , 正常執行情況下也可能要 <em>print</em> 一些資訊</p>
+
+<p>但是當程式寫好後, 原本用 <em>print</em> 出來的 <em>debug message</em> 就需要手動移除, 諸如此類的問題, 單純用 <em>pring</em> 就不方便</p>
+
+<p>如果是用 <em>logging</em> , 可以設各種不同的層次, 例如在 <em>debug</em> 的時候, 印出 <em>debug message</em> , <em>debug</em> 結束後就不要印 <em>debug message</em>  , 這樣只要調整一個參數即可, 不需要把所有用印出 <em>debug</em>  的程式碼都砍掉</p>
+
+<p><em>python</em> 的 <em>logging</em> 分成以下五個等級</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>等級</th>
+      <th>使用時機</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DEBUG</td>
+      <td>程式執行時的詳細資訊, 可以找出BUG在哪</td>
+    </tr>
+    <tr>
+      <td>INFO</td>
+      <td>程式執行時的基本資訊, 用來顯示程式正常執行時的狀況</td>
+    </tr>
+    <tr>
+      <td>WARNING</td>
+      <td>程式執行時遇到某些狀況超乎預期, 或未來可能遇到問題, 但程式目前仍可以繼續執行</td>
+    </tr>
+    <tr>
+      <td>ERROR</td>
+      <td>程式執行時發生問題, 可能導致結果產生錯誤</td>
+    </tr>
+    <tr>
+      <td>CRITICAL</td>
+      <td>程式執行時遇到嚴重問題, 程式必須馬上停止</td>
+    </tr>
+  </tbody>
+</table>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2014/05/08/python-standard-library-logging/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/4">&larr; Older</a>
@@ -741,15 +764,11 @@ This is not an apple </p>
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/linear-programming/'>linear programming (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (6)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
-      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
@@ -765,6 +784,10 @@ This is not an apple </p>
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
   </ul>

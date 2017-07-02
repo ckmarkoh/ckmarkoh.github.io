@@ -9,7 +9,7 @@
   <meta name="author" content="Mark Chang">
 
   
-  <meta name="description" content="What is Linear Programming? Linear Programming 是一種最佳化問題，在此最佳化問題中。Objective Function 和Constraints 都是線性的。 舉個例子，以下為一個 Linear Programming 的問題（公式一）： 將 &hellip;">
+  <meta name="description" content="Backward Propagation in nn.Module 本文接續 Torch NN Tutorial 4: Backward Propagation (part 1) ，與 Torch NN Tutorial 5: Backward Propagation (part 2) 講解 nn &hellip;">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -92,62 +92,6 @@ MathJax.Hub.Config({
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-<time class='entry-date' datetime='2017-05-30T09:05:30+08:00'><span class='date'><span class='date-month'>May</span> <span class='date-day'>30</span><span class='date-suffix'>th</span>, <span class='date-year'>2017</span></span> <span class='time'>9:05 am</span></time>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><h2 id="what-is-linear-programming">What is Linear Programming?</h2>
-
-<p>Linear Programming 是一種最佳化問題，在此最佳化問題中。Objective Function 和Constraints 都是線性的。</p>
-
-<p>舉個例子，以下為一個 Linear Programming 的問題<a name="eq1">（公式一）</a>：</p>
-
-<script type="math/tex; mode=display">% <![CDATA[
-
-
-\begin{align}
-&\text{Objective Function} \\
-&\mspace{20mu}\text{maximize: }  2x_1+3x_2  \\
-&\text{Constraints} \\
-&\mspace{20mu} x_1 + x_2  \leq 2 \\
-&\mspace{20mu} x_1 + 2x_2 \leq 3 \\
-&\mspace{20mu} x_1 , x_2  \geq 0  \\
-\end{align}
-
- %]]></script>
-
-<p>將 Constraints 畫在平面上，得出下圖：</p>
-
-<p><img src="/images/new/linearprog1.png" alt="" /></p>
-
-</div>
-  
-  
-    <footer>
-      <a rel="full-article" href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Read on &rarr;</a>
-    </footer>
-  
-
-
-    </article>
   
   
     <article>
@@ -646,6 +590,76 @@ l( y , \bar{y}) = (y  - \bar{y} )^2
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/blog/2016/07/10/nlp-vector-space-semantics/">Vector Space of Semantics</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+<time class='entry-date' datetime='2016-07-10T14:06:00+08:00'><span class='date'><span class='date-month'>Jul</span> <span class='date-day'>10</span><span class='date-suffix'>th</span>, <span class='date-year'>2016</span></span> <span class='time'>2:06 pm</span></time>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><h2 id="introduction">Introduction</h2>
+
+<p>如果要判斷某個字的語意，可以用它鄰近的字來判斷，例如以下句子：</p>
+
+<blockquote>
+  <p>The dog run.
+A cat run.
+A dog sleep.
+The cat sleep.
+A dog bark.
+The cat meows.
+The bird fly.
+A bird sleep.</p>
+</blockquote>
+
+<p>由於 <em>dog</em> 和 <em>cat</em> 這兩個字出現在類似的上下文情境中，因此，可以判斷出 <em>dog</em> 和 <em>cat</em> 語意相近。</p>
+
+<p>如果要能夠用數學運算，來計算語意相近程度，可以把文字的語意用向量表示，如下：</p>
+
+<script type="math/tex; mode=display">% <![CDATA[
+
+
+\begin{array}{c|c c c c c c c c c }
+
+     &a &bark &bird &cat &dog &fly &meow & run & sleep & the \\ \hline
+
+ dog &2 &1 &0 &0 &0 &0 &0 &1 &1 &1 \\
+
+ cat &1 &0 &0 &0 &0 &0 &1 &1 &1 &2 \\
+
+ bird &1 &0 &0 &0 &0 &1 &0 &0 &1 &1 
+
+\end{array}
+
+ %]]></script>
+
+<p>其中， <em>dog</em> 的向量為  ( 2, 1, 0, 0, 0, 0, 0, 1, 1, 1 ) ，第一個維度表示 <em>dog</em> 在 <em>a</em> 旁邊的次數有 2 次，第二個維度表示在 <em>bark</em> 旁邊的次數有 1 次，以此類推。</p>
+
+</div>
+  
+  
+    <footer>
+      <a rel="full-article" href="/blog/2016/07/10/nlp-vector-space-semantics/">Read on &rarr;</a>
+    </footer>
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="/posts/2">&larr; Older</a>
@@ -658,15 +672,11 @@ l( y , \bar{y}) = (y  - \bar{y} )^2
   
     <section>
   <h1>Categories</h1>
-    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/linear-programming/'>linear programming (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (6)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
+    <ul id="category-list"><li><a href='/blog/categories/functional-programming/'>functional programming (3)</a></li><li><a href='/blog/categories/information-retrieval/'>information retrieval (2)</a></li><li><a href='/blog/categories/information-theory/'>information theory (1)</a></li><li><a href='/blog/categories/machine-learning/'>machine learning (9)</a></li><li><a href='/blog/categories/natural-language-processing/'>natural language processing (27)</a></li><li><a href='/blog/categories/neural-networks/'>neural networks (14)</a></li><li><a href='/blog/categories/nltk/'>nltk (6)</a></li><li><a href='/blog/categories/optimization-methods/'>optimization methods (5)</a></li><li><a href='/blog/categories/probabilistic-graphical-models/'>probabilistic graphical models (3)</a></li><li><a href='/blog/categories/python-programming/'>python programming (9)</a></li><li><a href='/blog/categories/r-programming/'>r programming (1)</a></li><li><a href='/blog/categories/ruby-programming/'>ruby programming (2)</a></li><li><a href='/blog/categories/semantics/'>semantics (7)</a></li><li><a href='/blog/categories/text-mining/'>text mining (3)</a></li><li><a href='/blog/categories/torch/'>torch (6)</a></li><li><a href='/blog/categories/xpath/'>xpath (1)</a></li></ul>
 </section>
 <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/blog/2017/05/30/optimization-linear-programming-standard-form/">Linear Programming 1: Standard Form of Linear Programming</a>
-      </li>
     
       <li class="post">
         <a href="/blog/2017/01/01/torch-nn-tutorial-6-backward-propagation/">Torch NN Tutorial 6 : Backward Propagation ( Part 3 : nn.Module )</a>
@@ -682,6 +692,10 @@ l( y , \bar{y}) = (y  - \bar{y} )^2
     
       <li class="post">
         <a href="/blog/2016/12/25/torch-nn-tutorial-3-nn-dot-criterion/">Torch NN Tutorial 3 : NN.Criterion & NN.MSECriterion</a>
+      </li>
+    
+      <li class="post">
+        <a href="/blog/2016/12/24/torch-nn-tutorial-2-nn-container/">Torch NN Tutorial 2 : NN.Container & NN.Sequential</a>
       </li>
     
   </ul>
