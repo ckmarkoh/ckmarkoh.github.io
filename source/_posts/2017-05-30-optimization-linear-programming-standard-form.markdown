@@ -4,6 +4,7 @@ title: "Linear Programming 1: Standard Form of Linear Programming"
 date: 2017-05-30 09:05:30 +0800
 comments: true
 categories: ['Optimization Methods','Linear Programming']
+published: false 
 ---
 
 ## What is Linear Programming?

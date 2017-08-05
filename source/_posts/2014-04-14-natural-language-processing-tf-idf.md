@@ -34,7 +34,7 @@ categories: ['Natural Language Processing','Text Mining', 'Information Retrieval
 #### 2.在所有的文章中,有幾篇文章有這個字( *Inverse-Document-Frequency IDF* )
 
 
-這就是所謂的 IF-IDF
+這就是所謂的 TF-IDF
 
 
 公式如下：

@@ -228,7 +228,7 @@ $$
 
 $$
 
-\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_3}} \approx 0
+\frac{1}{1+e^{- \textbf{V}_1 \cdot \textbf{W}_4}} \approx 0
 
 $$
 
